@@ -1,0 +1,9 @@
+{
+    "parser": "@typescript-eslint/parser",
+    "plugins": ["@typescript-eslint"],
+    "overrides": [{
+        "files": ["*.ts", "*.tsx"],
+        "extends": ["@wemake-services/typescript/strict"],
+        "parserOptions": {"project": ["./tsconfig.json"]}
+    }]
+}

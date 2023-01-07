@@ -10,10 +10,10 @@ const config: { [key: string]: Knex.Config } = {
     connection: {
       filename: path.join(__dirname, 'dev.db.sqlite3')
     },
+    useNullAsDefault: true,
     migrations: {
       tableName: 'knex_migrations'
-    },
-    useNullAsDefault: true
+    }
   }
 
   // staging: {

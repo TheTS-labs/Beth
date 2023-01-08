@@ -10,20 +10,32 @@ const schema = Joi.object({
   repeat_password: Joi.ref("password"),
 }).with("password", "repeat_password");
 
-export default (req: Request, res: Response, db: Knex): void => {
+export default async (req: Request, res: Response, db: Knex): Promise<void> => {
   const validation = schema.validate(req.body);
   if (validation.error) { res.json({ message: "ValidationError", error: validation.error }); return; }
   
-  bcrypt.hash(req.body.password, 3, function(err, hash) {
+  bcrypt.hash(req.body.password, 3, async function(err, hash) {
     if (err) { res.json({message: "HashError", error: err.message}); return; }
 
-    db<TUser>("user").insert(
-      { email: req.body.email, password_hash: hash }
-    ).then((id) => {
+    let id;
+
+    try {
+      id = (await db<TUser>("user").insert({ email: req.body.email, password_hash: hash }))[0];
+    } catch(err: unknown) {
+      const e = err as { message: string, code: string, errno: number };
+
+      console.error(`[create] DatabaseError: ${e.message}`);
       res.json({
-        succsess: true,
-        id: id[0]
-      });
-    }).catch((err) => { res.json({message: "DatabaseError", error: err.message}); });
+        message: "DatabaseError",
+        err_code: e.code,
+        errno: e.errno,
+        err_msg: e.message
+      }); return;
+    }
+
+    res.json({
+      succsess: true,
+      id: id
+    });
   });
 };

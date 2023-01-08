@@ -8,7 +8,7 @@ dotenv.config();
 
 interface TEndpoints {
   [key: string]: { // routerName
-    [key: string]: (req: Request, res: Response, db: Knex) => void // endpointName
+    [key: string]: (req: Request, res: Response, db: Knex) => Promise<void> // endpointName
   }
 }
 

@@ -12,7 +12,7 @@ interface TEndpoints {
   }
 }
 
-class Endpoints {
+class App {
   db: Knex;
   app: Express;
   endpoints: TEndpoints;
@@ -28,7 +28,7 @@ class Endpoints {
     this.app.use(express.urlencoded({ extended: true }));
   }
 
-  registerRouters(): Endpoints {
+  registerRouters(): App {
     Object.keys(this.endpoints).map((routerName: string) => {
       const endpointRouter = Router();
 
@@ -51,11 +51,11 @@ class Endpoints {
 }
 
 const app: Express = express();
-const db = knex(knexfile["development"]);
+const db = knex(knexfile[process.env.NODE_ENV || "development"]);
 const endpoints: TEndpoints = {
   "/user": {
     "create": createUser
   }
 };
 
-new Endpoints(db, app, endpoints, process.env.APP_PORT).registerRouters().listen();
+new App(db, app, endpoints, process.env.APP_PORT).registerRouters().listen();

@@ -1,18 +1,18 @@
-import { Knex } from "knex"
-import dotenv from "dotenv"
-import path from "path"
+import { Knex } from "knex";
+import dotenv from "dotenv";
+import path from "path";
 
-dotenv.config()
+dotenv.config();
 
 const config: { [key: string]: Knex.Config } = {
   development: {
-    client: 'sqlite3',
+    client: "sqlite3",
     connection: {
-      filename: path.join(__dirname, 'dev.db.sqlite3')
+      filename: path.join(__dirname, "dev.db.sqlite3")
     },
     useNullAsDefault: true,
     migrations: {
-      tableName: 'knex_migrations'
+      tableName: "knex_migrations"
     }
   }
 
@@ -47,6 +47,6 @@ const config: { [key: string]: Knex.Config } = {
   //     tableName: "knex_migrations"
   //   }
   // }
-}
+};
 
-export default config
+export default config;

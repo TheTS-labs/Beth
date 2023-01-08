@@ -1,4 +1,4 @@
-import { Knex } from "knex"
+import { Knex } from "knex";
 
 export interface TUser {
   id: number
@@ -9,14 +9,14 @@ export interface TUser {
 
 export async function up(knex: Knex): Promise<void> {
   return knex.schema.createTable("user", function (table: Knex.CreateTableBuilder) {
-    table.increments("id")
-    table.string("email").unique().notNullable()
-    table.string("password_hash").notNullable()
-    table.boolean("is_banned").defaultTo(0)
-  })
+    table.increments("id");
+    table.string("email").unique().notNullable();
+    table.string("password_hash").notNullable();
+    table.boolean("is_banned").defaultTo(0);
+  });
 }
 
 export async function down(knex: Knex): Promise<void> {
-  return knex.schema.dropTable("user")
+  return knex.schema.dropTable("user");
 }
 

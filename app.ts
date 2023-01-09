@@ -2,6 +2,7 @@ import express, { Express, Router, Request, Response } from "express";
 import dotenv from "dotenv";
 import knex, { Knex } from "knex";
 import createUser from "./endpoints/user/create";
+import viewUser from "./endpoints/user/view";
 import knexfile from "./db/knexfile";
 
 dotenv.config();
@@ -54,7 +55,10 @@ const app: Express = express();
 const db = knex(knexfile[process.env.NODE_ENV || "development"]);
 const endpoints: TEndpoints = {
   "/user": {
-    "create": createUser
+    "create": createUser,
+    "view": viewUser,
+    // "edit": createUser,
+    // "delete": createUser,
   }
 };
 

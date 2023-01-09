@@ -25,7 +25,7 @@ export default async (req: Request, res: Response, db: Knex): Promise<void> => {
       const e = err as { message: string, code: string, errno: number };
 
       console.error(`[create] DatabaseError: ${e.message}`);
-      res.json({
+      res.status(500).json({
         message: "DatabaseError",
         err_code: e.code,
         errno: e.errno,

@@ -4,23 +4,26 @@ import knex, { Knex } from "knex";
 import createUser from "./endpoints/user/create";
 import viewUser from "./endpoints/user/view";
 import knexfile from "./db/knexfile";
+import { RedisClientType, createClient as createRedisClient } from "redis";
 
 dotenv.config();
 
 interface TEndpoints {
   [key: string]: { // routerName
-    [key: string]: (req: Request, res: Response, db: Knex) => Promise<void> // endpointName
+    [key: string]: (req: Request, res: Response, db: Knex, redisClient: RedisClientType) => Promise<void> // endpointName
   }
 }
 
 class App {
   db: Knex;
+  redisClient: RedisClientType;
   app: Express;
   endpoints: TEndpoints;
   port: string;
 
-  constructor(db: Knex, app: Express, endpoints: TEndpoints, port="8080") {
+  constructor(db: Knex, redisClient: RedisClientType, app: Express, endpoints: TEndpoints, port="8080") {
     this.db = db;
+    this.redisClient = redisClient;
     this.app = app;
     this.endpoints = endpoints;
     this.port = port;
@@ -34,7 +37,7 @@ class App {
       const endpointRouter = Router();
 
       endpointRouter.post("/:endPoint", async (req: Request, res: Response) => {
-        this.endpoints[routerName][req.params.endPoint](req, res, this.db);
+        this.endpoints[routerName][req.params.endPoint](req, res, this.db, this.redisClient);
       });
 
       this.app.use(routerName, endpointRouter);
@@ -51,15 +54,21 @@ class App {
   }
 }
 
-const app: Express = express();
-const db = knex(knexfile[process.env.NODE_ENV || "development"]);
-const endpoints: TEndpoints = {
-  "/user": {
-    "create": createUser,
-    "view": viewUser,
-    // "edit": createUser,
-    // "delete": createUser,
-  }
-};
+(async (): Promise<void> => {
+  const redisClient: RedisClientType = createRedisClient();
+  redisClient.on("error", (error) => { console.error(`[redis] Error: ${error}`); process.exit(1); });
+  await redisClient.connect();
 
-new App(db, app, endpoints, process.env.APP_PORT).registerRouters().listen();
+  const app: Express = express();
+  const db = knex(knexfile[process.env.NODE_ENV || "development"]);
+  const endpoints: TEndpoints = {
+    "/user": {
+      "create": createUser,
+      "view": viewUser,
+      // "edit": createUser,
+      // "delete": createUser,
+    }
+  };
+
+  new App(db, redisClient, app, endpoints, process.env.APP_PORT).registerRouters().listen();
+})();

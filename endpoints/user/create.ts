@@ -3,6 +3,7 @@ import Joi from "joi";
 import { Knex } from "knex";
 import { TUser } from "../../db/migrations/20230106181658_create_user_table";
 import bcrypt from "bcrypt";
+import { RedisClientType } from "redis";
 
 const schema = Joi.object({
   email: Joi.string().email().required(),
@@ -10,17 +11,15 @@ const schema = Joi.object({
   repeat_password: Joi.ref("password"),
 }).with("password", "repeat_password");
 
-export default async (req: Request, res: Response, db: Knex): Promise<void> => {
+export default async (req: Request, res: Response, db: Knex, redisClient: RedisClientType): Promise<void> => {
   const validation = schema.validate(req.body);
   if (validation.error) { res.json({ message: "ValidationError", error: validation.error }); return; }
   
   bcrypt.hash(req.body.password, 3, async function(err, hash) {
     if (err) { res.json({message: "HashError", error: err.message}); return; }
 
-    let id;
-
     try {
-      id = (await db<TUser>("user").insert({ email: req.body.email, password_hash: hash }))[0];
+      await db<TUser>("user").insert({ email: req.body.email, password_hash: hash });
     } catch(err: unknown) {
       const e = err as { message: string, code: string, errno: number };
 
@@ -33,9 +32,22 @@ export default async (req: Request, res: Response, db: Knex): Promise<void> => {
       }); return;
     }
 
+    const user = await db<TUser>("user").where({
+      email: req.body.email
+    }).select("id", "email", "is_banned").first();
+
+    if (!user) {
+      res.status(500).json({
+        message: "DatabaseError",
+        err_msg: "Unknown error"
+      }); return;
+    }
+
+    await redisClient.set(req.body.email, JSON.stringify(user));
+
     res.json({
       succsess: true,
-      id: id
+      id: user.id
     });
   });
 };

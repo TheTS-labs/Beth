@@ -4,6 +4,7 @@ import { Knex } from "knex";
 import { TUser } from "../../db/migrations/20230106181658_create_user_table";
 import bcrypt from "bcrypt";
 import { RedisClientType } from "redis";
+import winston from "winston";
 
 const schema = Joi.object({
   email: Joi.string().email().required(),
@@ -11,19 +12,22 @@ const schema = Joi.object({
   repeat_password: Joi.ref("password"),
 }).with("password", "repeat_password");
 
-export default async (req: Request, res: Response, db: Knex, redisClient: RedisClientType): Promise<void> => {
+export default async (req: Request, res: Response, db: Knex, redisClient: RedisClientType, logger: winston.Logger): Promise<void> => {
   const validation = schema.validate(req.body);
   if (validation.error) { res.json({ message: "ValidationError", error: validation.error }); return; }
   
   bcrypt.hash(req.body.password, 3, async function(err, hash) {
-    if (err) { res.json({message: "HashError", error: err.message}); return; }
+    if (err) {
+      logger.error(`[create][hash]: ${err.message}`);
+      res.json({message: "HashError", error: err.message}); return;
+    }
 
     try {
       await db<TUser>("user").insert({ email: req.body.email, password_hash: hash });
     } catch(err: unknown) {
       const e = err as { message: string, code: string, errno: number };
 
-      console.error(`[create] DatabaseError: ${e.message}`);
+      logger.error(`[create] DatabaseError: ${e.message}`);
       res.status(500).json({
         message: "DatabaseError",
         err_code: e.code,

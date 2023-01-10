@@ -3,6 +3,7 @@ import Joi from "joi";
 import { Knex } from "knex";
 import { TUser } from "../../db/migrations/20230106181658_create_user_table";
 import { RedisClientType } from "redis";
+import winston from "winston";
 
 const schema = Joi.object({
   email: Joi.string().email().required()
@@ -11,7 +12,7 @@ const schema = Joi.object({
 type RedisObject = Omit<TUser, "password_hash">;
 type DBObject = Pick<TUser, "email" | "id" | "is_banned">;
 
-const getUser = async (req: Request, res: Response, db: Knex, redisClient: RedisClientType): Promise<DBObject|RedisObject|undefined> => {
+const getUser = async (req: Request, res: Response, db: Knex, redisClient: RedisClientType, logger: winston.Logger): Promise<DBObject|RedisObject|undefined> => {
   const cached_user = await redisClient.get(req.body.email);
 
   if (cached_user) {
@@ -23,7 +24,7 @@ const getUser = async (req: Request, res: Response, db: Knex, redisClient: Redis
   }).select("id", "email", "is_banned").first();
 
   if (!user) {
-    console.error(`[view] DatabaseError: User with email ${req.body.email} not found`);
+    logger.error(`[view] DatabaseError: User with email ${req.body.email} not found`);
     res.status(404).json({
       message: "DatabaseError",
       err_msg: `User with email ${req.body.email} not found`
@@ -35,11 +36,11 @@ const getUser = async (req: Request, res: Response, db: Knex, redisClient: Redis
   return user;
 };
 
-export default async (req: Request, res: Response, db: Knex, redisClient: RedisClientType): Promise<void> => {
+export default async (req: Request, res: Response, db: Knex, redisClient: RedisClientType, logger: winston.Logger): Promise<void> => {
   const validation = schema.validate(req.body);
   if (validation.error) { res.json({ message: "ValidationError", error: validation.error }); return; }
 
-  const user: DBObject|RedisObject|undefined = await getUser(req, res, db, redisClient);
+  const user: DBObject|RedisObject|undefined = await getUser(req, res, db, redisClient, logger);
   if (!user) { return; }
 
   res.json({

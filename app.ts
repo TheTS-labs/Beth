@@ -5,12 +5,13 @@ import createUser from "./endpoints/user/create";
 import viewUser from "./endpoints/user/view";
 import knexfile from "./db/knexfile";
 import { RedisClientType, createClient as createRedisClient } from "redis";
+import winston, { format } from "winston";
 
 dotenv.config();
 
 interface TEndpoints {
   [key: string]: { // routerName
-    [key: string]: (req: Request, res: Response, db: Knex, redisClient: RedisClientType) => Promise<void> // endpointName
+    [key: string]: (req: Request, res: Response, db: Knex, redisClient: RedisClientType, logger: winston.Logger) => Promise<void> // endpointName
   }
 }
 
@@ -20,12 +21,14 @@ class App {
   app: Express;
   endpoints: TEndpoints;
   port: string;
+  logger: winston.Logger;
 
-  constructor(db: Knex, redisClient: RedisClientType, app: Express, endpoints: TEndpoints, port="8080") {
+  constructor(db: Knex, redisClient: RedisClientType, app: Express, endpoints: TEndpoints, logger: winston.Logger, port="8080") {
     this.db = db;
     this.redisClient = redisClient;
     this.app = app;
     this.endpoints = endpoints;
+    this.logger = logger;
     this.port = port;
 
     this.app.use(express.json());
@@ -37,11 +40,11 @@ class App {
       const endpointRouter = Router();
 
       endpointRouter.post("/:endPoint", async (req: Request, res: Response) => {
-        this.endpoints[routerName][req.params.endPoint](req, res, this.db, this.redisClient);
+        this.endpoints[routerName][req.params.endPoint](req, res, this.db, this.redisClient, this.logger);
       });
 
       this.app.use(routerName, endpointRouter);
-      console.log(`[endpoints]: ${routerName} router was registered`);
+      this.logger.info(`[endpoints]: ${routerName} router was registered`);
     });
 
     return this;
@@ -49,14 +52,25 @@ class App {
 
   listen(): void {
     this.app.listen(this.port, () => {
-      console.log(`[server]: Server is running at http://localhost:${this.port}`);
+      this.logger.info(`[server]: Server is running at http://localhost:${this.port}`);
     });
   }
 }
 
 (async (): Promise<void> => {
+  const logger = winston.createLogger({
+    level: "info",
+    format: format.combine(
+      format.colorize(),
+      format.printf(({ level, message }) => { return `${level} ${message}`; })
+    ),
+    transports: [
+      new winston.transports.Console()
+    ],
+  });
+
   const redisClient: RedisClientType = createRedisClient();
-  redisClient.on("error", (error) => { console.error(`[redis] Error: ${error}`); process.exit(1); });
+  redisClient.on("error", (error) => { logger.error(`[redis]: ${error}`); process.exit(1); });
   await redisClient.connect();
 
   const app: Express = express();
@@ -70,5 +84,5 @@ class App {
     }
   };
 
-  new App(db, redisClient, app, endpoints, process.env.APP_PORT).registerRouters().listen();
+  new App(db, redisClient, app, endpoints, logger, process.env.APP_PORT).registerRouters().listen();
 })();

@@ -23,7 +23,7 @@ export default async (req: Request, res: Response, db: Knex, redisClient: RedisC
     }
 
     try {
-      await db<TUser>("user").insert({ email: req.body.email, password_hash: hash });
+      await db<TUser>("user").insert({ email: req.body.email, password: hash });
     } catch(err: unknown) {
       const e = err as { message: string, code: string, errno: number };
 

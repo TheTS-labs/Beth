@@ -7,7 +7,7 @@ import winston from "winston";
 
 const schema = Joi.object({
   email: Joi.string().email().required()
-}).with("password", "repeat_password");
+});
 
 type RedisObject = Omit<TUser, "password_hash">;
 type DBObject = Pick<TUser, "email" | "id" | "is_banned">;

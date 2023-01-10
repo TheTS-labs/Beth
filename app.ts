@@ -3,6 +3,7 @@ import dotenv from "dotenv";
 import knex, { Knex } from "knex";
 import createUser from "./endpoints/user/create";
 import viewUser from "./endpoints/user/view";
+import editUser from "./endpoints/user/edit";
 import knexfile from "./db/knexfile";
 import { RedisClientType, createClient as createRedisClient } from "redis";
 import winston, { format } from "winston";
@@ -79,7 +80,7 @@ class App {
     "/user": {
       "create": createUser,
       "view": viewUser,
-      // "edit": createUser,
+      "edit": editUser,
       // "delete": createUser,
     }
   };

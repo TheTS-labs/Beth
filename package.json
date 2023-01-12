@@ -1,7 +1,7 @@
 {
   "name": "beth",
-  "version": "0.0.0",
-  "private": true,
+  "version": "InDev",
+  "license": "GPL-3.0-only",
   "scripts": {
     "start": "yarn ts-node app.ts",
     "migrate": "knex migrate:latest --knexfile db/knexfile.js",

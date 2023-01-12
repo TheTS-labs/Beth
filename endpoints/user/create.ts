@@ -8,6 +8,9 @@ import winston from "winston";
 import { TUser } from "../../db/migrations/20230106181658_create_user_table";
 import BaseEndpoint from "../base_endpoint";
 import JoiValidator from "../joi_validator";
+import { ErrorResponse, JoiErrorResponse, SuccessDBResponse } from "../response_interfaces";
+
+type DBObject = Pick<TUser, "email" | "id" | "is_banned">;
 
 export default class Create implements BaseEndpoint {
   validator: JoiValidator;
@@ -37,14 +40,21 @@ export default class Create implements BaseEndpoint {
 
       await redisClient.set(req.body.email, JSON.stringify(user));
 
-      res.json({ succsess: true, id: user.id });
+      res.json({ success: true, result: user } as SuccessDBResponse<DBObject>);
     });
   }
 
   async validate(req: Request, res: Response): Promise<boolean> {
     const validationError = await this.validator.validate(req.body);
 
-    if (validationError) { res.json({ message: "ValidationError", error: validationError }); return false; }
+    if (validationError) {
+      res.json({
+        success: false,
+        errorType: "ValidationError",
+        errorMessage: validationError
+      } as JoiErrorResponse);
+      return false;
+    }
 
     return true;
   }
@@ -57,24 +67,24 @@ export default class Create implements BaseEndpoint {
 
       logger.error(`[create] DatabaseError: ${e.message}`);
       res.status(500).json({
-        message: "DatabaseError",
-        err_code: e.code,
-        errno: e.errno,
-        err_msg: e.message
-      });
+        success: false,
+        errorType: "DatabaseError",
+        errorMessage: e.message
+      } as ErrorResponse);
       return false;
     }
 
     return true;
   }
 
-  private async getUser(db: Knex, email: string, res: Response): Promise<Pick<TUser, "email"|"id"|"is_banned">|undefined> {
+  private async getUser(db: Knex, email: string, res: Response): Promise<DBObject|undefined> {
     const user = await db<TUser>("user").where({ email: email }).select("id", "email", "is_banned").first();
     if (user) { return user; }
 
     res.status(500).json({
-      message: "DatabaseError",
-      err_msg: "Unknown error"
-    }); return undefined;
+      success: false,
+      errorType: "DatabaseError",
+      errorMessage: "Unknown error"
+    } as ErrorResponse); return undefined;
   }
 }

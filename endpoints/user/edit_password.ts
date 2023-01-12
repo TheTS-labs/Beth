@@ -8,6 +8,7 @@ import winston from "winston";
 import { TUser } from "../../db/migrations/20230106181658_create_user_table";
 import BaseEndpoint from "../base_endpoint";
 import JoiValidator from "../joi_validator";
+import { ErrorResponse, JoiErrorResponse, SuccessDBResponse } from "../response_interfaces";
 
 export default class EditPassword implements BaseEndpoint {
   validator: JoiValidator;
@@ -30,21 +31,25 @@ export default class EditPassword implements BaseEndpoint {
     bcrypt.compare(req.body.password, user.password, async (err, result) => {
       if (err) {
         logger.error(`[edit_password][hash]: ${err.message}`);
-        res.json({message: "HashError", error: err.message}); return;
+        res.json({
+          success: false,
+          errorType: "HashError",
+          errorMessage: err.message
+        } as ErrorResponse); return;
       }
 
-      if (!result) { res.json({message: "AuthError", error: "Wrong password"}); return; }
+      if (!result) { res.json({ success: false, errorType: "AuthError", errorMessage: "Wrong password" } as ErrorResponse); return; }
 
       bcrypt.hash(req.body.new_password, 3, async function(err, hash) {
         if (err) {
           logger.error(`[edit][hash]: ${err.message}`);
-          res.json({message: "HashError", error: err.message}); return;
+          res.json({ success: false, errorType: "HashError", errorMessage: err.message } as ErrorResponse); return;
         }
   
         await db<TUser>("user").where({email: req.body.email}).update({password: hash});
         redisClient.del(req.body.email);
   
-        res.json({success: true, id: user.id});
+        res.json({success: true, result: user.id} as SuccessDBResponse<TUser["id"]>);
       });
     });
   }
@@ -52,22 +57,28 @@ export default class EditPassword implements BaseEndpoint {
   async validate(req: Request, res: Response): Promise<boolean> {
     const validationError = await this.validator.validate(req.body);
 
-    if (validationError) { res.json({ message: "ValidationError", error: validationError }); return false; }
+    if (validationError) {
+      res.json({
+        success: false,
+        errorType: "ValidationError",
+        errorMessage: validationError
+      } as JoiErrorResponse);
+      return false;
+    }
 
     return true;
   }
 
   private async getUser(db: Knex, email: string, res: Response, logger: winston.Logger): Promise<TUser|undefined> {
-    const user = await db<TUser>("user").where({
-      email: email
-    }).select().first();
+    const user = await db<TUser>("user").where({ email: email }).select().first();
 
     if (user) { return user; }
 
     logger.error(`[edit] DatabaseError: User with email ${email} not found`);
     res.status(404).json({
-      message: "DatabaseError",
-      err_msg: `User with email ${email} not found`
-    }); return undefined;
+      success: false,
+      errorType: "DatabaseError",
+      errorMessage: `User with email ${email} not found`
+    } as ErrorResponse); return undefined;
   }
 }

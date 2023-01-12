@@ -7,6 +7,7 @@ import winston from "winston";
 import { TUser } from "../../db/migrations/20230106181658_create_user_table";
 import BaseEndpoint from "../base_endpoint";
 import JoiValidator from "../joi_validator";
+import { ErrorResponse, JoiErrorResponse, SuccessDBResponse } from "../response_interfaces";
 
 type RedisObject = Omit<TUser, "password_hash">;
 type DBObject = Pick<TUser, "email" | "id" | "is_banned">;
@@ -25,15 +26,22 @@ export default class View implements BaseEndpoint {
     if (!user) { return; }
 
     res.json({
-      succsess: true,
-      user: user
-    });
+      success: true,
+      result: user
+    } as SuccessDBResponse<DBObject>);
   }
 
   async validate(req: Request, res: Response): Promise<boolean> {
     const validationError = await this.validator.validate(req.body);
 
-    if (validationError) { res.json({ message: "ValidationError", error: validationError }); return false; }
+    if (validationError) {
+      res.json({
+        success: false,
+        errorType: "ValidationError",
+        errorMessage: validationError
+      } as JoiErrorResponse);
+      return false;
+    }
 
     return true;
   }
@@ -47,9 +55,10 @@ export default class View implements BaseEndpoint {
     if (!user) {
       logger.error(`[view] DatabaseError: User with email ${email} not found`);
       res.status(404).json({
-        message: "DatabaseError",
-        err_msg: `User with email ${email} not found`
-      }); return undefined;
+        success: false,
+        errorType: "DatabaseError",
+        errorMessage: `User with email ${email} not found`
+      } as ErrorResponse); return undefined;
     }
 
     await redisClient.set(email, JSON.stringify(user));

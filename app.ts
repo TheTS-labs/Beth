@@ -1,18 +1,20 @@
-import express, { Express, Router, Request, Response } from "express";
 import dotenv from "dotenv";
+import express, { Express, Request, Response, Router } from "express";
 import knex, { Knex } from "knex";
-import createUser from "./endpoints/user/create";
-import viewUser from "./endpoints/user/view";
-import editUser from "./endpoints/user/edit";
-import knexfile from "./db/knexfile";
-import { RedisClientType, createClient as createRedisClient } from "redis";
+import { createClient as createRedisClient,RedisClientType } from "redis";
 import winston, { format } from "winston";
+
+import knexfile from "./db/knexfile";
+import BaseEndpoint from "./endpoints/base_endpoint";
+import Create from "./endpoints/user/create";
+import EditPassword from "./endpoints/user/edit_password";
+import View from "./endpoints/user/view";
 
 dotenv.config();
 
 interface TEndpoints {
   [key: string]: { // routerName
-    [key: string]: (req: Request, res: Response, db: Knex, redisClient: RedisClientType, logger: winston.Logger) => Promise<void> // endpointName
+    [key: string]: BaseEndpoint // endpointName
   }
 }
 
@@ -41,7 +43,14 @@ class App {
       const endpointRouter = Router();
 
       endpointRouter.post("/:endPoint", async (req: Request, res: Response) => {
-        this.endpoints[routerName][req.params.endPoint](req, res, this.db, this.redisClient, this.logger);
+        const endpoint = this.endpoints[routerName][req.params.endPoint];
+
+        if (endpoint) { endpoint.call(req, res, this.db, this.redisClient, this.logger); return; }
+
+        res.status(404).json({
+          message: "EndpointNotFound",
+          error: `Endpoint ${routerName}/${req.params.endPoint} does not exist`
+        });
       });
 
       this.app.use(routerName, endpointRouter);
@@ -78,10 +87,10 @@ class App {
   const db = knex(knexfile[process.env.NODE_ENV || "development"]);
   const endpoints: TEndpoints = {
     "/user": {
-      "create": createUser,
-      "view": viewUser,
-      "edit": editUser,
-      // "delete": createUser,
+      "create": new Create(),
+      "view": new View(),
+      "edit_password": new EditPassword(),
+      // "delete": new Delete(),
     }
   };
 

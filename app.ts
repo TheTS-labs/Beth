@@ -1,7 +1,7 @@
 import dotenv from "dotenv";
 import express, { Express, Request, Response, Router } from "express";
 import knex, { Knex } from "knex";
-import { createClient as createRedisClient,RedisClientType } from "redis";
+import { createClient as createRedisClient, RedisClientType } from "redis";
 import winston, { format } from "winston";
 
 import knexfile from "./db/knexfile";
@@ -43,18 +43,20 @@ class App {
       const endpointRouter = Router();
 
       endpointRouter.post("/:endPoint", async (req: Request, res: Response) => {
+        if (!(req.params.endPoint in this.endpoints[routerName])) {
+          res.status(404).json({
+            message: "EndpointNotFound",
+            error: `Endpoint ${routerName}/${req.params.endPoint} does not exist`
+          }); return;
+        }
+
         const endpoint = new this.endpoints[routerName][req.params.endPoint](
           req, res, this.db,
           this.redisClient,
           this.logger
         );
 
-        if (endpoint) { endpoint.call(); return; }
-
-        res.status(404).json({
-          message: "EndpointNotFound",
-          error: `Endpoint ${routerName}/${req.params.endPoint} does not exist`
-        });
+        await endpoint.call();
       });
 
       this.app.use(routerName, endpointRouter);
@@ -94,7 +96,7 @@ class App {
       "create": Create,
       "view": View,
       "edit_password": EditPassword,
-      // "delete": new Delete(),
+      // "delete": Delete,
     }
   };
 

@@ -9,7 +9,7 @@ import { TUser } from "../../db/migrations/20230106181658_create_user_table";
 import { IBaseEndpoint } from "../base_endpoint";
 import { SafeUserObject } from "../common_types";
 import JoiValidator from "../joi_validator";
-import { ErrorResponse, JoiErrorResponse, SuccessDBResponse } from "../response_interfaces";
+import { ErrorResponse, SuccessDBResponse } from "../response_interfaces";
 
 export default class Create implements IBaseEndpoint {
   validator: JoiValidator;
@@ -37,16 +37,12 @@ export default class Create implements IBaseEndpoint {
     if (!await this.validate()) { return; }
 
     bcrypt.hash(this.req.body.password, 3, async (err, hash) => {
-      if (err) {
-        this.logger.error(`[create][hash]: ${err.message}`);
-        this.res.json({message: "HashError", error: err.message}); return;
-      }
+      if (err) { this.on_error("HashError", err.message, 500); return; }
 
-      const insertResult = await this.insertUser(this.req.body.email, hash);
-      if (!insertResult) { return; }
+      if (!await this.insertUser(this.req.body.email, hash)) { return; }
 
       const user = await this.getUser(this.req.body.email);
-      if (!user) { return;}
+      if (!user) { return; }
 
       await this.redisClient.set(this.req.body.email, JSON.stringify(user));
 
@@ -58,11 +54,7 @@ export default class Create implements IBaseEndpoint {
     const validationError = await this.validator.validate(this.req.body);
 
     if (validationError) {
-      this.res.json({
-        success: false,
-        errorType: "ValidationError",
-        errorMessage: validationError
-      } as JoiErrorResponse);
+      this.on_error("ValidationError", validationError.message, 400);
       return false;
     }
 
@@ -75,12 +67,7 @@ export default class Create implements IBaseEndpoint {
     } catch(err: unknown) {
       const e = err as { message: string, code: string, errno: number };
 
-      this.logger.error(`[create] DatabaseError: ${e.message}`);
-      this.res.status(500).json({
-        success: false,
-        errorType: "DatabaseError",
-        errorMessage: e.message
-      } as ErrorResponse);
+      this.on_error("DatabaseError", e.message, 500);
       return false;
     }
 
@@ -91,10 +78,16 @@ export default class Create implements IBaseEndpoint {
     const user = await this.db<TUser>("user").where({ email: email }).select("id", "email", "is_banned").first();
     if (user) { return user; }
 
-    this.res.status(500).json({
+    this.on_error("DatabaseError", "Unknown error", 500);
+    return undefined;
+  }
+
+  async on_error(errorType: string, errorMessage: string, status: number): Promise<void> {
+    this.logger.error(`[/user/create] ${errorType}, ${errorMessage}`);
+    this.res.status(status).json({
       success: false,
-      errorType: "DatabaseError",
-      errorMessage: "Unknown error"
-    } as ErrorResponse); return undefined;
+      errorType: errorType,
+      errorMessage: errorMessage
+    } as ErrorResponse);
   }
 }

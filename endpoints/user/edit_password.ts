@@ -8,7 +8,7 @@ import winston from "winston";
 import { TUser } from "../../db/migrations/20230106181658_create_user_table";
 import { IBaseEndpoint } from "../base_endpoint";
 import JoiValidator from "../joi_validator";
-import { ErrorResponse, JoiErrorResponse, SuccessDBResponse } from "../response_interfaces";
+import { ErrorResponse, SuccessDBResponse } from "../response_interfaces";
 
 export default class EditPassword implements IBaseEndpoint {
   validator: JoiValidator;
@@ -40,22 +40,12 @@ export default class EditPassword implements IBaseEndpoint {
     if (!user) { return; }
 
     bcrypt.compare(this.req.body.password, user.password, async (err, result) => {
-      if (err) {
-        this.logger.error(`[edit_password][hash]: ${err.message}`);
-        this.res.json({
-          success: false,
-          errorType: "HashError",
-          errorMessage: err.message
-        } as ErrorResponse); return;
-      }
+      if (err) { this.on_error("HashError", err.message, 500); return; }
 
-      if (!result) { this.res.json({ success: false, errorType: "AuthError", errorMessage: "Wrong password" } as ErrorResponse); return; }
+      if (!result) { this.on_error("AuthError", "Wrong password", 400); return; }
 
       bcrypt.hash(this.req.body.new_password, 3, async (err, hash) => {
-        if (err) {
-          this.logger.error(`[edit][hash]: ${err.message}`);
-          this.res.json({ success: false, errorType: "HashError", errorMessage: err.message } as ErrorResponse); return;
-        }
+        if (err) { this.on_error("HashError", "err.message", 500); return; }
   
         await this.db<TUser>("user").where({email: this.req.body.email}).update({password: hash});
         this.redisClient.del(this.req.body.email);
@@ -69,11 +59,7 @@ export default class EditPassword implements IBaseEndpoint {
     const validationError = await this.validator.validate(this.req.body);
 
     if (validationError) {
-      this.res.json({
-        success: false,
-        errorType: "ValidationError",
-        errorMessage: validationError
-      } as JoiErrorResponse);
+      this.on_error("ValidationError", validationError.message, 400);
       return false;
     }
 
@@ -85,11 +71,16 @@ export default class EditPassword implements IBaseEndpoint {
 
     if (user) { return user; }
 
-    this.logger.error(`[edit] DatabaseError: User with email ${email} not found`);
-    this.res.status(404).json({
+    this.on_error("DatabaseError", `User with email ${email} not found`, 404);
+    return undefined;
+  }
+
+  async on_error(errorType: string, errorMessage: string, status: number): Promise<void> {
+    this.logger.error(`[/user/create] ${errorType}, ${errorMessage}`);
+    this.res.status(status).json({
       success: false,
-      errorType: "DatabaseError",
-      errorMessage: `User with email ${email} not found`
-    } as ErrorResponse); return undefined;
+      errorType: errorType,
+      errorMessage: errorMessage
+    } as ErrorResponse);
   }
 }

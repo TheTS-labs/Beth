@@ -15,6 +15,7 @@ declare class IBaseEndpoint {
 
   constructor(req: Request, res: Response, db: Knex, redisClient: RedisClientType, logger: winston.Logger);
 
-  call(): Promise<void>;
-  validate(): Promise<boolean>;
+  async call(): Promise<void>;
+  async validate(): Promise<boolean>;
+  async on_error(errorType: string, errorMessage: string, status: number): Promise<void>;
 }

@@ -8,7 +8,7 @@ import { TUser } from "../../db/migrations/20230106181658_create_user_table";
 import { IBaseEndpoint } from "../base_endpoint";
 import { SafeUserObject } from "../common_types";
 import JoiValidator from "../joi_validator";
-import { ErrorResponse, JoiErrorResponse, SuccessDBResponse } from "../response_interfaces";
+import { ErrorResponse, SuccessDBResponse } from "../response_interfaces";
 
 export default class View implements IBaseEndpoint {
   validator: JoiValidator;
@@ -44,11 +44,7 @@ export default class View implements IBaseEndpoint {
     const validationError = await this.validator.validate(this.req.body);
 
     if (validationError) {
-      this.res.json({
-        success: false,
-        errorType: "ValidationError",
-        errorMessage: validationError
-      } as JoiErrorResponse);
+      this.on_error("ValidationError", validationError.message, 400);
       return false;
     }
 
@@ -61,16 +57,18 @@ export default class View implements IBaseEndpoint {
     if (cached_user) { return JSON.parse(cached_user) as SafeUserObject; }
 
     const user = await this.db<TUser>("user").where({ email: email }).select("id", "email", "is_banned").first();
-    if (!user) {
-      this.logger.error(`[view] DatabaseError: User with email ${email} not found`);
-      this.res.status(404).json({
-        success: false,
-        errorType: "DatabaseError",
-        errorMessage: `User with email ${email} not found`
-      } as ErrorResponse); return undefined;
-    }
+    if (!user) { this.on_error("DatabaseError", `User with email ${email} not found`, 404); return undefined; }
 
     await this.redisClient.set(email, JSON.stringify(user));
     return user;
+  }
+
+  async on_error(errorType: string, errorMessage: string, status: number): Promise<void> {
+    this.logger.error(`[/user/create] ${errorType}, ${errorMessage}`);
+    this.res.status(status).json({
+      success: false,
+      errorType: errorType,
+      errorMessage: errorMessage
+    } as ErrorResponse);
   }
 }

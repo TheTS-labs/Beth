@@ -5,7 +5,7 @@ import { createClient as createRedisClient,RedisClientType } from "redis";
 import winston, { format } from "winston";
 
 import knexfile from "./db/knexfile";
-import BaseEndpoint from "./endpoints/base_endpoint";
+import { IBaseEndpoint } from "./endpoints/base_endpoint";
 import Create from "./endpoints/user/create";
 import EditPassword from "./endpoints/user/edit_password";
 import View from "./endpoints/user/view";
@@ -14,7 +14,7 @@ dotenv.config();
 
 interface TEndpoints {
   [key: string]: { // routerName
-    [key: string]: BaseEndpoint // endpointName
+    [key: string]: typeof IBaseEndpoint // endpointName
   }
 }
 
@@ -43,9 +43,13 @@ class App {
       const endpointRouter = Router();
 
       endpointRouter.post("/:endPoint", async (req: Request, res: Response) => {
-        const endpoint = this.endpoints[routerName][req.params.endPoint];
+        const endpoint = new this.endpoints[routerName][req.params.endPoint](
+          req, res, this.db,
+          this.redisClient,
+          this.logger
+        );
 
-        if (endpoint) { endpoint.call(req, res, this.db, this.redisClient, this.logger); return; }
+        if (endpoint) { endpoint.call(); return; }
 
         res.status(404).json({
           message: "EndpointNotFound",
@@ -87,9 +91,9 @@ class App {
   const db = knex(knexfile[process.env.NODE_ENV || "development"]);
   const endpoints: TEndpoints = {
     "/user": {
-      "create": new Create(),
-      "view": new View(),
-      "edit_password": new EditPassword(),
+      "create": Create,
+      "view": View,
+      "edit_password": EditPassword,
       // "delete": new Delete(),
     }
   };

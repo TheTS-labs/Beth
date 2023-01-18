@@ -32,6 +32,7 @@ class App {
     this.app.use(express.urlencoded({ extended: true }));
 
     Object.keys(endpoints).map((routerName: string) => {
+      this.logger.debug(`[app] Creating ${routerName} object...`);
       this.endpoints[routerName] = new endpoints[routerName](
         this.db,
         this.redisClient,
@@ -72,7 +73,11 @@ class App {
       format.printf(({ level, message }) => { return `${level} ${message}`; })
     ),
     transports: [
-      new winston.transports.Console()
+      new winston.transports.Console(),
+      new winston.transports.File({
+        level: "debug",
+        filename: "app.log"
+      })
     ],
   });
 

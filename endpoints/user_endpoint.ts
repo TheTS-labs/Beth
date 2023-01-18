@@ -93,9 +93,10 @@ export default class UserEndpoint implements IBaseEndpoint {
   // >>> Edit Password >>>
 
   async callEndpoint(name: string, req: Request, res: Response): Promise<void> {
+    this.logger.debug(`[User] Incoming Request: ${JSON.stringify(req.body)}`);
     this.req = req; this.res = res;
 
-    if (!(req.params.endPoint in this.allowNames)) {
+    if (!this.allowNames.includes(req.params.endPoint)) {
       this.on_error("EndpointNotFound", `Endpoint user/${req.params.endPoint} does not exist`, 404);
       return;
     }
@@ -117,7 +118,7 @@ export default class UserEndpoint implements IBaseEndpoint {
   }
 
   async on_error(errorType: string, errorMessage: string, status: number): Promise<void> {
-    this.logger.error(`[User] ${errorType} - ${errorMessage}`);
+    this.logger.error(`[User] ${status}#${errorType}, ${errorMessage}`);
     this.res.status(status).json({
       success: false,
       errorType: errorType,
@@ -127,6 +128,7 @@ export default class UserEndpoint implements IBaseEndpoint {
 
   private async insertUser(email: string, hash: string): Promise<boolean> {
     try {
+      this.logger.debug(`[User] Trying to insert user ${email}(${hash})`);
       await this.db<TUser>("user").insert({ email: email, password: hash });
     } catch(err: unknown) {
       const e = err as { message: string, code: string, errno: number };
@@ -139,6 +141,7 @@ export default class UserEndpoint implements IBaseEndpoint {
   }
 
   private async getUser(email: string): Promise<SafeUserObject|undefined> {
+    this.logger.debug(`[User] Getting safe user ${email}`);
     const user = await this.db<TUser>("user").where({ email: email }).select("id", "email", "is_banned").first();
     if (user) { return user; }
 

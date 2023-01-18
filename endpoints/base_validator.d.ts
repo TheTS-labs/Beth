@@ -1,3 +1,3 @@
 declare class IBaseValidator {
-  validate(value: unknown): Promise<unknown|undefined>;
+  validate(schema: unknown, value: unknown): Promise<unknown|undefined>;
 }

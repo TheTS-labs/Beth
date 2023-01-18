@@ -3,10 +3,7 @@ import Joi from "joi";
 // import { IBaseValidator } from "./base_validator";
 
 export default class JoiValidator implements IBaseValidator {
-  schema: Joi.ObjectSchema;
-
-  constructor(schema: Joi.ObjectSchema) { this.schema = schema; }
-  async validate(value: unknown): Promise<Joi.ValidationError|undefined> {
-    return this.schema.validate(value).error;
+  async validate(schema: Joi.ObjectSchema, value: unknown): Promise<Joi.ValidationError|undefined> {
+    return schema.validate(value).error;
   }
 }

@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "start": "yarn ts-node app.ts",
+    "start": "ts-node app.ts",
     "migrate": "knex migrate:latest --knexfile db/knexfile.js",
     "seed": "knex seed:run --knexfile db/knexfile.js"
   },

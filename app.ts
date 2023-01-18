@@ -6,36 +6,38 @@ import winston, { format } from "winston";
 
 import knexfile from "./db/knexfile";
 import { IBaseEndpoint } from "./endpoints/base_endpoint";
-import Create from "./endpoints/user/create";
-import EditPassword from "./endpoints/user/edit_password";
-import View from "./endpoints/user/view";
+import UserEndpoint from "./endpoints/user_endpoint";
 
 dotenv.config();
 
-interface TEndpoints {
-  [key: string]: { // routerName
-    [key: string]: typeof IBaseEndpoint // endpointName
-  }
-}
+interface TEndpointTypes { [key: string]: typeof IBaseEndpoint }
+interface TEndpointObjects { [key: string]: IBaseEndpoint }
 
 class App {
   db: Knex;
   redisClient: RedisClientType;
   app: Express;
-  endpoints: TEndpoints;
+  endpoints: TEndpointObjects = {};
   port: string;
   logger: winston.Logger;
 
-  constructor(db: Knex, redisClient: RedisClientType, app: Express, endpoints: TEndpoints, logger: winston.Logger, port="8080") {
+  constructor(db: Knex, redisClient: RedisClientType, app: Express, endpoints: TEndpointTypes, logger: winston.Logger, port="8080") {
     this.db = db;
     this.redisClient = redisClient;
     this.app = app;
-    this.endpoints = endpoints;
     this.logger = logger;
     this.port = port;
 
     this.app.use(express.json());
     this.app.use(express.urlencoded({ extended: true }));
+
+    Object.keys(endpoints).map((routerName: string) => {
+      this.endpoints[routerName] = new endpoints[routerName](
+        this.db,
+        this.redisClient,
+        this.logger
+      );
+    });
   }
 
   registerRouters(): App {
@@ -43,20 +45,9 @@ class App {
       const endpointRouter = Router();
 
       endpointRouter.post("/:endPoint", async (req: Request, res: Response) => {
-        if (!(req.params.endPoint in this.endpoints[routerName])) {
-          res.status(404).json({
-            message: "EndpointNotFound",
-            error: `Endpoint ${routerName}/${req.params.endPoint} does not exist`
-          }); return;
-        }
+        const endpoint = this.endpoints[routerName];
 
-        const endpoint = new this.endpoints[routerName][req.params.endPoint](
-          req, res, this.db,
-          this.redisClient,
-          this.logger
-        );
-
-        await endpoint.call();
+        await endpoint.callEndpoint(req.params.endPoint, req, res);
       });
 
       this.app.use(routerName, endpointRouter);
@@ -87,17 +78,15 @@ class App {
 
   const redisClient: RedisClientType = createRedisClient();
   redisClient.on("error", (error) => { logger.error(`[redis]: ${error}`); process.exit(1); });
+  redisClient.on("ready", () => { logger.info("[redis]: The client successfully initiated the connection to the server"); });
+  redisClient.on("reconnecting", () => { logger.warn("[redis]: The client is trying to reconnect to the server..."); });
+  redisClient.on("end", () => { logger.warn("[redis]: The client disconnected the connection to the server via .quit() or .disconnect()"); });
   await redisClient.connect();
 
   const app: Express = express();
   const db = knex(knexfile[process.env.NODE_ENV || "development"]);
-  const endpoints: TEndpoints = {
-    "/user": {
-      "create": Create,
-      "view": View,
-      "edit_password": EditPassword,
-      // "delete": Delete,
-    }
+  const endpoints: TEndpointTypes = {
+    "/user": UserEndpoint
   };
 
   new App(db, redisClient, app, endpoints, logger, process.env.APP_PORT).registerRouters().listen();

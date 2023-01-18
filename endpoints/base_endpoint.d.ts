@@ -7,15 +7,16 @@ import BaseValidator from "./base_validator";
 
 declare class IBaseEndpoint {
   validator: BaseValidator;
-  req: Request;
-  res: Response;
+  req!: Request;
+  res!: Response;
   db: Knex;
   redisClient: RedisClientType;
   logger: winston.Logger;
+  allowNames: Array<string>;
 
-  constructor(req: Request, res: Response, db: Knex, redisClient: RedisClientType, logger: winston.Logger);
+  constructor(db: Knex, redisClient: RedisClientType, logger: winston.Logger);
 
-  async call(): Promise<void>;
-  async validate(): Promise<boolean>;
+  async callEndpoint(name: string, req: Request, res: Response): Promise<void>;
+  async validate(schema: unknown, value: unknown): Promise<boolean>;
   async on_error(errorType: string, errorMessage: string, status: number): Promise<void>;
 }

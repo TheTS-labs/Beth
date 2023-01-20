@@ -18,5 +18,5 @@ declare class IBaseEndpoint {
 
   async callEndpoint(name: string, req: Request, res: Response): Promise<void>;
   async validate(schema: unknown, value: unknown): Promise<boolean>;
-  async on_error(errorType: string, errorMessage: string, status: number): Promise<void>;
+  async onError(errorType: string, errorMessage: string, status: number): Promise<void>;
 }

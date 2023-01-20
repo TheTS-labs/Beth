@@ -34,11 +34,11 @@ export default class UserEndpoint implements IBaseEndpoint {
     if (!await this.validate(Joi.object({
       email: Joi.string().email().required(),
       password: Joi.string().pattern(new RegExp("^[a-zA-Z0-9]{3,30}$")).required(),
-      repeat_password: Joi.ref("password"),
-    }).with("password", "repeat_password"))) { return; }
+      repeatPassword: Joi.ref("password"),
+    }).with("password", "repeatPassword"))) { return; }
 
     bcrypt.hash(this.req.body.password, 3, async (err, hash) => {
-      if (err) { this.on_error("HashError", err.message, 500); return; }
+      if (err) { this.onError("HashError", err.message, 500); return; }
       if (!await this.insertUser(this.req.body.email, hash)) { return; }
 
       const user = await this.getUser(this.req.body.email);
@@ -64,24 +64,24 @@ export default class UserEndpoint implements IBaseEndpoint {
   // >>> View >>>
 
   // <<< Edit Password <<<
-  async edit_password(): Promise<void> {
+  async editPassword(): Promise<void> {
     if (!await this.validate(Joi.object({
       email: Joi.string().email().required(),
       password: Joi.string().pattern(new RegExp("^[a-zA-Z0-9]{3,30}$")).required(),
 
-      new_password: Joi.string().pattern(new RegExp("^[a-zA-Z0-9]{3,30}$")).required(),
+      newPassword: Joi.string().pattern(new RegExp("^[a-zA-Z0-9]{3,30}$")).required(),
     }))) { return; }
 
     const user = await this.getUnsafeUser(this.req.body.email);
     if (!user) { return; }
 
     bcrypt.compare(this.req.body.password, user.password, async (err, result) => {
-      if (err) { this.on_error("HashError", err.message, 500); return; }
+      if (err) { this.onError("HashError", err.message, 500); return; }
 
-      if (!result) { this.on_error("AuthError", "Wrong password", 400); return; }
+      if (!result) { this.onError("AuthError", "Wrong password", 400); return; }
 
-      bcrypt.hash(this.req.body.new_password, 3, async (err, hash) => {
-        if (err) { this.on_error("HashError", "err.message", 500); return; }
+      bcrypt.hash(this.req.body.newPassword, 3, async (err, hash) => {
+        if (err) { this.onError("HashError", "err.message", 500); return; }
   
         await this.db<TUser>("user").where({email: this.req.body.email}).update({password: hash});
         this.redisClient.del(this.req.body.email);
@@ -97,7 +97,7 @@ export default class UserEndpoint implements IBaseEndpoint {
     this.req = req; this.res = res;
 
     if (!this.allowNames.includes(req.params.endPoint)) {
-      this.on_error("EndpointNotFound", `Endpoint user/${req.params.endPoint} does not exist`, 404);
+      this.onError("EndpointNotFound", `Endpoint user/${req.params.endPoint} does not exist`, 404);
       return;
     }
 
@@ -110,14 +110,14 @@ export default class UserEndpoint implements IBaseEndpoint {
     const validationError = await this.validator.validate(schema, this.req.body);
 
     if (validationError) {
-      this.on_error("ValidationError", validationError.message, 400);
+      this.onError("ValidationError", validationError.message, 400);
       return false;
     }
 
     return true;
   }
 
-  async on_error(errorType: string, errorMessage: string, status: number): Promise<void> {
+  async onError(errorType: string, errorMessage: string, status: number): Promise<void> {
     this.logger.error(`[User] ${status}#${errorType}, ${errorMessage}`);
     this.res.status(status).json({
       success: false,
@@ -133,7 +133,7 @@ export default class UserEndpoint implements IBaseEndpoint {
     } catch(err: unknown) {
       const e = err as { message: string, code: string, errno: number };
 
-      this.on_error("DatabaseError", e.message, 500);
+      this.onError("DatabaseError", e.message, 500);
       return false;
     }
 
@@ -145,7 +145,7 @@ export default class UserEndpoint implements IBaseEndpoint {
     const user = await this.db<TUser>("user").where({ email: email }).select("id", "email", "is_banned").first();
     if (user) { return user; }
 
-    this.on_error("DatabaseError", "Unknown error", 500);
+    this.onError("DatabaseError", "Unknown error", 500);
     return undefined;
   }
 
@@ -154,7 +154,7 @@ export default class UserEndpoint implements IBaseEndpoint {
 
     if (user) { return user; }
 
-    this.on_error("DatabaseError", `User with email ${email} not found`, 404);
+    this.onError("DatabaseError", `User with email ${email} not found`, 404);
     return undefined;
   }
 }

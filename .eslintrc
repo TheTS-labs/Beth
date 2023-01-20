@@ -9,7 +9,8 @@
             "@typescript-eslint/semi": [2, "always"],
             "quotes": [2, "double", { "avoidEscape": true }],
             "simple-import-sort/imports": "warn",
-            "simple-import-sort/exports": "warn"
+            "simple-import-sort/exports": "warn",
+            "camelcase": "error"
         }
     }]
 }

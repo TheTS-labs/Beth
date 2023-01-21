@@ -1,12 +1,14 @@
 import dotenv from "dotenv";
 import express, { Express, Request, Response, Router } from "express";
 import knex, { Knex } from "knex";
-import { createClient as createRedisClient, RedisClientType } from "redis";
-import winston, { format } from "winston";
+import { RedisClientType } from "redis";
+import winston from "winston";
 
 import knexfile from "./db/knexfile";
 import { IBaseEndpoint } from "./endpoints/base_endpoint";
 import UserEndpoint from "./endpoints/user_endpoint";
+import Logger from "./Logger";
+import Redis from "./Redis";
 
 dotenv.config();
 
@@ -15,18 +17,16 @@ interface TEndpointObjects { [key: string]: IBaseEndpoint }
 
 class App {
   db: Knex;
-  redisClient: RedisClientType;
+  redisClient!: RedisClientType;
   app: Express;
   endpoints: TEndpointObjects = {};
-  port: string;
   logger: winston.Logger;
 
-  constructor(db: Knex, redisClient: RedisClientType, app: Express, endpoints: TEndpointTypes, logger: winston.Logger, port="8080") {
-    this.db = db;
-    this.redisClient = redisClient;
-    this.app = app;
-    this.logger = logger;
-    this.port = port;
+  constructor(endpoints: TEndpointTypes) {
+    this.app = express();
+    this.logger = Logger();
+    this.db = knex(knexfile[process.env.NODE_ENV || "development"]);
+    async (): Promise<void> => { this.redisClient = await Redis(this.logger); };
 
     this.app.use(express.json());
     this.app.use(express.urlencoded({ extended: true }));
@@ -59,40 +59,14 @@ class App {
   }
 
   listen(): void {
-    this.app.listen(this.port, () => {
-      this.logger.info(`[server]: Server is running at http://localhost:${this.port}`);
+    this.app.listen(process.env.APP_PORT, () => {
+      this.logger.info(`[server]: Server is running at http://localhost:${process.env.APP_PORT}`);
     });
   }
 }
 
-(async (): Promise<void> => {
-  const logger = winston.createLogger({
-    level: "info",
-    format: format.combine(
-      format.colorize(),
-      format.printf(({ level, message }) => { return `${level} ${message}`; })
-    ),
-    transports: [
-      new winston.transports.Console(),
-      new winston.transports.File({
-        level: "debug",
-        filename: "app.log"
-      })
-    ],
-  });
+const endpoints: TEndpointTypes = {
+  "/user": UserEndpoint
+};
 
-  const redisClient: RedisClientType = createRedisClient();
-  redisClient.on("error", (error) => { logger.error(`[redis]: ${error}`); process.exit(1); });
-  redisClient.on("ready", () => { logger.info("[redis]: The client successfully initiated the connection to the server"); });
-  redisClient.on("reconnecting", () => { logger.warn("[redis]: The client is trying to reconnect to the server..."); });
-  redisClient.on("end", () => { logger.warn("[redis]: The client disconnected the connection to the server via .quit() or .disconnect()"); });
-  await redisClient.connect();
-
-  const app: Express = express();
-  const db = knex(knexfile[process.env.NODE_ENV || "development"]);
-  const endpoints: TEndpointTypes = {
-    "/user": UserEndpoint
-  };
-
-  new App(db, redisClient, app, endpoints, logger, process.env.APP_PORT).registerRouters().listen();
-})();
+new App(endpoints).registerRouters().listen();

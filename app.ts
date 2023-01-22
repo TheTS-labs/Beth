@@ -1,5 +1,5 @@
 import dotenv from "dotenv";
-import express, { Express, Request, Response, Router } from "express";
+import express, { Express, Request, Response } from "express";
 import knex, { Knex } from "knex";
 import { RedisClientType } from "redis";
 import winston from "winston";
@@ -43,15 +43,11 @@ class App {
 
   registerRouters(): App {
     Object.keys(this.endpoints).map((routerName: string) => {
-      const endpointRouter = Router();
-
-      endpointRouter.post("/:endPoint", async (req: Request, res: Response) => {
+      this.app.post(`${routerName}/:endPoint`, async (req: Request, res: Response) => {
         const endpoint = this.endpoints[routerName];
-
         await endpoint.callEndpoint(req.params.endPoint, req, res);
       });
 
-      this.app.use(routerName, endpointRouter);
       this.logger.info(`[endpoints]: ${routerName} router was registered`);
     });
 

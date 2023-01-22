@@ -17,16 +17,16 @@ interface TEndpointObjects { [key: string]: IBaseEndpoint }
 
 class App {
   db: Knex;
-  redisClient!: RedisClientType;
+  redisClient: RedisClientType;
   app: Express;
   endpoints: TEndpointObjects = {};
   logger: winston.Logger;
 
   constructor(endpoints: TEndpointTypes) {
     this.app = express();
-    this.logger = Logger();
+    this.logger = new Logger().get();
     this.db = knex(knexfile[process.env.NODE_ENV || "development"]);
-    async (): Promise<void> => { this.redisClient = await Redis(this.logger); };
+    this.redisClient = new Redis(this.logger).get();
 
     this.app.use(express.json());
     this.app.use(express.urlencoded({ extended: true }));

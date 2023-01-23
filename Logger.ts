@@ -9,7 +9,7 @@ export default class Logger {
         format.printf(({ level, message }) => { return `${level} ${message}`; })
       ),
       transports: [
-        new winston.transports.Console(),
+        new winston.transports.Console({level: "debug"}),
         new winston.transports.File({
           level: "debug",
           filename: "app.log"

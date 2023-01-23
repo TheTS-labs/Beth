@@ -1,12 +1,5 @@
 import { Knex } from "knex";
 
-export interface TUser {
-  id: number
-  email: string
-  password: string
-  is_banned: boolean
-}
-
 export async function up(knex: Knex): Promise<void> {
   return knex.schema.createTable("user", function (table: Knex.CreateTableBuilder) {
     table.increments("id");

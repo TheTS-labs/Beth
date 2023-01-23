@@ -4,9 +4,9 @@ import knex, { Knex } from "knex";
 import { RedisClientType } from "redis";
 import winston from "winston";
 
+import { IBaseEndpoint } from "./common/base_endpoint";
 import knexfile from "./db/knexfile";
-import { IBaseEndpoint } from "./endpoints/base_endpoint";
-import UserEndpoint from "./endpoints/user_endpoint";
+import UserEndpoint from "./endpoints/user/user_endpoint";
 import Logger from "./Logger";
 import Redis from "./Redis";
 
@@ -45,7 +45,11 @@ class App {
     Object.keys(this.endpoints).map((routerName: string) => {
       this.app.post(`${routerName}/:endPoint`, async (req: Request, res: Response) => {
         const endpoint = this.endpoints[routerName];
-        await endpoint.callEndpoint(req.params.endPoint, req, res);
+        const result = await endpoint.callEndpoint(req.params.endPoint, req.body);
+
+        this.logger.debug(`[App] Request result: ${JSON.stringify(result)}`);
+
+        res.json(result);
       });
 
       this.logger.info(`[endpoints]: ${routerName} router was registered`);

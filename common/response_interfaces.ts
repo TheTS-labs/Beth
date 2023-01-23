@@ -5,8 +5,9 @@ export interface BaseResponse {
 export interface ErrorResponse extends BaseResponse {
   errorType: string
   errorMessage: string
+  errorStatus: number
 }
   
-export interface SuccessDBResponse<Type> extends BaseResponse {
+export interface SuccessResponse<Type> extends BaseResponse {
   result: Type
 }

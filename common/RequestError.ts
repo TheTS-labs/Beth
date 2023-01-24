@@ -1,4 +1,4 @@
-import { ErrorResponse } from "./response_interfaces";
+import { EndpointResponse } from "./types";
 
 export default class RequestError {
   constructor(
@@ -8,7 +8,7 @@ export default class RequestError {
   ) {}
 
   message(): string { return `${this.status}#${this.errorType}, ${this.errorMessage}`; }
-  object(): ErrorResponse {
+  object(): EndpointResponse<unknown> & { success: false } {
     return {
       success: false,
       errorStatus: this.status,

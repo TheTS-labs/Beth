@@ -1,10 +1,8 @@
-// import bcrypt from "bcrypt";
-// import Joi from "joi";
 import { Knex } from "knex";
 import winston from "winston";
 
-import { FunctionResponse, SafeUserObject } from "../../common/common_types";
 import RequestError from "../../common/RequestError";
+import { FunctionResponse, SafeUserObject } from "../../common/types";
 
 export interface TUser {
   id: number
@@ -26,10 +24,8 @@ export default class UserModel {
     } catch(err: unknown) {
       const e = err as { message: string };
 
-      return {
-        success: false,
-        result: new RequestError("DatabaseError", e.message, 500)
-      };
+      return { success: false,
+               result: new RequestError("DatabaseError", e.message, 500) };
     }
 
     const user = await this.getUser(email);
@@ -42,10 +38,8 @@ export default class UserModel {
     const user = await this.db<TUser>("user").where({ email: email }).select("id", "email", "is_banned").first();
     if (user) { return { success: true, result: user }; }
 
-    return {
-      success: false,
-      result: new RequestError("DatabaseError", `User with email ${email} not found`, 404)
-    };
+    return { success: false,
+             result: new RequestError("DatabaseError", `User with email ${email} not found`, 404) };
   }
 
   public async getUnsafeUser(email: string): Promise<FunctionResponse<TUser>> {
@@ -54,10 +48,8 @@ export default class UserModel {
     const user = await this.db<TUser>("user").where({email}).select().first();
     if (user) { return { success: true, result: user }; }
 
-    return {
-      success: false,
-      result: new RequestError("DatabaseError", `User with email ${email} not found`, 404)
-    };
+    return { success: false,
+             result: new RequestError("DatabaseError", `User with email ${email} not found`, 404) };
   }
 
   public async changePassword(email: string, newHash: string): Promise<FunctionResponse<SafeUserObject>> {

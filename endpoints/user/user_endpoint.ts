@@ -5,15 +5,14 @@ import { RedisClientType } from "redis";
 import winston from "winston";
 
 import { IBaseEndpoint } from "../../common/base_endpoint";
-import { EndpointResponse, FunctionResponse, SafeUserObject } from "../../common/common_types";
 import JoiValidator from "../../common/joi_validator";
 import RequestError from "../../common/RequestError";
+import { EndpointResponse, FunctionResponse, SafeUserObject } from "../../common/types";
 import UserModel from "../../db/models/user";
 import { CreateArgs, CreateArgsSchema, EditPasswordArgs, EditPasswordArgsSchema, UserRequestArgs, ViewArgs, ViewArgsSchema } from "./types";
 
 export default class UserEndpoint implements IBaseEndpoint {
   validator: JoiValidator = new JoiValidator();
-  result!: EndpointResponse;
   allowNames: Array<string> = [
     "create", "view",
     "editPassword",
@@ -73,7 +72,7 @@ export default class UserEndpoint implements IBaseEndpoint {
   }
   // >>> Edit Password >>>
 
-  async callEndpoint(name: string, args: UserRequestArgs): Promise<EndpointResponse> {
+  async callEndpoint(name: string, args: UserRequestArgs): Promise<EndpointResponse<SafeUserObject>> {
     this.logger.debug(`[UserEndpoint] Incoming Request: ${JSON.stringify(args)}`);
 
     const userIncludes = this.allowNames.includes(name);
@@ -85,7 +84,7 @@ export default class UserEndpoint implements IBaseEndpoint {
     }
 
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    //@ts-ignore
+    // @ts-ignore
     const result: FunctionResponse = await this[name](args);
 
     if (!result.success) { this.logger.error(`[UserEndpoint] ${result.result.message()}`); return result.result.object(); }
@@ -97,10 +96,8 @@ export default class UserEndpoint implements IBaseEndpoint {
     const validationError = await this.validator.validate(schema, args);
 
     if (validationError) {
-      return {
-        success: false,
-        result: new RequestError("ValidationError", validationError.message, 400)
-      };
+      return { success: false,
+               result: new RequestError("ValidationError", validationError.message, 400) };
     }
 
     return { success: true, result: undefined };

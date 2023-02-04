@@ -1,10 +1,12 @@
 import dotenv from "dotenv";
-import express, { Express, Request, Response } from "express";
+import express, { Express, NextFunction,Request, Response } from "express";
+import asyncHandler from "express-async-handler";
 import knex, { Knex } from "knex";
 import { RedisClientType } from "redis";
 import winston from "winston";
 
 import { IBaseEndpoint } from "./common/base_endpoint";
+import RequestError from "./common/RequestError";
 import knexfile from "./db/knexfile";
 import UserEndpoint from "./endpoints/user/user_endpoint";
 import Logger from "./Logger";
@@ -43,16 +45,35 @@ class App {
 
   registerRouters(): App {
     Object.keys(this.endpoints).map((routerName: string) => {
-      this.app.post(`${routerName}/:endPoint`, async (req: Request, res: Response) => {
+      this.app.post(`${routerName}/:endPoint`, asyncHandler(async (req: Request, res: Response) => {
         const endpoint = this.endpoints[routerName];
         const result = await endpoint.callEndpoint(req.params.endPoint, req.body);
+        Object.defineProperty(result, "success", { value: true });
 
         this.logger.debug(`[App] Request result: ${JSON.stringify(result)}`);
 
         res.json(result);
-      });
+      }));
 
       this.logger.info(`[endpoints]: ${routerName} router was registered`);
+    });
+    
+    return this;
+  }
+
+  addErrorMiddleware(): App {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    this.app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
+      if (!(err instanceof RequestError)) {
+        this.logger.error("Unknown error");
+        this.logger.error(err.stack);
+        res.status(500).send("Sorry, something went wrong");
+      }
+      const e = err as unknown as RequestError;
+
+      this.logger.error(e.message());
+      res.status(e.status).json({ success: false,
+                                  details: e.object() });
     });
 
     return this;
@@ -69,4 +90,4 @@ const endpoints: TEndpointTypes = {
   "/user": UserEndpoint
 };
 
-new App(endpoints).registerRouters().listen();
+new App(endpoints).registerRouters().addErrorMiddleware().listen();

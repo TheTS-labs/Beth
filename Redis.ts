@@ -14,7 +14,7 @@ export default class Redis {
     redisClient.on("reconnecting", () => { this.logger.warn("[redis]: The client is trying to reconnect to the server..."); });
     redisClient.on("end", () => { this.logger.warn("[redis]: The client disconnected the connection to the server via .quit() or .disconnect()"); });
 
-    redisClient.connect().then();
+    redisClient.connect();
 
     return redisClient;
   }

@@ -1,16 +1,15 @@
-import { EndpointResponse } from "./types";
+import { RequestErrorObject } from "./types";
 
 export default class RequestError {
   constructor(
-    private errorType: string,
-    private errorMessage: string,
-    private status: number
+    public errorType: string,
+    public errorMessage: string,
+    public status: number
   ) {}
 
   message(): string { return `${this.status}#${this.errorType}, ${this.errorMessage}`; }
-  object(): EndpointResponse<unknown> & { success: false } {
+  object(): RequestErrorObject {
     return {
-      success: false,
       errorStatus: this.status,
       errorType: this.errorType,
       errorMessage: this.errorMessage

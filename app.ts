@@ -48,7 +48,6 @@ class App {
       this.app.post(`${routerName}/:endPoint`, asyncHandler(async (req: Request, res: Response) => {
         const endpoint = this.endpoints[routerName];
         const result = await endpoint.callEndpoint(req.params.endPoint, req.body);
-        Object.defineProperty(result, "success", { value: true });
 
         this.logger.debug(`[App] Request result: ${JSON.stringify(result)}`);
 
@@ -72,8 +71,7 @@ class App {
       const e = err as unknown as RequestError;
 
       this.logger.error(e.message());
-      res.status(e.status).json({ success: false,
-                                  details: e.object() });
+      res.status(e.status).json({ error: e.object() });
     });
 
     return this;

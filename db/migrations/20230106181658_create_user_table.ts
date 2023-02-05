@@ -5,7 +5,7 @@ export async function up(knex: Knex): Promise<void> {
     table.increments("id");
     table.string("email").unique().notNullable();
     table.string("password").notNullable();
-    table.boolean("is_banned").defaultTo(0);
+    table.boolean("isBanned").defaultTo(0);
   });
 }
 

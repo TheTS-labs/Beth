@@ -6,9 +6,9 @@ import { RedisClientType } from "redis";
 import winston from "winston";
 
 import { IBaseEndpoint } from "./common/base_endpoint";
-import RequestError from "./common/RequestError";
 import knexfile from "./db/knexfile";
 import UserEndpoint from "./endpoints/user/user_endpoint";
+import ErrorMiddleware from "./ErrorMiddleware";
 import Logger from "./Logger";
 import Redis from "./Redis";
 
@@ -23,12 +23,14 @@ class App {
   app: Express;
   endpoints: TEndpointObjects = {};
   logger: winston.Logger;
+  errorMiddleware: ErrorMiddleware;
 
   constructor(endpoints: TEndpointTypes) {
     this.app = express();
     this.logger = new Logger().get();
     this.db = knex(knexfile[process.env.NODE_ENV || "development"]);
     this.redisClient = new Redis(this.logger).get();
+    this.errorMiddleware = new ErrorMiddleware(this.logger);
 
     this.app.use(express.json());
     this.app.use(express.urlencoded({ extended: true }));
@@ -56,24 +58,9 @@ class App {
 
       this.logger.info(`[endpoints]: ${routerName} router was registered`);
     });
+
+    this.app.use((err: Error, req: Request, res: Response, next: NextFunction) => { this.errorMiddleware.middleware(err, req, res, next); });
     
-    return this;
-  }
-
-  addErrorMiddleware(): App {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    this.app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
-      if (!(err instanceof RequestError)) {
-        this.logger.error("Unknown error");
-        this.logger.error(err.stack);
-        res.status(500).send("Sorry, something went wrong");
-      }
-      const e = err as unknown as RequestError;
-
-      this.logger.error(e.message());
-      res.status(e.status).json({ error: e.object() });
-    });
-
     return this;
   }
 
@@ -88,4 +75,4 @@ const endpoints: TEndpointTypes = {
   "/user": UserEndpoint
 };
 
-new App(endpoints).registerRouters().addErrorMiddleware().listen();
+new App(endpoints).registerRouters().listen();

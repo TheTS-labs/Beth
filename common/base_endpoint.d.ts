@@ -15,6 +15,6 @@ declare class IBaseEndpoint {
     public logger: winston.Logger
   );
 
-  async callEndpoint(name: string, args: RequestArgs): Promise<object|never>;
-  async validate(schema: unknown, args: unknown): Promise<void|never>;
+  async callEndpoint(name: string, args: object): Promise<object|never>;
+  async validate(schema: unknown, args: object): Promise<void|never>;
 }

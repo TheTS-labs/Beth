@@ -9,15 +9,11 @@ export default class ErrorMiddleware {
     ) {}
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    middleware(err: Error, req: Request, res: Response, next: NextFunction): void {
-        if (!(err instanceof RequestError)) {
-            this.logger.error("Unknown error");
-            this.logger.error(err.stack);
-            res.status(500).send("Sorry, something went wrong");
-        }
-        const e = err as unknown as RequestError;
+    public middleware = (err: Error, req: Request, res: Response, next: NextFunction): void => {
+      if (err instanceof RequestError) { this.logger.error(err.message()); res.status(err.status).json(err.object()); }
 
-        this.logger.error(e.message());
-        res.status(e.status).json({ error: e.object() });
-  }
+      this.logger.error("Unknown error");
+      this.logger.error(err.stack);
+      res.status(500).send("Sorry, something went wrong");
+    };
 }

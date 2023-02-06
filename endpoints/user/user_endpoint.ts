@@ -44,7 +44,7 @@ export default class UserEndpoint implements IBaseEndpoint {
   async view(args: ViewArgs): Promise<SafeUserObject|Record<string, never>|never> {
     await this.validate(ViewArgsSchema, args);
 
-    const user = await this.model.getUser(args.email);
+    const user = await this.model.getUser(args.email, true);
     if (!user) { return {}; }
 
     await this.redisClient.set(args.email, JSON.stringify(user));
@@ -57,7 +57,7 @@ export default class UserEndpoint implements IBaseEndpoint {
   async editPassword(args: EditPasswordArgs): Promise<{success: true}|never> {
     await this.validate(EditPasswordArgsSchema, args);
 
-    const user = await this.model.getUnsafeUser(args.email);
+    const user = await this.model.getUser<false>(args.email, false);
     if (!user) { throw new RequestError("DatabaseError", `User with email ${args.email} not found`, 404); }
 
     const compareResult = await bcrypt.compare(args.password, user.password);
@@ -81,7 +81,7 @@ export default class UserEndpoint implements IBaseEndpoint {
 
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
-    const result: FunctionResponse = await this[name](args);
+    const result: CallEndpointReturnType = await this[name](args);
 
     return result;
   }

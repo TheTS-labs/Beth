@@ -18,17 +18,14 @@ interface TEndpointTypes { [key: string]: typeof IBaseEndpoint }
 interface TEndpointObjects { [key: string]: IBaseEndpoint }
 
 class App {
-  db: Knex;
+  db: Knex = knex(knexfile[process.env.NODE_ENV || "development"]);
   redisClient: RedisClientType;
-  app: Express;
+  app: Express = express();
   endpoints: TEndpointObjects = {};
-  logger: winston.Logger;
+  logger: winston.Logger = new Logger().get();
   errorMiddleware: ErrorMiddleware;
 
   constructor(endpoints: TEndpointTypes) {
-    this.app = express();
-    this.logger = new Logger().get();
-    this.db = knex(knexfile[process.env.NODE_ENV || "development"]);
     this.redisClient = new Redis(this.logger).get();
     this.errorMiddleware = new ErrorMiddleware(this.logger);
 
@@ -59,8 +56,8 @@ class App {
       this.logger.info(`[endpoints]: ${routerName} router was registered`);
     });
 
-    this.app.use((err: Error, req: Request, res: Response, next: NextFunction) => { this.errorMiddleware.middleware(err, req, res, next); });
-    
+    this.app.use(this.errorMiddleware.middleware.bind(this.errorMiddleware));
+
     return this;
   }
 

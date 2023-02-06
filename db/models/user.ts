@@ -10,6 +10,8 @@ export interface TUser {
   isBanned: boolean
 }
 
+export type Value<Type extends boolean> = Type extends true ? SafeUserObject : TUser;
+
 export default class UserModel {
   constructor(
     public db: Knex,
@@ -21,18 +23,10 @@ export default class UserModel {
     await this.db<TUser>("user").insert({ email: email, password: hash });
   }
 
-  public async getUser(email: string): Promise<SafeUserObject|undefined> {
-    this.logger.debug(`[UserModel] Getting safe user ${email}`);
-
-    const user = await this.db<TUser>("user").where({ email: email }).select("id", "email", "isBanned").first();
-    
-    return user;
-  }
-
-  public async getUnsafeUser(email: string): Promise<TUser|undefined> {
+  public async getUser<Type extends boolean>(email: string, safe: Type): Promise<Value<Type>|undefined> {
     this.logger.debug(`[UserModel] Getting unsafe user ${email}`);
-    
-    const user = await this.db<TUser>("user").where({email}).select().first();
+
+    const user = await this.db<TUser>("user").where({email}).select(safe ? ["id", "email", "isBanned"] : []).first() as Value<Type>|undefined;
 
     return user;
   }

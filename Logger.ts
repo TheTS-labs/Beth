@@ -6,11 +6,13 @@ export default class Logger {
       level: "info",
       format: format.combine(
         format.colorize(),
-        format.printf(({ level, message }) => { return `${level} ${message}`; })
+        format.printf(({ level, message }) => {
+          return `${level} ${message}`;
+        }),
       ),
       transports: [
         new winston.transports.Console({ level: "debug" }),
-        new winston.transports.File({ level: "debug", filename: "app.log" })
+        new winston.transports.File({ level: "debug", filename: "app.log" }),
       ],
     });
   }

@@ -1,5 +1,5 @@
 import dotenv from "dotenv";
-import express, { Express,Request, Response } from "express";
+import express, { Express, Request, Response } from "express";
 import asyncHandler from "express-async-handler";
 import knex, { Knex } from "knex";
 import { RedisClientType } from "redis";
@@ -14,8 +14,12 @@ import Redis from "./Redis";
 
 dotenv.config();
 
-interface TEndpointTypes { [key: string]: typeof IBaseEndpoint }
-interface TEndpointObjects { [key: string]: IBaseEndpoint }
+interface TEndpointTypes {
+  [key: string]: typeof IBaseEndpoint
+}
+interface TEndpointObjects {
+  [key: string]: IBaseEndpoint
+}
 
 class App {
   db: Knex = knex(knexfile[process.env.NODE_ENV || "development"]);
@@ -34,24 +38,23 @@ class App {
 
     Object.keys(endpoints).map((routerName: string) => {
       this.logger.debug(`[app] Creating ${routerName} object...`);
-      this.endpoints[routerName] = new endpoints[routerName](
-        this.db,
-        this.redisClient,
-        this.logger
-      );
+      this.endpoints[routerName] = new endpoints[routerName](this.db, this.redisClient, this.logger);
     });
   }
 
   registerRouters(): App {
     Object.keys(this.endpoints).map((routerName: string) => {
-      this.app.post(`${routerName}/:endPoint`, asyncHandler(async (req: Request, res: Response) => {
-        const endpoint = this.endpoints[routerName];
-        const result = await endpoint.callEndpoint(req.params.endPoint, req.body);
+      this.app.post(
+        `${routerName}/:endPoint`,
+        asyncHandler(async (req: Request, res: Response) => {
+          const endpoint = this.endpoints[routerName];
+          const result = await endpoint.callEndpoint(req.params.endPoint, req.body);
 
-        this.logger.debug(`[App] Request result: ${JSON.stringify(result)}`);
+          this.logger.debug(`[App] Request result: ${JSON.stringify(result)}`);
 
-        res.json(result);
-      }));
+          res.json(result);
+        }),
+      );
 
       this.logger.info(`[endpoints]: ${routerName} router was registered`);
     });
@@ -69,7 +72,7 @@ class App {
 }
 
 const endpoints: TEndpointTypes = {
-  "/user": UserEndpoint
+  "/user": UserEndpoint,
 };
 
 new App(endpoints).registerRouters().listen();

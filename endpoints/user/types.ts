@@ -15,10 +15,12 @@ export const CreateArgsSchema = Joi.object({
 // <<< Create <<<
 
 // >>> View >>>
-export interface ViewArgs { email: string }
+export interface ViewArgs {
+  email: string
+}
 
 export const ViewArgsSchema = Joi.object({
-  email: Joi.string().email().required()
+  email: Joi.string().email().required(),
 });
 // <<< View <<<
 
@@ -48,4 +50,4 @@ export const FreezeArgsSchema = Joi.object({
 });
 // <<< Freeze <<<
 
-export type UserRequestArgs = CreateArgs|ViewArgs|EditPasswordArgs|FreezeArgs;
+export type UserRequestArgs = CreateArgs | ViewArgs | EditPasswordArgs | FreezeArgs;

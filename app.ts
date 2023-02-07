@@ -1,89 +1,75 @@
-import express, { Express, Router, Request, Response } from "express";
 import dotenv from "dotenv";
+import express, { Express,Request, Response } from "express";
+import asyncHandler from "express-async-handler";
 import knex, { Knex } from "knex";
-import createUser from "./endpoints/user/create";
-import viewUser from "./endpoints/user/view";
-import editUser from "./endpoints/user/edit";
+import { RedisClientType } from "redis";
+import winston from "winston";
+
+import { IBaseEndpoint } from "./common/base_endpoint";
 import knexfile from "./db/knexfile";
-import { RedisClientType, createClient as createRedisClient } from "redis";
-import winston, { format } from "winston";
+import UserEndpoint from "./endpoints/user/user_endpoint";
+import ErrorMiddleware from "./ErrorMiddleware";
+import Logger from "./Logger";
+import Redis from "./Redis";
 
 dotenv.config();
 
-interface TEndpoints {
-  [key: string]: { // routerName
-    [key: string]: (req: Request, res: Response, db: Knex, redisClient: RedisClientType, logger: winston.Logger) => Promise<void> // endpointName
-  }
-}
+interface TEndpointTypes { [key: string]: typeof IBaseEndpoint }
+interface TEndpointObjects { [key: string]: IBaseEndpoint }
 
 class App {
-  db: Knex;
+  db: Knex = knex(knexfile[process.env.NODE_ENV || "development"]);
   redisClient: RedisClientType;
-  app: Express;
-  endpoints: TEndpoints;
-  port: string;
-  logger: winston.Logger;
+  app: Express = express();
+  endpoints: TEndpointObjects = {};
+  logger: winston.Logger = new Logger().get();
+  errorMiddleware: ErrorMiddleware;
 
-  constructor(db: Knex, redisClient: RedisClientType, app: Express, endpoints: TEndpoints, logger: winston.Logger, port="8080") {
-    this.db = db;
-    this.redisClient = redisClient;
-    this.app = app;
-    this.endpoints = endpoints;
-    this.logger = logger;
-    this.port = port;
+  constructor(endpoints: TEndpointTypes) {
+    this.redisClient = new Redis(this.logger).get();
+    this.errorMiddleware = new ErrorMiddleware(this.logger);
 
     this.app.use(express.json());
     this.app.use(express.urlencoded({ extended: true }));
+
+    Object.keys(endpoints).map((routerName: string) => {
+      this.logger.debug(`[app] Creating ${routerName} object...`);
+      this.endpoints[routerName] = new endpoints[routerName](
+        this.db,
+        this.redisClient,
+        this.logger
+      );
+    });
   }
 
   registerRouters(): App {
     Object.keys(this.endpoints).map((routerName: string) => {
-      const endpointRouter = Router();
+      this.app.post(`${routerName}/:endPoint`, asyncHandler(async (req: Request, res: Response) => {
+        const endpoint = this.endpoints[routerName];
+        const result = await endpoint.callEndpoint(req.params.endPoint, req.body);
 
-      endpointRouter.post("/:endPoint", async (req: Request, res: Response) => {
-        this.endpoints[routerName][req.params.endPoint](req, res, this.db, this.redisClient, this.logger);
-      });
+        this.logger.debug(`[App] Request result: ${JSON.stringify(result)}`);
 
-      this.app.use(routerName, endpointRouter);
+        res.json(result);
+      }));
+
       this.logger.info(`[endpoints]: ${routerName} router was registered`);
     });
+
+    this.app.use(this.errorMiddleware.middleware.bind(this.errorMiddleware));
 
     return this;
   }
 
   listen(): void {
-    this.app.listen(this.port, () => {
-      this.logger.info(`[server]: Server is running at http://localhost:${this.port}`);
+    this.app.listen(process.env.APP_PORT, () => {
+      this.logger.info(`[server]: Server is running at http://localhost:${process.env.APP_PORT}`);
     });
   }
 }
 
-(async (): Promise<void> => {
-  const logger = winston.createLogger({
-    level: "info",
-    format: format.combine(
-      format.colorize(),
-      format.printf(({ level, message }) => { return `${level} ${message}`; })
-    ),
-    transports: [
-      new winston.transports.Console()
-    ],
-  });
+const endpoints: TEndpointTypes = {
+  "/user": UserEndpoint
+};
 
-  const redisClient: RedisClientType = createRedisClient();
-  redisClient.on("error", (error) => { logger.error(`[redis]: ${error}`); process.exit(1); });
-  await redisClient.connect();
-
-  const app: Express = express();
-  const db = knex(knexfile[process.env.NODE_ENV || "development"]);
-  const endpoints: TEndpoints = {
-    "/user": {
-      "create": createUser,
-      "view": viewUser,
-      "edit": editUser,
-      // "delete": createUser,
-    }
-  };
-
-  new App(db, redisClient, app, endpoints, logger, process.env.APP_PORT).registerRouters().listen();
-})();
+new App(endpoints).registerRouters().listen();

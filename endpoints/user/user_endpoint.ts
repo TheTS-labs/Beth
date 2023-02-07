@@ -33,8 +33,9 @@ export default class UserEndpoint implements IBaseEndpoint {
 
     const hash = await bcrypt.hash(args.password, 3);
 
-    try { await this.model.insertUser(args.email, hash); }
-    catch(err) { const e = err as { message: string }; throw new RequestError("DatabaseError", e.message, 500); }
+    await this.model.insertUser(args.email, hash).catch((err: { message: string }) => {
+      throw new RequestError("DatabaseError", err.message, 500);
+    });
 
     return { success: true };
   }
@@ -45,11 +46,8 @@ export default class UserEndpoint implements IBaseEndpoint {
     await this.validate(ViewArgsSchema, args);
 
     const user = await this.model.getUser(args.email, true);
-    if (!user) { return {}; }
 
-    await this.redisClient.set(args.email, JSON.stringify(user));
-
-    return user;
+    return user||{};
   }
   // >>> View >>>
 

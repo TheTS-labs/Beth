@@ -1,5 +1,5 @@
 import dotenv from "dotenv";
-import express, { Express, NextFunction,Request, Response } from "express";
+import express, { Express,Request, Response } from "express";
 import asyncHandler from "express-async-handler";
 import knex, { Knex } from "knex";
 import { RedisClientType } from "redis";

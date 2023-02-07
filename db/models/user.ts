@@ -7,7 +7,7 @@ export interface TUser {
   id: number
   email: string
   password: string
-  isBanned: boolean
+  isFreezen: boolean
 }
 
 export type Value<Type extends boolean> = Type extends true ? SafeUserObject : TUser;
@@ -26,7 +26,7 @@ export default class UserModel {
   public async getUser<Type extends boolean>(email: string, safe: Type): Promise<Value<Type>|undefined> {
     this.logger.debug(`[UserModel] Getting unsafe user ${email}`);
 
-    const user = await this.db<TUser>("user").where({email}).select(safe ? ["id", "email", "isBanned"] : []).first() as Value<Type>|undefined;
+    const user = await this.db<TUser>("user").where({email}).select(safe ? ["id", "email", "isFreezen"] : []).first() as Value<Type>|undefined;
 
     return user;
   }
@@ -35,5 +35,19 @@ export default class UserModel {
     this.logger.debug(`[UserModel] Changing user(${email}) password...`);
 
     await this.db<TUser>("user").where({email: email}).update({password: newHash});
+  }
+
+  public async isFreezen(email: string): Promise<boolean> {
+    this.logger.debug(`[UserModel] Is ${email} freezen...`);
+
+    const result: Pick<TUser, "isFreezen">|undefined = await this.db<TUser>("user").where({email}).select("isFreezen").first()||{ isFreezen: false };
+
+    return result.isFreezen;
+  }
+
+  public async changeIsFreezeUser(email: string, value=true): Promise<void> {
+    this.logger.debug(`[UserModel] Freezing ${email}...`);
+
+    await this.db<TUser>("user").where({email: email}).update({isFreezen: value});
   }
 }

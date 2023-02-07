@@ -7,7 +7,6 @@ import BaseValidator from "./base_validator";
 declare class IBaseEndpoint {
   public validator: BaseValidator;
   public allowNames: Array<string>;
-  public model?: unknown;
 
   constructor(
     public db: Knex,

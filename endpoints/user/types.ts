@@ -36,4 +36,16 @@ export const EditPasswordArgsSchema = Joi.object({
 });
 // <<< Edit Password <<<
 
-export type UserRequestArgs = CreateArgs|ViewArgs|EditPasswordArgs;
+// >>> Freeze >>>
+export interface FreezeArgs {
+  email: string
+  password: string
+}
+
+export const FreezeArgsSchema = Joi.object({
+  email: Joi.string().email().required(),
+  password: Joi.string().pattern(new RegExp("^[a-zA-Z0-9]{8,64}$")).required(),
+});
+// <<< Freeze <<<
+
+export type UserRequestArgs = CreateArgs|ViewArgs|EditPasswordArgs|FreezeArgs;

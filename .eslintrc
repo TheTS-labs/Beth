@@ -11,7 +11,11 @@
             "simple-import-sort/imports": "warn",
             "simple-import-sort/exports": "warn",
             "camelcase": "error",
-            "@typescript-eslint/indent": "off"
+            "@typescript-eslint/indent": "off",
+            "max-len": ["error", {
+                "code": 120,
+                "tabWidth": 2
+            }]
         }
     }]
 }

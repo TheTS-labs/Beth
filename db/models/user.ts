@@ -26,7 +26,9 @@ export default class UserModel {
   public async getUser<Type extends boolean>(email: string, safe: Type): Promise<Value<Type>|undefined> {
     this.logger.debug(`[UserModel] Getting unsafe user ${email}`);
 
-    const user = await this.db<TUser>("user").where({email}).select(safe ? ["id", "email", "isFreezen"] : []).first() as Value<Type>|undefined;
+    const selectRows = safe ? ["id", "email", "isFreezen"] : [];
+
+    const user = await this.db<TUser>("user").where({email}).select(selectRows).first() as Value<Type>|undefined;
 
     return user;
   }
@@ -40,7 +42,12 @@ export default class UserModel {
   public async isFreezen(email: string): Promise<boolean> {
     this.logger.debug(`[UserModel] Is ${email} freezen...`);
 
-    const result: Pick<TUser, "isFreezen">|undefined = await this.db<TUser>("user").where({email}).select("isFreezen").first()||{ isFreezen: false };
+    const record = await this.db<TUser>("user")
+                             .where({email})
+                             .select("isFreezen")
+                             .first();
+
+    const result = record||{ isFreezen: false };
 
     return result.isFreezen;
   }

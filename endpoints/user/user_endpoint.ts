@@ -28,8 +28,10 @@ export default class UserEndpoint implements IBaseEndpoint {
     public db: Knex,
     public redisClient: RedisClientType,
     public logger: winston.Logger
-  ) { this.userModel = new UserModel(this.db, this.logger);
-      this.permissionsModel = new PermissionsModel(this.db, this.logger); }
+  ) {
+    this.userModel = new UserModel(this.db, this.logger);
+    this.permissionsModel = new PermissionsModel(this.db, this.logger);
+  }
 
   // >>> Create >>>
   async create(args: type.CreateArgs): Promise<{success: true}|never> {
@@ -37,11 +39,11 @@ export default class UserEndpoint implements IBaseEndpoint {
 
     const hash = await bcrypt.hash(args.password, 3);
 
-    await this.userModel.insertUser(args.email, hash).catch((err: { message: string }) => {
+    await this.userModel.insertUser(args.email, hash).catch((err: Error) => {
       throw new RequestError("DatabaseError", err.message, 500);
     });
 
-    await this.permissionsModel.insertPermissions(args.email).catch((err: { message: string }) => {
+    await this.permissionsModel.insertPermissions(args.email).catch((err: Error) => {
       throw new RequestError("DatabaseError", err.message, 500);
     });
 
@@ -65,7 +67,7 @@ export default class UserEndpoint implements IBaseEndpoint {
     await this.abortIfFreezen(args.email);
 
     const user = await this.userModel.getUser<false>(args.email, false);
-    if (typeof user === "undefined") { throw new RequestError("DatabaseError", `User with email ${args.email} not found`, 404); }
+    if (!user) { throw new RequestError("DatabaseError", `User with email ${args.email} not found`, 404); }
 
     const compareResult = await bcrypt.compare(args.password, user.password);
     if (!compareResult) { throw new RequestError("AuthError", "Wrong password", 400); }
@@ -85,7 +87,7 @@ export default class UserEndpoint implements IBaseEndpoint {
     await this.abortIfFreezen(args.email);
 
     const user = await this.userModel.getUser<false>(args.email, false);
-    if (typeof user === "undefined") { throw new RequestError("DatabaseError", `User with email ${args.email} not found`, 404); }
+    if (!user) { throw new RequestError("DatabaseError", `User with email ${args.email} not found`, 404); }
 
     const compareResult = await bcrypt.compare(args.password, user.password);
     if (!compareResult) { throw new RequestError("AuthError", "Wrong password", 400); }

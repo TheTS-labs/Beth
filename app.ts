@@ -7,6 +7,7 @@ import winston from "winston";
 
 import { IBaseEndpoint } from "./common/base_endpoint";
 import knexfile from "./db/knexfile";
+import PermissionEndpoint from "./endpoints/permission/permission_endpoint";
 import UserEndpoint from "./endpoints/user/user_endpoint";
 import ErrorMiddleware from "./ErrorMiddleware";
 import Logger from "./Logger";
@@ -73,6 +74,7 @@ class App {
 
 const endpoints: TEndpointTypes = {
   "/user": UserEndpoint,
+  "/permission": PermissionEndpoint
 };
 
 new App(endpoints).registerRouters().listen();

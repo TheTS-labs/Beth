@@ -5,6 +5,8 @@ export interface TPermissions {
   id: number
   email: string
   canFreeze: 0 | 1
+  canGrant: 0 | 1
+  canRescind: 0 | 1
 }
 
 export default class PermissionsModel {
@@ -20,5 +22,15 @@ export default class PermissionsModel {
     const permissions = await this.db<TPermissions>("permission").where({ email }).first();
 
     return permissions;
+  }
+
+  public async grantPermission(email: string, permission: string): Promise<void> {
+    this.logger.debug(`Granting permission(${permission}) to ${email}...`);
+    await this.db<TPermissions>("permission").where({ email: email }).update({ [permission]: 1 });
+  }
+
+  public async rescindPermission(email: string, permission: string): Promise<void> {
+    this.logger.debug(`Rescinding permission(${permission}) from ${email}...`);
+    await this.db<TPermissions>("permission").where({ email: email }).update({ [permission]: 0 });
   }
 }

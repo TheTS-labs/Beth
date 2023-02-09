@@ -5,6 +5,8 @@ export async function up(knex: Knex): Promise<void> {
     table.increments("id");
     table.string("email").unique().notNullable();
     table.boolean("canFreeze").defaultTo(0);
+    table.boolean("canGrant").defaultTo(0);
+    table.boolean("canRescind").defaultTo(0);
   });
 }
 

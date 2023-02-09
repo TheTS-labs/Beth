@@ -7,7 +7,7 @@ export interface TUser {
   id: number
   email: string
   password: string
-  isFreezen: boolean
+  isFreezen: 0 | 1
 }
 
 export type Value<Type extends boolean> = Type extends true ? SafeUserObject : TUser;
@@ -36,17 +36,17 @@ export default class UserModel {
     await this.db<TUser>("user").where({ email: email }).update({ password: newHash });
   }
 
-  public async isFreezen(email: string): Promise<boolean> {
+  public async isFreezen(email: string): Promise<0 | 1> {
     this.logger.debug(`[UserModel] Is ${email} freezen...`);
 
     const record = await this.db<TUser>("user").where({ email }).select("isFreezen").first();
 
-    const result = record || { isFreezen: false };
+    const result = record || { isFreezen: 0 };
 
     return result.isFreezen;
   }
 
-  public async changeIsFreezeUser(email: string, value = true): Promise<void> {
+  public async changeIsFreezeUser(email: string, value:0|1 = 1): Promise<void> {
     this.logger.debug(`[UserModel] Freezing ${email}...`);
 
     await this.db<TUser>("user").where({ email: email }).update({ isFreezen: value });

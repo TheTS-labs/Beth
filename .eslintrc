@@ -19,7 +19,9 @@
             "code": 120,
             "tabWidth": 2
           }
-        ]
+        ],
+        "import/max-dependencies": ["warn", { "ignoreTypeImports": true }],
+        "@typescript-eslint/no-unused-vars": ["warn", { "argsIgnorePattern": "^_" }]
       }
     }
   ]

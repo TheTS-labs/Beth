@@ -10,6 +10,6 @@ declare class IBaseEndpoint {
 
   constructor(public db: Knex, public redisClient: RedisClientType, public logger: winston.Logger);
 
-  async callEndpoint(name: string, args: object): Promise<object | never>;
+  async callEndpoint(name: string, args: object, user: TUser | undefined): Promise<object | never>;
   async validate(schema: unknown, args: object): Promise<void | never>;
 }

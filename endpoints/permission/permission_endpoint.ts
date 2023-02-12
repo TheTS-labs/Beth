@@ -1,4 +1,3 @@
-import bcrypt from "bcrypt";
 import Joi from "joi";
 import { Knex } from "knex";
 import { RedisClientType } from "redis";
@@ -8,7 +7,7 @@ import { IBaseEndpoint } from "../../common/base_endpoint";
 import JoiValidator from "../../common/joi_validator";
 import RequestError from "../../common/RequestError";
 import PermissionModel, { TPermissions } from "../../db/models/permission";
-import UserModel from "../../db/models/user";
+import UserModel, { TUser } from "../../db/models/user";
 import * as type from "./types";
 
 type CallEndpointReturnType = Record<string, never> | TPermissions | {success: true};
@@ -25,8 +24,10 @@ export default class PermissionEndpoint implements IBaseEndpoint {
   }
 
   // <<< View <<<
-  async view(args: type.ViewArgs): Promise<TPermissions | Record<string, never>> {
+  async view(args: type.ViewArgs, user: TUser): Promise<TPermissions | Record<string, never>> {
+    await this.abortIfUserDoesntExist(user);
     await this.validate(type.ViewArgsSchema, args);
+    await this.abortIfFreezen(user.email);
 
     const permissions = await this.permissionModel.getPermissions(args.email);
 
@@ -35,20 +36,10 @@ export default class PermissionEndpoint implements IBaseEndpoint {
   // >>> View >>>
 
   // <<< Grant <<<
-  async grant(args: type.GrantArgs): Promise<{success: true}|never> {
+  async grant(args: type.GrantArgs, user: TUser): Promise<{success: true}|never> {
+    await this.abortIfUserDoesntExist(user);
     await this.validate(type.GrantArgsSchema, args);
-    await this.abortIfFreezen(args.email);
-    await this.abortIfDontHasPermission(args.email, "canGrant");
-
-    const user = await this.userModel.getUser<false>(args.email, false);
-    if (!user) {
-      throw new RequestError("DatabaseError", `User with email ${args.email} not found`, 404);
-    }
-
-    const compareResult = await bcrypt.compare(args.password, user.password);
-    if (!compareResult) {
-      throw new RequestError("AuthError", "Wrong password", 400);
-    }
+    await this.abortIfFreezen(user.email);
 
     await this.permissionModel.grantPermission(args.grantTo, args.grantPermission).catch((err: Error) => {
       throw new RequestError("DatabaseError", err.message, 500);
@@ -59,20 +50,10 @@ export default class PermissionEndpoint implements IBaseEndpoint {
   // >>> Grant >>>
 
   // <<< Rescind <<<
-  async rescind(args: type.RescindArgs): Promise<{success: true}|never> {
+  async rescind(args: type.RescindArgs, user: TUser): Promise<{success: true}|never> {
+    await this.abortIfUserDoesntExist(user);
     await this.validate(type.RescindArgsSchema, args);
-    await this.abortIfFreezen(args.email);
-    await this.abortIfDontHasPermission(args.email, "canRescind");
-
-    const user = await this.userModel.getUser<false>(args.email, false);
-    if (!user) {
-      throw new RequestError("DatabaseError", `User with email ${args.email} not found`, 404);
-    }
-
-    const compareResult = await bcrypt.compare(args.password, user.password);
-    if (!compareResult) {
-      throw new RequestError("AuthError", "Wrong password", 400);
-    }
+    await this.abortIfFreezen(user.email);
 
     await this.permissionModel.rescindPermission(args.rescindFrom, args.rescindPermission).catch((err: Error) => {
       throw new RequestError("DatabaseError", err.message, 500);
@@ -82,7 +63,9 @@ export default class PermissionEndpoint implements IBaseEndpoint {
   }
   // >>> Rescind >>>
 
-  async callEndpoint(name: string, args: type.PermissionRequestArgs): Promise<CallEndpointReturnType | never> {
+  async callEndpoint(
+    name: string, args: type.PermissionRequestArgs, user: TUser | undefined
+  ): Promise<CallEndpointReturnType | never> {
     this.logger.debug(`[PermissionEndpoint] Incoming Request: ${JSON.stringify(args)}`);
 
     const permissionIncludes = this.allowNames.includes(name);
@@ -93,7 +76,7 @@ export default class PermissionEndpoint implements IBaseEndpoint {
 
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
-    const result: CallEndpointReturnType = await this[name](args);
+    const result: CallEndpointReturnType = await this[name](args, user);
 
     return result;
   }
@@ -112,14 +95,9 @@ export default class PermissionEndpoint implements IBaseEndpoint {
     }
   }
 
-  async abortIfDontHasPermission(email: string, permission: string): Promise<void | never> {
-    const permissions = await this.permissionModel.getPermissions(email) as unknown as { [key: string]: 0|1 };
-    if (!permissions) {
-      throw new RequestError("DatabaseError", `User permissions with email ${email} not found`, 500);
-    }
-
-    if (!permissions[permission]) {
-      throw new RequestError("PermissionDenied", `You don't have permission: ${permission}`, 403);
+  async abortIfUserDoesntExist(user: TUser | undefined): Promise<void | never> {
+    if (!user) {
+      throw new RequestError("MiddlewareError", "User doesn't exist", 404);
     }
   }
 }

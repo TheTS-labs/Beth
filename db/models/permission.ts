@@ -4,9 +4,12 @@ import winston from "winston";
 export interface TPermissions {
   id: number
   email: string
-  canFreeze: 0 | 1
-  canGrant: 0 | 1
-  canRescind: 0 | 1
+  user_view: 0 | 1
+  user_editPassword: 0 | 1
+  user_freeze: 0 | 1
+  permissions_view: 0 | 1
+  permissions_grand: 0 | 1
+  permissions_rescind: 0 | 1
 }
 
 export default class PermissionsModel {

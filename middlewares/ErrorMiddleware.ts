@@ -1,13 +1,12 @@
 import { NextFunction, Request, Response } from "express";
 import winston from "winston";
 
-import RequestError from "./common/RequestError";
+import RequestError from "../common/RequestError";
 
 export default class ErrorMiddleware {
   constructor(private logger: winston.Logger) {}
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  public middleware = (err: Error, req: Request, res: Response, next: NextFunction): void => {
+  public middleware = (err: Error, req: Request, res: Response, _next: NextFunction): void => {
     if (err instanceof RequestError) {
       this.logger.error(err.message());
       res.status(err.status).json(err.object());

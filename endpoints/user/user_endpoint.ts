@@ -49,9 +49,9 @@ export default class UserEndpoint implements IBaseEndpoint {
     await this.validate(type.ViewArgsSchema, args);
     await this.abortIfFreezen(user.email);
 
-    const requestedUser = await this.userModel.getUser(args.email, true);
+    const requestedUser = await this.getUser(args.email);
 
-    return requestedUser || {};
+    return requestedUser;
   }
   // >>> View >>>
 
@@ -118,5 +118,24 @@ export default class UserEndpoint implements IBaseEndpoint {
     if (!user) {
       throw new RequestError("MiddlewareError", "User doesn't exist", 404);
     }
+  }
+
+  async getUser(email: string): Promise<SafeUserObject | Record<string, never>> {
+    const cachedUserString = await this.redisClient.get(`${email}_safe`);
+    const cachedUser: SafeUserObject|Record<string, never> = JSON.parse(cachedUserString||"{}");
+
+    if (Object.keys(cachedUser).length != 0) { return cachedUser as SafeUserObject; }
+
+    const user = await this.userModel.getUser(email, true);
+    if (!user) {
+      return {};
+    }
+
+    await this.redisClient.set(`${email}_safe`, JSON.stringify(user), {
+      EX: 60 * 10, // Expires in 10 minutes
+      NX: true
+    });
+
+    return user;
   }
 }

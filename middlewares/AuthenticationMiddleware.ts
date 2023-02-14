@@ -1,6 +1,7 @@
 import bcrypt from "bcrypt";
 import { NextFunction, Response } from "express";
 import { Knex } from "knex";
+import { RedisClientType } from "redis";
 import winston from "winston";
 
 import RequestError from "../common/RequestError";
@@ -12,7 +13,7 @@ type MiddlewareFunction = (req: RequestWithUser, res: Response, next: NextFuncti
 export default class AuthenticationMiddleware {
   userModel: UserModel;
 
-  constructor(private logger: winston.Logger, private db: Knex) {
+  constructor(private logger: winston.Logger, private db: Knex, private redisClient: RedisClientType) {
     this.userModel = new UserModel(this.db, this.logger);
   }
 
@@ -41,7 +42,7 @@ export default class AuthenticationMiddleware {
   }
 
   private async authenticate(email: string, password: string): Promise<TUser> {
-    const user = await this.userModel.getUser(email, false);
+    const user = await this.getUser(email);
 
     if (!user) {
       throw new RequestError("DatabaseError", `User with email ${email} not found`, 404);
@@ -51,6 +52,25 @@ export default class AuthenticationMiddleware {
     if (!compareResult) {
       throw new RequestError("AuthError", "Wrong password", 400);
     }
+
+    return user;
+  }
+
+  private async getUser(email: string): Promise<TUser> {
+    const cachedUserString = await this.redisClient.get(email);
+    const cachedUser: TUser|Record<string, never> = JSON.parse(cachedUserString||"{}");
+
+    if (Object.keys(cachedUser).length != 0) { return cachedUser as TUser; }
+
+    const user = await this.userModel.getUser(email, false);
+    if (!user) {
+      throw new RequestError("DatabaseError", `User with email ${email} not found`, 404);
+    }
+
+    await this.redisClient.set(email, JSON.stringify(user), {
+      EX: 60 * 10, // Expires in 10 minutes
+      NX: true
+    });
 
     return user;
   }

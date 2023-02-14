@@ -29,9 +29,9 @@ export default class PermissionEndpoint implements IBaseEndpoint {
     await this.validate(type.ViewArgsSchema, args);
     await this.abortIfFreezen(user.email);
 
-    const permissions = await this.permissionModel.getPermissions(args.email);
+    const permissions = await this.getPermissions(args.email);
 
-    return permissions || {};
+    return permissions;
   }
   // >>> View >>>
 
@@ -99,5 +99,24 @@ export default class PermissionEndpoint implements IBaseEndpoint {
     if (!user) {
       throw new RequestError("MiddlewareError", "User doesn't exist", 404);
     }
+  }
+
+  private async getPermissions(email: string): Promise<TPermissions | Record<string, never>> {
+    const cachedPermissionsString = await this.redisClient.get(`${email}_permissions`);
+    const cachedPermissions: TPermissions|Record<string, never> = JSON.parse(cachedPermissionsString||"{}");
+
+    if (Object.keys(cachedPermissions).length != 0) { return cachedPermissions as TPermissions; }
+
+    const permissions = await this.permissionModel.getPermissions(email);
+    if (!permissions) {
+      return {};
+    }
+
+    await this.redisClient.set(`${email}_permissions`, JSON.stringify(permissions), {
+      EX: 60 * 5, // Expires in 5 minutes
+      NX: true
+    });
+
+    return permissions;
   }
 }

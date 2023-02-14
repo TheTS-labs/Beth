@@ -42,8 +42,8 @@ export default class App {
     this.redisClient = new Redis(this.logger).get();
 
     // >>> Middlewares >>>
-    this.authenticationMiddleware = new AuthenticationMiddleware(this.logger, this.db);
-    this.permissionMiddleware = new PermissionMiddleware(this.logger, this.db);
+    this.authenticationMiddleware = new AuthenticationMiddleware(this.logger, this.db, this.redisClient);
+    this.permissionMiddleware = new PermissionMiddleware(this.logger, this.db, this.redisClient);
     this.errorMiddleware = new ErrorMiddleware(this.logger);
     // <<< Middlewares <<<
 

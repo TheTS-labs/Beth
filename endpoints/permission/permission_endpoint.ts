@@ -102,16 +102,21 @@ export default class PermissionEndpoint implements IBaseEndpoint {
   }
 
   private async getPermissions(email: string): Promise<TPermissions | Record<string, never>> {
+    this.logger.debug("[PermissionEndpoint] Getting user permissions from cache...");
     const cachedPermissionsString = await this.redisClient.get(`${email}_permissions`);
     const cachedPermissions: TPermissions|Record<string, never> = JSON.parse(cachedPermissionsString||"{}");
 
+    this.logger.debug(`[PermissionEndpoint] Cached?: ${cachedPermissionsString}`);
+
     if (Object.keys(cachedPermissions).length != 0) { return cachedPermissions as TPermissions; }
 
+    this.logger.debug("[PermissionEndpoint] Getting user permissions...");
     const permissions = await this.permissionModel.getPermissions(email);
     if (!permissions) {
       return {};
     }
 
+    this.logger.debug("[PermissionEndpoint] Caching user permissions...");
     await this.redisClient.set(`${email}_permissions`, JSON.stringify(permissions), {
       EX: 60 * 5, // Expires in 5 minutes
       NX: true

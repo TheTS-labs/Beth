@@ -121,16 +121,21 @@ export default class UserEndpoint implements IBaseEndpoint {
   }
 
   async getUser(email: string): Promise<SafeUserObject | Record<string, never>> {
+    this.logger.debug("[UserEndpoint] Getting user from cache...");
     const cachedUserString = await this.redisClient.get(`${email}_safe`);
     const cachedUser: SafeUserObject|Record<string, never> = JSON.parse(cachedUserString||"{}");
 
+    this.logger.debug(`[UserEndpoint] Cached?: ${cachedUserString}`);
+
     if (Object.keys(cachedUser).length != 0) { return cachedUser as SafeUserObject; }
 
+    this.logger.debug("[UserEndpoint] Getting user...");
     const user = await this.userModel.getUser(email, true);
     if (!user) {
       return {};
     }
 
+    this.logger.debug("[UserEndpoint] Caching user...");
     await this.redisClient.set(`${email}_safe`, JSON.stringify(user), {
       EX: 60 * 10, // Expires in 10 minutes
       NX: true

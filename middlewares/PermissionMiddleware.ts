@@ -21,10 +21,12 @@ export default class PermissionMiddleware {
   public middleware(): MiddlewareFunction {
     return async (req: RequestWithUser & { user: TUser }, res: Response, next: NextFunction): Promise<void> => {
       if (!req.user) {
+        this.logger.debug("[PermissionMiddleware] Skip");
         next();
       }
 
-      const permission = req.originalUrl.replace("/", "").replace("/", "_");
+      const permission = req.originalUrl.replace("/", "").replaceAll("/", "_");
+      this.logger.debug(`[PermissionMiddleware] Checking for ${permission}(${req.originalUrl})`);
       const permissions = await this.getPermissions(req.user.email) as TPermissionsIndex;
   
       if (!permissions[permission]) {
@@ -36,16 +38,21 @@ export default class PermissionMiddleware {
   }
 
   private async getPermissions(email: string): Promise<TPermissions> {
+    this.logger.debug("[PermissionMiddleware] Getting user permissions from cache...");
     const cachedPermissionsString = await this.redisClient.get(`${email}_permissions`);
     const cachedPermissions: TPermissions|Record<string, never> = JSON.parse(cachedPermissionsString||"{}");
 
+    this.logger.debug(`[PermissionMiddleware] Cached?: ${cachedPermissionsString}`);
+
     if (Object.keys(cachedPermissions).length != 0) { return cachedPermissions as TPermissions; }
 
+    this.logger.debug("[PermissionMiddleware] Getting user permissions...");
     const permissions = await this.permissionModel.getPermissions(email);
     if (!permissions) {
       throw new RequestError("DatabaseError", `User permissions with email ${email} not found`, 500);
     }
 
+    this.logger.debug("[PermissionMiddleware] Caching user permissions...");
     await this.redisClient.set(`${email}_permissions`, JSON.stringify(permissions), {
       EX: 60 * 5, // Expires in 5 minutes
       NX: true

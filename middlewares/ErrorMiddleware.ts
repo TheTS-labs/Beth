@@ -13,7 +13,6 @@ export default class ErrorMiddleware {
       return;
     }
 
-    this.logger.error("Unknown error");
     this.logger.error(err.stack);
     res.status(500).send("Sorry, something went wrong");
     return;

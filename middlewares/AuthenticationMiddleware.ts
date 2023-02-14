@@ -21,6 +21,7 @@ export default class AuthenticationMiddleware {
     return async (req: RequestWithUser, res: Response, next: NextFunction): Promise<void> => {
       const excludedPath = exculdePaths.includes(req.originalUrl);
       if (excludedPath) {
+        this.logger.debug("[AuthenticationMiddleware] Excluded path. Skip");
         next();
       }
 
@@ -33,6 +34,7 @@ export default class AuthenticationMiddleware {
   }
 
   private getCreds(authorization: string|undefined): string[] {
+    this.logger.debug("[AuthenticationMiddleware] Getting credentitals from the Basic Auth header...");
     if (!authorization) {
       throw new RequestError("AuthError", "Basic Auth header is required", 400);
     }
@@ -42,6 +44,7 @@ export default class AuthenticationMiddleware {
   }
 
   private async authenticate(email: string, password: string): Promise<TUser> {
+    this.logger.debug("[AuthenticationMiddleware] Authenticating...");
     const user = await this.getUser(email);
 
     if (!user) {
@@ -57,16 +60,21 @@ export default class AuthenticationMiddleware {
   }
 
   private async getUser(email: string): Promise<TUser> {
+    this.logger.debug("[AuthenticationMiddleware] Getting user from cache...");
     const cachedUserString = await this.redisClient.get(email);
     const cachedUser: TUser|Record<string, never> = JSON.parse(cachedUserString||"{}");
 
+    this.logger.debug(`[AuthenticationMiddleware] Cached?: ${cachedUserString}`);
+
     if (Object.keys(cachedUser).length != 0) { return cachedUser as TUser; }
 
+    this.logger.debug("[AuthenticationMiddleware] Getting user...");
     const user = await this.userModel.getUser(email, false);
     if (!user) {
       throw new RequestError("DatabaseError", `User with email ${email} not found`, 404);
     }
 
+    this.logger.debug("[AuthenticationMiddleware] Caching user...");
     await this.redisClient.set(email, JSON.stringify(user), {
       EX: 60 * 10, // Expires in 10 minutes
       NX: true

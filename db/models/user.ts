@@ -15,7 +15,7 @@ export type Value<Type extends boolean> = Type extends true ? SafeUserObject : T
 export default class UserModel {
   constructor(public db: Knex, public logger: winston.Logger) {}
 
-  public async insertUser(email: string, hash: string): Promise<void | never> {
+  public async insertUser(email: string, hash: string): Promise<void> {
     this.logger.debug(`[UserModel] Trying to insert user ${email}`);
     await this.db<TUser>("user").insert({ email: email, password: hash });
   }

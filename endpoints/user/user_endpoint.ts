@@ -11,7 +11,7 @@ import PermissionModel from "../../db/models/permission";
 import UserModel, { TUser } from "../../db/models/user";
 import * as type from "./types";
 
-type CallEndpointReturnType = { success: true } | Record<string, never> | SafeUserObject;
+type CallEndpointReturnType = { success: true } | {} | SafeUserObject;
 
 export default class UserEndpoint implements IBaseEndpoint {
   allowNames: Array<string> = ["create", "view", "editPassword", "freeze"];
@@ -24,7 +24,7 @@ export default class UserEndpoint implements IBaseEndpoint {
   }
 
   // >>> Create >>>
-  async create(args: type.CreateArgs, _user: TUser | undefined): Promise<{ success: true } | never> {
+  async create(args: type.CreateArgs, _user: TUser | undefined): Promise<{ success: true }> {
     await this.validate(type.CreateArgsSchema, args);
 
     const hash = await bcrypt.hash(args.password, 3);
@@ -42,7 +42,7 @@ export default class UserEndpoint implements IBaseEndpoint {
   // <<< Create <<<
 
   // <<< View <<<
-  async view(args: type.ViewArgs, user: TUser): Promise<SafeUserObject | Record<string, never>> {
+  async view(args: type.ViewArgs, user: TUser): Promise<SafeUserObject | {}> {
     await this.abortIfUserDoesntExist(user);
     await this.validate(type.ViewArgsSchema, args);
     await this.abortIfFreezen(user.email);
@@ -54,7 +54,7 @@ export default class UserEndpoint implements IBaseEndpoint {
   // >>> View >>>
 
   // <<< Edit Password <<<
-  async editPassword(args: type.EditPasswordArgs, user: TUser): Promise<{ success: true } | never> {
+  async editPassword(args: type.EditPasswordArgs, user: TUser): Promise<{ success: true }> {
     await this.abortIfUserDoesntExist(user);
     await this.validate(type.EditPasswordArgsSchema, args);
     await this.abortIfFreezen(user.email);
@@ -69,7 +69,7 @@ export default class UserEndpoint implements IBaseEndpoint {
   // >>> Edit Password >>>
 
   // <<< Freeze <<<
-  async freeze(args: type.FreezeArgs, user: TUser): Promise<{ success: true } | never> {
+  async freeze(args: type.FreezeArgs, user: TUser): Promise<{ success: true }> {
     await this.abortIfUserDoesntExist(user);
     await this.validate(type.FreezeArgsSchema, args);
 
@@ -83,7 +83,7 @@ export default class UserEndpoint implements IBaseEndpoint {
 
   async callEndpoint(
     name: string, args: type.UserRequestArgs, user: TUser | undefined
-  ): Promise<CallEndpointReturnType | never> {
+  ): Promise<CallEndpointReturnType> {
     this.logger.debug(`[UserEndpoint] Incoming Request: ${JSON.stringify(args)}`);
 
     const userIncludes = this.allowNames.includes(name);
@@ -98,30 +98,30 @@ export default class UserEndpoint implements IBaseEndpoint {
     return result;
   }
 
-  async validate(schema: Joi.ObjectSchema, args: type.UserRequestArgs): Promise<void | never> {
+  async validate(schema: Joi.ObjectSchema, args: type.UserRequestArgs): Promise<void> {
     const validationResult = schema.validate(args);
     if (validationResult.error) {
       throw new RequestError("ValidationError", validationResult.error.message, 400);
     }
   }
 
-  async abortIfFreezen(email: string): Promise<void | never> {
+  async abortIfFreezen(email: string): Promise<void> {
     const result = await this.userModel.isFreezen(email);
     if (result) {
       throw new RequestError("UserIsFreezen", `User(${email}) is freezen`, 403);
     }
   }
 
-  async abortIfUserDoesntExist(user: TUser | undefined): Promise<void | never> {
+  async abortIfUserDoesntExist(user: TUser | undefined): Promise<void> {
     if (!user) {
       throw new RequestError("MiddlewareError", "User doesn't exist", 404);
     }
   }
 
-  async getUser(email: string): Promise<SafeUserObject | Record<string, never>> {
+  async getUser(email: string): Promise<SafeUserObject | {}> {
     this.logger.debug("[UserEndpoint] Getting user from cache...");
     const cachedUserString = await this.redisClient.get(`${email}_safe`);
-    const cachedUser: SafeUserObject|Record<string, never> = JSON.parse(cachedUserString||"{}");
+    const cachedUser: SafeUserObject|{} = JSON.parse(cachedUserString||"{}");
 
     this.logger.debug(`[UserEndpoint] Cached?: ${cachedUserString}`);
 

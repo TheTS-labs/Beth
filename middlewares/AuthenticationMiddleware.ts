@@ -62,7 +62,7 @@ export default class AuthenticationMiddleware {
   private async getUser(email: string): Promise<TUser> {
     this.logger.debug("[AuthenticationMiddleware] Getting user from cache...");
     const cachedUserString = await this.redisClient.get(email);
-    const cachedUser: TUser|Record<string, never> = JSON.parse(cachedUserString||"{}");
+    const cachedUser: TUser|{} = JSON.parse(cachedUserString||"{}");
 
     this.logger.debug(`[AuthenticationMiddleware] Cached?: ${cachedUserString}`);
 

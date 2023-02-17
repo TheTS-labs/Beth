@@ -40,7 +40,7 @@ export default class PermissionMiddleware {
   private async getPermissions(email: string): Promise<TPermissions> {
     this.logger.debug("[PermissionMiddleware] Getting user permissions from cache...");
     const cachedPermissionsString = await this.redisClient.get(`${email}_permissions`);
-    const cachedPermissions: TPermissions|Record<string, never> = JSON.parse(cachedPermissionsString||"{}");
+    const cachedPermissions: TPermissions|{} = JSON.parse(cachedPermissionsString||"{}");
 
     this.logger.debug(`[PermissionMiddleware] Cached?: ${cachedPermissionsString}`);
 

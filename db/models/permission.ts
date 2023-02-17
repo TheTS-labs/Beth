@@ -15,7 +15,7 @@ export interface TPermissions {
 export default class PermissionsModel {
   constructor(public db: Knex, public logger: winston.Logger) {}
 
-  public async insertPermissions(email: string): Promise<void | never> {
+  public async insertPermissions(email: string): Promise<void> {
     this.logger.debug(`Instering permission for ${email}...`);
     await this.db<TPermissions>("permission").insert({ email });
   }

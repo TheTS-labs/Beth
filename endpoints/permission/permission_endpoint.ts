@@ -9,7 +9,7 @@ import PermissionModel, { TPermissions } from "../../db/models/permission";
 import UserModel, { TUser } from "../../db/models/user";
 import * as type from "./types";
 
-type CallEndpointReturnType = Record<string, never> | TPermissions | {success: true};
+type CallEndpointReturnType = {} | TPermissions | {success: true};
 
 export default class PermissionEndpoint implements IBaseEndpoint {
   allowNames: Array<string> = ["view", "grant", "rescind"];
@@ -22,7 +22,7 @@ export default class PermissionEndpoint implements IBaseEndpoint {
   }
 
   // <<< View <<<
-  async view(args: type.ViewArgs, user: TUser): Promise<TPermissions | Record<string, never>> {
+  async view(args: type.ViewArgs, user: TUser): Promise<TPermissions | {}> {
     await this.abortIfUserDoesntExist(user);
     await this.validate(type.ViewArgsSchema, args);
     await this.abortIfFreezen(user.email);
@@ -63,7 +63,7 @@ export default class PermissionEndpoint implements IBaseEndpoint {
 
   async callEndpoint(
     name: string, args: type.PermissionRequestArgs, user: TUser | undefined
-  ): Promise<CallEndpointReturnType | never> {
+  ): Promise<CallEndpointReturnType> {
     this.logger.debug(`[PermissionEndpoint] Incoming Request: ${JSON.stringify(args)}`);
 
     const permissionIncludes = this.allowNames.includes(name);
@@ -79,30 +79,30 @@ export default class PermissionEndpoint implements IBaseEndpoint {
     return result;
   }
 
-  async validate(schema: Joi.ObjectSchema, args: type.PermissionRequestArgs): Promise<void | never> {
+  async validate(schema: Joi.ObjectSchema, args: type.PermissionRequestArgs): Promise<void> {
     const validationResult = schema.validate(args);
     if (validationResult.error) {
       throw new RequestError("ValidationError", validationResult.error.message, 400);
     }
   }
 
-  async abortIfFreezen(email: string): Promise<void | never> {
+  async abortIfFreezen(email: string): Promise<void> {
     const result = await this.userModel.isFreezen(email);
     if (result) {
       throw new RequestError("UserIsFreezen", `User(${email}) is freezen`, 403);
     }
   }
 
-  async abortIfUserDoesntExist(user: TUser | undefined): Promise<void | never> {
+  async abortIfUserDoesntExist(user: TUser | undefined): Promise<void> {
     if (!user) {
       throw new RequestError("MiddlewareError", "User doesn't exist", 404);
     }
   }
 
-  private async getPermissions(email: string): Promise<TPermissions | Record<string, never>> {
+  private async getPermissions(email: string): Promise<TPermissions | {}> {
     this.logger.debug("[PermissionEndpoint] Getting user permissions from cache...");
     const cachedPermissionsString = await this.redisClient.get(`${email}_permissions`);
-    const cachedPermissions: TPermissions|Record<string, never> = JSON.parse(cachedPermissionsString||"{}");
+    const cachedPermissions: TPermissions|{} = JSON.parse(cachedPermissionsString||"{}");
 
     this.logger.debug(`[PermissionEndpoint] Cached?: ${cachedPermissionsString}`);
 

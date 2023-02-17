@@ -22,14 +22,17 @@ export default class PermissionEndpoint implements IBaseEndpoint {
   }
 
   // <<< View <<<
-  async view(args: type.ViewArgs, user: TUser): Promise<TPermissions | {}> {
+  async view(args: type.ViewArgs, user: TUser): Promise<TPermissions> {
     await this.abortIfUserDoesntExist(user);
     await this.validate(type.ViewArgsSchema, args);
     await this.abortIfFreezen(user.email);
 
     const permissions = await this.getPermissions(args.email);
+    if (!permissions) {
+      throw new RequestError("DatabaseError", `User permissions with email ${args.email} not found`, 500);
+    }
 
-    return permissions;
+    return permissions as TPermissions;
   }
   // >>> View >>>
 
@@ -102,11 +105,13 @@ export default class PermissionEndpoint implements IBaseEndpoint {
   private async getPermissions(email: string): Promise<TPermissions | {}> {
     this.logger.debug("[PermissionEndpoint] Getting user permissions from cache...");
     const cachedPermissionsString = await this.redisClient.get(`${email}_permissions`);
-    const cachedPermissions: TPermissions|{} = JSON.parse(cachedPermissionsString||"{}");
+    const cachedPermissions: TPermissions = JSON.parse(cachedPermissionsString||"null");
 
     this.logger.debug(`[PermissionEndpoint] Cached?: ${cachedPermissionsString}`);
 
-    if (Object.keys(cachedPermissions).length != 0) { return cachedPermissions as TPermissions; }
+    if (cachedPermissions) {
+      return cachedPermissions;
+    }
 
     this.logger.debug("[PermissionEndpoint] Getting user permissions...");
     const permissions = await this.permissionModel.getPermissions(email);

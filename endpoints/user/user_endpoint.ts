@@ -5,7 +5,6 @@ import { RedisClientType } from "redis";
 import winston from "winston";
 
 import { IBaseEndpoint } from "../../common/base_endpoint";
-import JoiValidator from "../../common/joi_validator";
 import RequestError from "../../common/RequestError";
 import { SafeUserObject } from "../../common/types";
 import PermissionModel from "../../db/models/permission";
@@ -15,7 +14,6 @@ import * as type from "./types";
 type CallEndpointReturnType = { success: true } | Record<string, never> | SafeUserObject;
 
 export default class UserEndpoint implements IBaseEndpoint {
-  validator: JoiValidator = new JoiValidator();
   allowNames: Array<string> = ["create", "view", "editPassword", "freeze"];
   userModel: UserModel;
   permissionModel: PermissionModel;
@@ -101,9 +99,9 @@ export default class UserEndpoint implements IBaseEndpoint {
   }
 
   async validate(schema: Joi.ObjectSchema, args: type.UserRequestArgs): Promise<void | never> {
-    const validationError = await this.validator.validate(schema, args);
-    if (validationError) {
-      throw new RequestError("ValidationError", validationError.message, 400);
+    const validationResult = schema.validate(args);
+    if (validationResult.error) {
+      throw new RequestError("ValidationError", validationResult.error.message, 400);
     }
   }
 

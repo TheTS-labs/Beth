@@ -4,7 +4,6 @@ import { RedisClientType } from "redis";
 import winston from "winston";
 
 import { IBaseEndpoint } from "../../common/base_endpoint";
-import JoiValidator from "../../common/joi_validator";
 import RequestError from "../../common/RequestError";
 import PermissionModel, { TPermissions } from "../../db/models/permission";
 import UserModel, { TUser } from "../../db/models/user";
@@ -13,7 +12,6 @@ import * as type from "./types";
 type CallEndpointReturnType = Record<string, never> | TPermissions | {success: true};
 
 export default class PermissionEndpoint implements IBaseEndpoint {
-  validator: JoiValidator = new JoiValidator();
   allowNames: Array<string> = ["view", "grant", "rescind"];
   permissionModel: PermissionModel;
   userModel: UserModel;
@@ -82,9 +80,9 @@ export default class PermissionEndpoint implements IBaseEndpoint {
   }
 
   async validate(schema: Joi.ObjectSchema, args: type.PermissionRequestArgs): Promise<void | never> {
-    const validationError = await this.validator.validate(schema, args);
-    if (validationError) {
-      throw new RequestError("ValidationError", validationError.message, 400);
+    const validationResult = schema.validate(args);
+    if (validationResult.error) {
+      throw new RequestError("ValidationError", validationResult.error.message, 400);
     }
   }
 

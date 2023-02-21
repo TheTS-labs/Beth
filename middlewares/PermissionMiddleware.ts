@@ -14,7 +14,12 @@ type MiddlewareFunction = (req: RequestWithUser & { user: TUser }, res: Response
 export default class PermissionMiddleware {
   permissionModel: PermissionModel;
 
-  constructor(private logger: winston.Logger, private db: Knex, private redisClient: RedisClientType) {
+  constructor(
+    private logger: winston.Logger,
+    private db: Knex,
+    private redisClient: RedisClientType,
+    private useRedis: boolean
+  ) {
     this.permissionModel = new PermissionModel(this.db, this.logger);
   }
 
@@ -38,14 +43,16 @@ export default class PermissionMiddleware {
   }
 
   private async getPermissions(email: string): Promise<TPermissions> {
-    this.logger.debug("[PermissionMiddleware] Getting user permissions from cache...");
-    const cachedPermissionsString = await this.redisClient.get(`${email}_permissions`);
-    const cachedPermissions: TPermissions = JSON.parse(cachedPermissionsString||"null");
+    if (this.useRedis) {
+      this.logger.debug("[PermissionMiddleware] Getting user permissions from cache...");
+      const cachedPermissionsString = await this.redisClient.get(`${email}_permissions`);
+      const cachedPermissions: TPermissions = JSON.parse(cachedPermissionsString||"null");
 
-    this.logger.debug(`[PermissionMiddleware] Cached?: ${cachedPermissionsString}`);
+      this.logger.debug(`[PermissionMiddleware] Cached?: ${cachedPermissionsString}`);
 
-    if (cachedPermissions) {
-      return cachedPermissions;
+      if (cachedPermissions) {
+        return cachedPermissions;
+      }
     }
 
     this.logger.debug("[PermissionMiddleware] Getting user permissions...");
@@ -54,11 +61,13 @@ export default class PermissionMiddleware {
       throw new RequestError("DatabaseError", `User permissions with email ${email} not found`, 500);
     }
 
-    this.logger.debug("[PermissionMiddleware] Caching user permissions...");
-    await this.redisClient.set(`${email}_permissions`, JSON.stringify(permissions), {
-      EX: 60 * 5, // Expires in 5 minutes
-      NX: true
-    });
+    if (this.useRedis) {
+      this.logger.debug("[PermissionMiddleware] Caching user permissions...");
+      await this.redisClient.set(`${email}_permissions`, JSON.stringify(permissions), {
+        EX: 60 * 5, // Expires in 5 minutes
+        NX: true
+      });
+    }
 
     return permissions;
   }

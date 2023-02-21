@@ -2,7 +2,7 @@ import { createClient as createRedisClient, RedisClientType } from "redis";
 import winston from "winston";
 
 export default class Redis {
-  constructor(private logger: winston.Logger) {}
+  constructor(private logger: winston.Logger, public useRedis: boolean) {}
 
   get(): RedisClientType {
     const redisClient: RedisClientType = createRedisClient();
@@ -21,7 +21,9 @@ export default class Redis {
       this.logger.warn("[redis]: The client disconnected the connection to the server via .quit() or .disconnect()");
     });
 
-    redisClient.connect();
+    if (this.useRedis) {
+      redisClient.connect();
+    }
 
     return redisClient;
   }

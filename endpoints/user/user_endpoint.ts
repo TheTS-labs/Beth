@@ -18,7 +18,12 @@ export default class UserEndpoint implements IBaseEndpoint {
   userModel: UserModel;
   permissionModel: PermissionModel;
 
-  constructor(public db: Knex, public redisClient: RedisClientType, public logger: winston.Logger) {
+  constructor(
+    public db: Knex,
+    public redisClient: RedisClientType,
+    public logger: winston.Logger,
+    public useRedis: boolean
+  ) {
     this.userModel = new UserModel(this.db, this.logger);
     this.permissionModel = new PermissionModel(this.db, this.logger);
   }
@@ -119,14 +124,16 @@ export default class UserEndpoint implements IBaseEndpoint {
   }
 
   async getUser(email: string): Promise<SafeUserObject | {}> {
-    this.logger.debug("[UserEndpoint] Getting user from cache...");
-    const cachedUserString = await this.redisClient.get(`${email}_safe`);
-    const cachedUser: SafeUserObject = JSON.parse(cachedUserString||"null");
+    if (this.useRedis) {
+      this.logger.debug("[UserEndpoint] Getting user from cache...");
+      const cachedUserString = await this.redisClient.get(`${email}_safe`);
+      const cachedUser: SafeUserObject = JSON.parse(cachedUserString||"null");
 
-    this.logger.debug(`[UserEndpoint] Cached?: ${cachedUserString}`);
+      this.logger.debug(`[UserEndpoint] Cached?: ${cachedUserString}`);
 
-    if (cachedUser) {
-      return cachedUser;
+      if (cachedUser) {
+        return cachedUser;
+      }
     }
 
     this.logger.debug("[UserEndpoint] Getting user...");
@@ -135,11 +142,13 @@ export default class UserEndpoint implements IBaseEndpoint {
       return {};
     }
 
-    this.logger.debug("[UserEndpoint] Caching user...");
-    await this.redisClient.set(`${email}_safe`, JSON.stringify(user), {
-      EX: 60 * 10, // Expires in 10 minutes
-      NX: true
-    });
+    if (this.useRedis) {
+      this.logger.debug("[UserEndpoint] Caching user...");
+      await this.redisClient.set(`${email}_safe`, JSON.stringify(user), {
+        EX: 60 * 10, // Expires in 10 minutes
+        NX: true
+      });
+    }
 
     return user;
   }

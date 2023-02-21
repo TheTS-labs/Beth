@@ -39,11 +39,15 @@ export default class App {
 
   //! Disabling auth you also disabling permission check
   constructor(endpoints: TEndpointTypes, disableAuthFor:string[]=[]) {
-    this.redisClient = new Redis(this.logger).get();
+    this.redisClient = new Redis(this.logger, Boolean(process.env.REDIS_REQUIRED)).get();
 
     // >>> Middlewares >>>
-    this.authenticationMiddleware = new AuthenticationMiddleware(this.logger, this.db, this.redisClient);
-    this.permissionMiddleware = new PermissionMiddleware(this.logger, this.db, this.redisClient);
+    this.authenticationMiddleware = new AuthenticationMiddleware(
+      this.logger, this.db, this.redisClient, Boolean(process.env.REDIS_REQUIRED)
+    );
+    this.permissionMiddleware = new PermissionMiddleware(
+      this.logger, this.db, this.redisClient, Boolean(process.env.REDIS_REQUIRED)
+    );
     this.errorMiddleware = new ErrorMiddleware(this.logger);
     // <<< Middlewares <<<
 
@@ -79,7 +83,12 @@ export default class App {
     Object.keys(endpoints).map((routerName: string) => {
       this.logger.debug(`[app] Creating ${routerName} object...`);
       const endpointClass = endpoints[routerName];
-      const endpointClassObject = new endpointClass(this.db, this.redisClient, this.logger);
+      const endpointClassObject = new endpointClass(
+        this.db,
+        this.redisClient,
+        this.logger,
+        Boolean(process.env.REDIS_REQUIRED)
+      );
 
       this.endpoints[routerName] = endpointClassObject;
     });

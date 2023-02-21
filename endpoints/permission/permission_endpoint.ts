@@ -16,7 +16,12 @@ export default class PermissionEndpoint implements IBaseEndpoint {
   permissionModel: PermissionModel;
   userModel: UserModel;
 
-  constructor(public db: Knex, public redisClient: RedisClientType, public logger: winston.Logger) {
+  constructor(
+    public db: Knex,
+    public redisClient: RedisClientType,
+    public logger: winston.Logger,
+    public useRedis: boolean
+  ) {
     this.permissionModel = new PermissionModel(this.db, this.logger);
     this.userModel = new UserModel(this.db, this.logger);
   }
@@ -103,14 +108,16 @@ export default class PermissionEndpoint implements IBaseEndpoint {
   }
 
   private async getPermissions(email: string): Promise<TPermissions | {}> {
-    this.logger.debug("[PermissionEndpoint] Getting user permissions from cache...");
-    const cachedPermissionsString = await this.redisClient.get(`${email}_permissions`);
-    const cachedPermissions: TPermissions = JSON.parse(cachedPermissionsString||"null");
+    if (this.useRedis) {
+      this.logger.debug("[PermissionEndpoint] Getting user permissions from cache...");
+      const cachedPermissionsString = await this.redisClient.get(`${email}_permissions`);
+      const cachedPermissions: TPermissions = JSON.parse(cachedPermissionsString||"null");
 
-    this.logger.debug(`[PermissionEndpoint] Cached?: ${cachedPermissionsString}`);
+      this.logger.debug(`[PermissionEndpoint] Cached?: ${cachedPermissionsString}`);
 
-    if (cachedPermissions) {
-      return cachedPermissions;
+      if (cachedPermissions) {
+        return cachedPermissions;
+      }
     }
 
     this.logger.debug("[PermissionEndpoint] Getting user permissions...");
@@ -119,11 +126,13 @@ export default class PermissionEndpoint implements IBaseEndpoint {
       return {};
     }
 
-    this.logger.debug("[PermissionEndpoint] Caching user permissions...");
-    await this.redisClient.set(`${email}_permissions`, JSON.stringify(permissions), {
-      EX: 60 * 5, // Expires in 5 minutes
-      NX: true
-    });
+    if (this.useRedis) {
+      this.logger.debug("[PermissionEndpoint] Caching user permissions...");
+      await this.redisClient.set(`${email}_permissions`, JSON.stringify(permissions), {
+        EX: 60 * 5, // Expires in 5 minutes
+        NX: true
+      });
+    }
 
     return permissions;
   }

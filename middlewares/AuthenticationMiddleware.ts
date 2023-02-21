@@ -13,7 +13,12 @@ type MiddlewareFunction = (req: RequestWithUser, res: Response, next: NextFuncti
 export default class AuthenticationMiddleware {
   userModel: UserModel;
 
-  constructor(private logger: winston.Logger, private db: Knex, private redisClient: RedisClientType) {
+  constructor(
+    private logger: winston.Logger,
+    private db: Knex,
+    private redisClient: RedisClientType,
+    private useRedis: boolean
+  ) {
     this.userModel = new UserModel(this.db, this.logger);
   }
 
@@ -60,27 +65,31 @@ export default class AuthenticationMiddleware {
   }
 
   private async getUser(email: string): Promise<TUser> {
-    this.logger.debug("[AuthenticationMiddleware] Getting user from cache...");
-    const cachedUserString = await this.redisClient.get(email);
-    const cachedUser: TUser = JSON.parse(cachedUserString||"null");
+    if (this.useRedis) {
+      this.logger.debug("[AuthenticationMiddleware] Getting user from cache...");
+      const cachedUserString = await this.redisClient.get(email);
+      const cachedUser: TUser = JSON.parse(cachedUserString||"null");
 
-    this.logger.debug(`[AuthenticationMiddleware] Cached?: ${cachedUserString}`);
+      this.logger.debug(`[AuthenticationMiddleware] Cached?: ${cachedUserString}`);
 
-    if (cachedUser) {
-      return cachedUser;
+      if (cachedUser) {
+        return cachedUser;
+      }
     }
-
+  
     this.logger.debug("[AuthenticationMiddleware] Getting user...");
     const user = await this.userModel.getUser(email, false);
     if (!user) {
       throw new RequestError("DatabaseError", `User with email ${email} not found`, 404);
     }
 
-    this.logger.debug("[AuthenticationMiddleware] Caching user...");
-    await this.redisClient.set(email, JSON.stringify(user), {
-      EX: 60 * 10, // Expires in 10 minutes
-      NX: true
-    });
+    if (this.useRedis) {
+      this.logger.debug("[AuthenticationMiddleware] Caching user...");
+      await this.redisClient.set(email, JSON.stringify(user), {
+        EX: 60 * 10, // Expires in 10 minutes
+        NX: true
+      });
+    }
 
     return user;
   }

@@ -7,6 +7,8 @@ import winston from "winston";
 import { IBaseEndpoint } from "../../common/base_endpoint";
 import RequestError from "../../common/RequestError";
 import { SafeUserObject } from "../../common/types";
+import CachingPermissionModel from "../../db/models/caching/caching_permission";
+import CachingUserModel from "../../db/models/caching/caching_user";
 import PermissionModel from "../../db/models/permission";
 import UserModel, { TUser } from "../../db/models/user";
 import * as type from "./types";
@@ -15,8 +17,8 @@ type CallEndpointReturnType = { success: true } | {} | SafeUserObject;
 
 export default class UserEndpoint implements IBaseEndpoint {
   allowNames: Array<string> = ["create", "view", "editPassword", "freeze"];
-  userModel: UserModel;
-  permissionModel: PermissionModel;
+  userModel: UserModel | CachingUserModel;
+  permissionModel: PermissionModel | CachingPermissionModel;
 
   constructor(
     public db: Knex,
@@ -24,8 +26,11 @@ export default class UserEndpoint implements IBaseEndpoint {
     public logger: winston.Logger,
     public useRedis: boolean
   ) {
-    this.userModel = new UserModel(this.db, this.logger);
-    this.permissionModel = new PermissionModel(this.db, this.logger);
+    const UserModelType = this.useRedis ? CachingUserModel : UserModel;
+    const PermissionModelType = this.useRedis ? CachingPermissionModel : PermissionModel;
+
+    this.userModel = new UserModelType(this.db, this.logger, this.redisClient);
+    this.permissionModel = new PermissionModelType(this.db, this.logger, this.redisClient);
   }
 
   // >>> Create >>>
@@ -52,9 +57,9 @@ export default class UserEndpoint implements IBaseEndpoint {
     await this.validate(type.ViewArgsSchema, args);
     await this.abortIfFreezen(user.email);
 
-    const requestedUser = await this.getUser(args.email);
+    const requestedUser = await this.userModel.getSafeUser(args.email);
 
-    return requestedUser;
+    return requestedUser||{};
   }
   // >>> View >>>
 
@@ -78,7 +83,7 @@ export default class UserEndpoint implements IBaseEndpoint {
     await this.abortIfUserDoesntExist(user);
     await this.validate(type.FreezeArgsSchema, args);
 
-    await this.userModel.changeIsFreezeUser(user.email).catch((err: { message: string }) => {
+    await this.userModel.freezeUser(user.email).catch((err: { message: string }) => {
       throw new RequestError("DatabaseError", err.message, 500);
     });
 
@@ -121,35 +126,5 @@ export default class UserEndpoint implements IBaseEndpoint {
     if (!user) {
       throw new RequestError("MiddlewareError", "User doesn't exist", 404);
     }
-  }
-
-  async getUser(email: string): Promise<SafeUserObject | {}> {
-    if (this.useRedis) {
-      this.logger.debug("[UserEndpoint] Getting user from cache...");
-      const cachedUserString = await this.redisClient.get(`${email}_safe`);
-      const cachedUser: SafeUserObject = JSON.parse(cachedUserString||"null");
-
-      this.logger.debug(`[UserEndpoint] Cached?: ${cachedUserString}`);
-
-      if (cachedUser) {
-        return cachedUser;
-      }
-    }
-
-    this.logger.debug("[UserEndpoint] Getting user...");
-    const user = await this.userModel.getUser(email, true);
-    if (!user) {
-      return {};
-    }
-
-    if (this.useRedis) {
-      this.logger.debug("[UserEndpoint] Caching user...");
-      await this.redisClient.set(`${email}_safe`, JSON.stringify(user), {
-        EX: 60 * 10, // Expires in 10 minutes
-        NX: true
-      });
-    }
-
-    return user;
   }
 }

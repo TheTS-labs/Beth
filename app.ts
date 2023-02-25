@@ -30,6 +30,7 @@ export default class App {
   redisClient: RedisClientType;
   endpoints: TEndpointObjects = {};
   logger: winston.Logger = new Logger().get();
+  redisRequired: boolean;
 
   // >>> Middlewares >>>
   authenticationMiddleware: AuthenticationMiddleware;
@@ -39,14 +40,15 @@ export default class App {
 
   //! Disabling auth you also disabling permission check
   constructor(endpoints: TEndpointTypes, disableAuthFor:string[]=[]) {
-    this.redisClient = new Redis(this.logger, Boolean(process.env.REDIS_REQUIRED)).get();
+    this.redisRequired = process.env.REDIS_REQUIRED === "true";
+    this.redisClient = new Redis(this.logger, this.redisRequired).get();
 
     // >>> Middlewares >>>
     this.authenticationMiddleware = new AuthenticationMiddleware(
-      this.logger, this.db, this.redisClient, Boolean(process.env.REDIS_REQUIRED)
+      this.logger, this.db, this.redisClient, this.redisRequired
     );
     this.permissionMiddleware = new PermissionMiddleware(
-      this.logger, this.db, this.redisClient, Boolean(process.env.REDIS_REQUIRED)
+      this.logger, this.db, this.redisClient, this.redisRequired
     );
     this.errorMiddleware = new ErrorMiddleware(this.logger);
     // <<< Middlewares <<<
@@ -63,7 +65,7 @@ export default class App {
         this.logger.debug(`[App] Request result: ${JSON.stringify(result)}`);
 
         res.json(result);
-      }),
+      })
     );
 
       this.logger.info(`[endpoints]: ${routerName} router was registered`);
@@ -87,7 +89,7 @@ export default class App {
         this.db,
         this.redisClient,
         this.logger,
-        Boolean(process.env.REDIS_REQUIRED)
+        this.redisRequired
       );
 
       this.endpoints[routerName] = endpointClassObject;

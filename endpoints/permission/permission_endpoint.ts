@@ -5,6 +5,8 @@ import winston from "winston";
 
 import { IBaseEndpoint } from "../../common/base_endpoint";
 import RequestError from "../../common/RequestError";
+import CachingPermissionModel from "../../db/models/caching/caching_permission";
+import CachingUserModel from "../../db/models/caching/caching_user";
 import PermissionModel, { TPermissions } from "../../db/models/permission";
 import UserModel, { TUser } from "../../db/models/user";
 import * as type from "./types";
@@ -13,8 +15,8 @@ type CallEndpointReturnType = {} | TPermissions | {success: true};
 
 export default class PermissionEndpoint implements IBaseEndpoint {
   allowNames: Array<string> = ["view", "grant", "rescind"];
-  permissionModel: PermissionModel;
-  userModel: UserModel;
+  permissionModel: PermissionModel | CachingPermissionModel;
+  userModel: UserModel | CachingUserModel;
 
   constructor(
     public db: Knex,
@@ -22,8 +24,11 @@ export default class PermissionEndpoint implements IBaseEndpoint {
     public logger: winston.Logger,
     public useRedis: boolean
   ) {
-    this.permissionModel = new PermissionModel(this.db, this.logger);
-    this.userModel = new UserModel(this.db, this.logger);
+    const UserModelType = this.useRedis ? CachingUserModel : UserModel;
+    const PermissionModelType = this.useRedis ? CachingPermissionModel : PermissionModel;
+
+    this.userModel = new UserModelType(this.db, this.logger, this.redisClient);
+    this.permissionModel = new PermissionModelType(this.db, this.logger, this.redisClient);
   }
 
   // <<< View <<<

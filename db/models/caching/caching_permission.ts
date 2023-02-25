@@ -2,18 +2,9 @@ import { Knex } from "knex";
 import { RedisClientType } from "redis";
 import winston from "winston";
 
-export interface TPermissions {
-  id: number
-  email: string
-  user_view: 0 | 1
-  user_editPassword: 0 | 1
-  user_freeze: 0 | 1
-  permissions_view: 0 | 1
-  permissions_grand: 0 | 1
-  permissions_rescind: 0 | 1
-}
+import PermissionsModel, { TPermissions } from "../permission";
 
-export default class PermissionsModel {
+export default class CachingPermissionModel implements PermissionsModel {
   constructor(public db: Knex, public logger: winston.Logger, public redisClient: RedisClientType) {}
 
   public async insertPermissions(email: string): Promise<void> {
@@ -21,9 +12,34 @@ export default class PermissionsModel {
     await this.db<TPermissions>("permission").insert({ email });
   }
 
-  public async getPermissions(email: string): Promise<TPermissions | undefined> {
+  private async _getPermissions(email: string): Promise<TPermissions | undefined> {
     this.logger.debug(`Getting permission for ${email}...`);
     const permissions = await this.db<TPermissions>("permission").where({ email }).first();
+
+    return permissions;
+  }
+
+  public async getPermissions(email: string): Promise<TPermissions | undefined> {
+    this.logger.debug("Getting user permissions from cache...");
+    const cachedPermissionsString = await this.redisClient.get(`${email}_permissions`);
+    const cachedPermissions: TPermissions = JSON.parse(cachedPermissionsString||"null");
+
+    if (cachedPermissions) {
+      this.logger.debug("Using cached user permissions...");
+      return cachedPermissions;
+    }
+
+    this.logger.debug("Getting user permissions...");
+    const permissions = await this._getPermissions(email);
+    if (!permissions) {
+      return undefined;
+    }
+
+    this.logger.debug("Caching user permissions...");
+    await this.redisClient.set(`${email}_permissions`, JSON.stringify(permissions), {
+      EX: 60 * 5, // Expires in 5 minutes
+      NX: true
+    });
 
     return permissions;
   }

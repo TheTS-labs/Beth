@@ -31,7 +31,7 @@ export default class UserModel {
   }
 
   public async getUnsafeUser(email: string): Promise<TUser | undefined> {
-    this.logger.debug(`[UserModel] Getting safe user ${email}`);
+    this.logger.debug(`[UserModel] Getting unsafe user ${email}`);
 
     const user = await this.db<TUser>("user").where({ email }).select().first();
 
@@ -39,13 +39,13 @@ export default class UserModel {
   }
 
   public async changePassword(email: string, newHash: string): Promise<void> {
-    this.logger.debug(`[UserModel] Changing user(${email}) password...`);
+    this.logger.debug(`[UserModel] Changing user's(${email}) password`);
 
     await this.db<TUser>("user").where({ email: email }).update({ password: newHash });
   }
 
   public async isFreezen(email: string): Promise<0 | 1> {
-    this.logger.debug(`[UserModel] Is ${email} freezen...`);
+    this.logger.debug(`[UserModel] Is ${email} freezen`);
 
     const record = await this.db<TUser>("user").where({ email }).select("isFreezen").first();
 
@@ -55,13 +55,13 @@ export default class UserModel {
   }
 
   public async unfreezeUser(email: string): Promise<void> {
-    this.logger.debug(`[UserModel] Unfreezing ${email}...`);
+    this.logger.debug(`[UserModel] Unfreezing ${email}`);
 
     await this.db<TUser>("user").where({ email: email }).update({ isFreezen: 0 });
   }
 
   public async freezeUser(email: string): Promise<void> {
-    this.logger.debug(`[UserModel] Freezing ${email}...`);
+    this.logger.debug(`[UserModel] Freezing ${email}`);
 
     await this.db<TUser>("user").where({ email: email }).update({ isFreezen: 1 });
   }

@@ -57,8 +57,13 @@ export default class App {
   }
 
   registerRouters(): App {
+    this.logger.info("[App] Registering endpoint objects");
     Object.keys(this.endpoints).map((routerName: string) => {
       this.app.post(`${routerName}/:endPoint`, asyncHandler(async (req: RequestWithUser, res: Response) => {
+        this.logger.debug(
+          `[App] Incoming request to ${routerName}/${req.params.endPoint}: ${JSON.stringify(req.body)}`
+        );
+
         const classObject = this.endpoints[routerName];
         const result = await classObject.callEndpoint(req.params.endPoint, req.body, req.user);
 
@@ -68,22 +73,24 @@ export default class App {
       })
     );
 
-      this.logger.info(`[endpoints]: ${routerName} router was registered`);
+    this.logger.debug(`[App] The ${routerName} endpoint object is registered`);
     });
 
+    this.logger.debug("[App] Enabling the error-catching middleware");
     this.app.use(this.errorMiddleware.middleware.bind(this.errorMiddleware));
 
     return this;
   }
 
   private setupApp(endpoints: TEndpointTypes, disableAuthFor: string[]): void {
+    this.logger.info("[App] Configure the application settings and enable the middlewares");
     this.app.use(express.json());
     this.app.use(express.urlencoded({ extended: true }));
     this.app.use(asyncMiddleware(this.authenticationMiddleware.middleware(disableAuthFor)));
     this.app.use(asyncMiddleware(this.permissionMiddleware.middleware()));
 
+    this.logger.info("[App] Create endpoint objects");
     Object.keys(endpoints).map((routerName: string) => {
-      this.logger.debug(`[app] Creating ${routerName} object...`);
       const endpointClass = endpoints[routerName];
       const endpointClassObject = new endpointClass(
         this.db,
@@ -93,12 +100,14 @@ export default class App {
       );
 
       this.endpoints[routerName] = endpointClassObject;
+
+      this.logger.debug(`[App] The ${routerName} endpoint object is created`);
     });
   }
 
   listen(): void {
     this.app.listen(process.env.APP_PORT, () => {
-      this.logger.info(`[server]: Server is running at http://localhost:${process.env.APP_PORT}`);
+      this.logger.info(`[App] Server is running at http://localhost:${process.env.APP_PORT}`);
     });
   }
 }

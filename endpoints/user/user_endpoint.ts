@@ -94,8 +94,6 @@ export default class UserEndpoint implements IBaseEndpoint {
   async callEndpoint(
     name: string, args: type.UserRequestArgs, user: TUser | undefined
   ): Promise<CallEndpointReturnType> {
-    this.logger.debug(`[UserEndpoint] Incoming Request: ${JSON.stringify(args)}`);
-
     const userIncludes = this.allowNames.includes(name);
     if (!userIncludes) {
       throw new RequestError("EndpointNotFound", `Endpoint user/${name} does not exist`, 404);

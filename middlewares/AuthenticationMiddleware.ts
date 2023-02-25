@@ -36,13 +36,15 @@ export default class AuthenticationMiddleware {
       const [email, password] = this.getCreds(req.headers.authorization);
       const user = await this.authenticate(email, password);
       req.user = user;
+
+      this.logger.debug("[AuthenticationMiddleware] User is authorized");
   
       next();
     };
   }
 
   private getCreds(authorization: string|undefined): string[] {
-    this.logger.debug("[AuthenticationMiddleware] Getting credentitals from the Basic Auth header...");
+    this.logger.debug("[AuthenticationMiddleware] Getting credentials from the Basic Auth header");
     if (!authorization) {
       throw new RequestError("AuthError", "Basic Auth header is required", 400);
     }
@@ -52,7 +54,7 @@ export default class AuthenticationMiddleware {
   }
 
   private async authenticate(email: string, password: string): Promise<TUser> {
-    this.logger.debug("[AuthenticationMiddleware] Authenticating...");
+    this.logger.debug("[AuthenticationMiddleware] User authentication");
     const user = await this.userModel.getUnsafeUser(email);
 
     if (!user) {

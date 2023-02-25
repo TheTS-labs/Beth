@@ -37,12 +37,12 @@ export default class PermissionEndpoint implements IBaseEndpoint {
     await this.validate(type.ViewArgsSchema, args);
     await this.abortIfFreezen(user.email);
 
-    const permissions = await this.getPermissions(args.email);
+    const permissions = await this.permissionModel.getPermissions(args.email);
     if (!permissions) {
       throw new RequestError("DatabaseError", `User permissions with email ${args.email} not found`, 500);
     }
 
-    return permissions as TPermissions;
+    return permissions;
   }
   // >>> View >>>
 
@@ -77,10 +77,7 @@ export default class PermissionEndpoint implements IBaseEndpoint {
   async callEndpoint(
     name: string, args: type.PermissionRequestArgs, user: TUser | undefined
   ): Promise<CallEndpointReturnType> {
-    this.logger.debug(`[PermissionEndpoint] Incoming Request: ${JSON.stringify(args)}`);
-
     const permissionIncludes = this.allowNames.includes(name);
-
     if (!permissionIncludes) {
       throw new RequestError("EndpointNotFound", `Endpoint permission/${name} does not exist`, 404);
     }
@@ -110,35 +107,5 @@ export default class PermissionEndpoint implements IBaseEndpoint {
     if (!user) {
       throw new RequestError("MiddlewareError", "User doesn't exist", 404);
     }
-  }
-
-  private async getPermissions(email: string): Promise<TPermissions | {}> {
-    if (this.useRedis) {
-      this.logger.debug("[PermissionEndpoint] Getting user permissions from cache...");
-      const cachedPermissionsString = await this.redisClient.get(`${email}_permissions`);
-      const cachedPermissions: TPermissions = JSON.parse(cachedPermissionsString||"null");
-
-      this.logger.debug(`[PermissionEndpoint] Cached?: ${cachedPermissionsString}`);
-
-      if (cachedPermissions) {
-        return cachedPermissions;
-      }
-    }
-
-    this.logger.debug("[PermissionEndpoint] Getting user permissions...");
-    const permissions = await this.permissionModel.getPermissions(email);
-    if (!permissions) {
-      return {};
-    }
-
-    if (this.useRedis) {
-      this.logger.debug("[PermissionEndpoint] Caching user permissions...");
-      await this.redisClient.set(`${email}_permissions`, JSON.stringify(permissions), {
-        EX: 60 * 5, // Expires in 5 minutes
-        NX: true
-      });
-    }
-
-    return permissions;
   }
 }

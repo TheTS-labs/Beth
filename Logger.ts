@@ -3,7 +3,6 @@ import winston, { format } from "winston";
 export default class Logger {
   get(): winston.Logger {
     return winston.createLogger({
-      level: "info",
       format: format.combine(
         format.colorize(),
         format.printf(({ level, message }) => {
@@ -11,7 +10,7 @@ export default class Logger {
         }),
       ),
       transports: [
-        new winston.transports.Console({ level: "debug" }),
+        new winston.transports.Console({ level: process.env.NODE_ENV === "production" ? "info" : "debug" }),
         new winston.transports.File({ level: "debug", filename: "app.log" }),
       ],
     });

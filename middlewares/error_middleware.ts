@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import winston from "winston";
 
-import RequestError from "../common/RequestError";
+import RequestError from "../common/request_error";
 
 export default class ErrorMiddleware {
   constructor(private logger: winston.Logger) {}

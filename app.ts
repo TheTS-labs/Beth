@@ -8,13 +8,13 @@ import winston from "winston";
 
 import { IBaseEndpoint } from "./common/base_endpoint";
 import { RequestWithUser } from "./common/types";
-import ENV, { Config } from "./Config";
+import ENV, { Config } from "./config";
 import knexfile from "./knexfile";
-import Logger from "./Logger";
-import AuthenticationMiddleware from "./middlewares/AuthenticationMiddleware";
-import ErrorMiddleware from "./middlewares/ErrorMiddleware";
-import PermissionMiddleware from "./middlewares/PermissionMiddleware";
-import Redis from "./Redis";
+import Logger from "./logger";
+import AuthenticationMiddleware from "./middlewares/authentication_middleware";
+import ErrorMiddleware from "./middlewares/error_middleware";
+import PermissionMiddleware from "./middlewares/permission_middleware";
+import Redis from "./redis";
 
 dotenv.config();
 

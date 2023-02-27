@@ -2,7 +2,7 @@ import { Knex } from "knex";
 import { RedisClientType } from "redis";
 import winston from "winston";
 
-import ENV from "../../../Config";
+import ENV from "../../../config";
 import PermissionsModel, { TPermissions } from "../permission";
 
 export default class CachingPermissionModel implements PermissionsModel {

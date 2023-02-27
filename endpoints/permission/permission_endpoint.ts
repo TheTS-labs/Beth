@@ -4,8 +4,8 @@ import { RedisClientType } from "redis";
 import winston from "winston";
 
 import { IBaseEndpoint } from "../../common/base_endpoint";
-import RequestError from "../../common/RequestError";
-import ENV from "../../Config";
+import RequestError from "../../common/request_error";
+import ENV from "../../config";
 import CachingPermissionModel from "../../db/models/caching/caching_permission";
 import CachingUserModel from "../../db/models/caching/caching_user";
 import PermissionModel, { TPermissions } from "../../db/models/permission";

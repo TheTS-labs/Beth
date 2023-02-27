@@ -1,7 +1,7 @@
 import { createClient as createRedisClient, RedisClientType } from "redis";
 import winston from "winston";
 
-import ENV from "./Config";
+import ENV from "./config";
 
 export default class Redis {
   constructor(private logger: winston.Logger, public config: ENV) {}

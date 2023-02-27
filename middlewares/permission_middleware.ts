@@ -3,9 +3,9 @@ import { Knex } from "knex";
 import { RedisClientType } from "redis";
 import winston from "winston";
 
-import RequestError from "../common/RequestError";
+import RequestError from "../common/request_error";
 import { RequestWithUser } from "../common/types";
-import ENV from "../Config";
+import ENV from "../config";
 import CachingPermissionModel from "../db/models/caching/caching_permission";
 import PermissionModel, { TPermissions } from "../db/models/permission";
 import { TUser } from "../db/models/user";
@@ -24,7 +24,7 @@ export default class PermissionMiddleware {
   ) {
     const PermissionModelType = this.config.REDIS_REQUIRED ? CachingPermissionModel : PermissionModel;
 
-    this.permissionModel = new PermissionModelType(this.db, this.logger, this.redisClient);
+    this.permissionModel = new PermissionModelType(this.db, this.logger, this.redisClient, this.config);
   }
 
   public middleware(): MiddlewareFunction {

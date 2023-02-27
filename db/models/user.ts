@@ -3,7 +3,7 @@ import { RedisClientType } from "redis";
 import winston from "winston";
 
 import { SafeUserObject } from "../../common/types";
-import ENV from "../../Config";
+import ENV from "../../config";
 
 export interface TUser {
   id: number

@@ -2,6 +2,8 @@ import { Knex } from "knex";
 import { RedisClientType } from "redis";
 import winston from "winston";
 
+import ENV from "../../Config";
+
 export interface TPermissions {
   id: number
   email: string
@@ -14,7 +16,12 @@ export interface TPermissions {
 }
 
 export default class PermissionsModel {
-  constructor(public db: Knex, public logger: winston.Logger, public redisClient: RedisClientType) {}
+  constructor(
+    public db: Knex,
+    public logger: winston.Logger,
+    public redisClient: RedisClientType, 
+    public config: ENV
+  ) {}
 
   public async insertPermissions(email: string): Promise<void> {
     this.logger.debug(`[PermissionsModel] Instering permission for ${email}`);

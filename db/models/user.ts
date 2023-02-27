@@ -3,6 +3,7 @@ import { RedisClientType } from "redis";
 import winston from "winston";
 
 import { SafeUserObject } from "../../common/types";
+import ENV from "../../Config";
 
 export interface TUser {
   id: number
@@ -12,7 +13,12 @@ export interface TUser {
 }
 
 export default class UserModel {
-  constructor(public db: Knex, public logger: winston.Logger, public redisClient: RedisClientType) {}
+  constructor(
+    public db: Knex,
+    public logger: winston.Logger,
+    public redisClient: RedisClientType, 
+    public config: ENV
+  ) {}
 
   public async insertUser(email: string, hash: string): Promise<void> {
     this.logger.debug(`[UserModel] Trying to insert user ${email}`);

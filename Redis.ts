@@ -1,8 +1,10 @@
 import { createClient as createRedisClient, RedisClientType } from "redis";
 import winston from "winston";
 
+import ENV from "./Config";
+
 export default class Redis {
-  constructor(private logger: winston.Logger, public useRedis: boolean) {}
+  constructor(private logger: winston.Logger, public config: ENV) {}
 
   get(): RedisClientType {
     const redisClient: RedisClientType = createRedisClient();
@@ -21,7 +23,7 @@ export default class Redis {
       this.logger.warn("[Redis] The client disconnected the connection to the server via .quit() or .disconnect()");
     });
 
-    if (this.useRedis) {
+    if (this.config.REDIS_REQUIRED) {
       redisClient.connect();
     }
 

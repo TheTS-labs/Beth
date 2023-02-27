@@ -6,6 +6,7 @@ import winston from "winston";
 
 import RequestError from "../common/RequestError";
 import { RequestWithUser } from "../common/types";
+import ENV from "../Config";
 import CachingUserModel from "../db/models/caching/caching_user";
 import UserModel, { TUser } from "../db/models/user";
 
@@ -18,10 +19,9 @@ export default class AuthenticationMiddleware {
     private logger: winston.Logger,
     private db: Knex,
     private redisClient: RedisClientType,
-    private useRedis: boolean
+    private config: ENV
   ) {
-    const UserModelType = this.useRedis ? CachingUserModel : UserModel;
-
+    const UserModelType = this.config.REDIS_REQUIRED ? CachingUserModel : UserModel;
     this.userModel = new UserModelType(this.db, this.logger, this.redisClient);
   }
 

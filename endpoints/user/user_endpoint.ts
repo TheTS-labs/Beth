@@ -7,6 +7,7 @@ import winston from "winston";
 import { IBaseEndpoint } from "../../common/base_endpoint";
 import RequestError from "../../common/RequestError";
 import { SafeUserObject } from "../../common/types";
+import ENV from "../../Config";
 import CachingPermissionModel from "../../db/models/caching/caching_permission";
 import CachingUserModel from "../../db/models/caching/caching_user";
 import PermissionModel from "../../db/models/permission";
@@ -24,13 +25,13 @@ export default class UserEndpoint implements IBaseEndpoint {
     public db: Knex,
     public redisClient: RedisClientType,
     public logger: winston.Logger,
-    public useRedis: boolean
+    public config: ENV
   ) {
-    const UserModelType = this.useRedis ? CachingUserModel : UserModel;
-    const PermissionModelType = this.useRedis ? CachingPermissionModel : PermissionModel;
+    const UserModelType = this.config.REDIS_REQUIRED ? CachingUserModel : UserModel;
+    const PermissionModelType = this.config.REDIS_REQUIRED ? CachingPermissionModel : PermissionModel;
 
-    this.userModel = new UserModelType(this.db, this.logger, this.redisClient);
-    this.permissionModel = new PermissionModelType(this.db, this.logger, this.redisClient);
+    this.userModel = new UserModelType(this.db, this.logger, this.redisClient, this.config);
+    this.permissionModel = new PermissionModelType(this.db, this.logger, this.redisClient, this.config);
   }
 
   // >>> Create >>>

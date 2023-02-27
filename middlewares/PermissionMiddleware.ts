@@ -5,6 +5,7 @@ import winston from "winston";
 
 import RequestError from "../common/RequestError";
 import { RequestWithUser } from "../common/types";
+import ENV from "../Config";
 import CachingPermissionModel from "../db/models/caching/caching_permission";
 import PermissionModel, { TPermissions } from "../db/models/permission";
 import { TUser } from "../db/models/user";
@@ -19,9 +20,9 @@ export default class PermissionMiddleware {
     private logger: winston.Logger,
     private db: Knex,
     private redisClient: RedisClientType,
-    private useRedis: boolean
+    private config: ENV
   ) {
-    const PermissionModelType = this.useRedis ? CachingPermissionModel : PermissionModel;
+    const PermissionModelType = this.config.REDIS_REQUIRED ? CachingPermissionModel : PermissionModel;
 
     this.permissionModel = new PermissionModelType(this.db, this.logger, this.redisClient);
   }

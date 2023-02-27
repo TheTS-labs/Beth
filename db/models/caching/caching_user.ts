@@ -3,10 +3,16 @@ import { RedisClientType } from "redis";
 import winston from "winston";
 
 import { SafeUserObject } from "../../../common/types";
+import ENV from "../../../Config";
 import UserModel, { TUser } from "../user";
 
 export default class CachingUserModel implements UserModel {
-    constructor(public db: Knex, public logger: winston.Logger, public redisClient: RedisClientType) {}
+  constructor(
+    public db: Knex,
+    public logger: winston.Logger,
+    public redisClient: RedisClientType, 
+    public config: ENV
+  ) {}
   
     public async insertUser(email: string, hash: string): Promise<void> {
       this.logger.debug(`[CachingUserModel] Trying to insert user ${email}`);
@@ -28,7 +34,7 @@ export default class CachingUserModel implements UserModel {
       if (user) {
         this.logger.debug("[CachingUserModel] Caching user");
         await this.redisClient.set(email, JSON.stringify(user), {
-          EX: 60 * 10, // Expires in 10 minutes
+          EX: this.config.USER_EX_SECS,
           NX: true
         });
       }

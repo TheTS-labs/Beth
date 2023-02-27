@@ -2,10 +2,16 @@ import { Knex } from "knex";
 import { RedisClientType } from "redis";
 import winston from "winston";
 
+import ENV from "../../../Config";
 import PermissionsModel, { TPermissions } from "../permission";
 
 export default class CachingPermissionModel implements PermissionsModel {
-  constructor(public db: Knex, public logger: winston.Logger, public redisClient: RedisClientType) {}
+  constructor(
+    public db: Knex,
+    public logger: winston.Logger,
+    public redisClient: RedisClientType, 
+    public config: ENV
+  ) {}
 
   public async insertPermissions(email: string): Promise<void> {
     this.logger.debug(`[CachingPermissionModel] Instering permission for ${email}`);
@@ -37,7 +43,7 @@ export default class CachingPermissionModel implements PermissionsModel {
 
     this.logger.debug("[CachingPermissionModel] Caching user permissions");
     await this.redisClient.set(`${email}_permissions`, JSON.stringify(permissions), {
-      EX: 60 * 5, // Expires in 5 minutes
+      EX: this.config.USER_REPMISSIONS_EX_SECS,
       NX: true
     });
 

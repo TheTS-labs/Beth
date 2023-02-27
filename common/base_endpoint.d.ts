@@ -2,6 +2,8 @@ import { Knex } from "knex";
 import { RedisClientType } from "redis";
 import winston from "winston";
 
+import ENV from "../Config";
+
 declare class IBaseEndpoint {
   public allowNames: Array<string>;
 
@@ -9,7 +11,7 @@ declare class IBaseEndpoint {
     public db: Knex,
     public redisClient: RedisClientType,
     public logger: winston.Logger,
-    public useRedis: boolean
+    public config: ENV
   );
 
   async callEndpoint(name: string, args: object, user: TUser | undefined): Promise<object>;

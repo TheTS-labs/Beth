@@ -8,6 +8,7 @@ import winston from "winston";
 
 import { IBaseEndpoint } from "./common/base_endpoint";
 import { RequestWithUser } from "./common/types";
+import ENV, { Config } from "./Config";
 import knexfile from "./knexfile";
 import Logger from "./Logger";
 import AuthenticationMiddleware from "./middlewares/AuthenticationMiddleware";
@@ -26,11 +27,11 @@ export interface TEndpointObjects {
 
 export default class App {
   app: Express = express();
-  db: Knex = knex(knexfile[process.env.NODE_ENV || "development"]);
+  config: ENV = new Config(process.env).getConfig();
+  db: Knex;
   redisClient: RedisClientType;
   endpoints: TEndpointObjects = {};
   logger: winston.Logger = new Logger().get();
-  redisRequired: boolean;
 
   // >>> Middlewares >>>
   authenticationMiddleware: AuthenticationMiddleware;
@@ -40,16 +41,12 @@ export default class App {
 
   //! Disabling auth you also disabling permission check
   constructor(endpoints: TEndpointTypes, disableAuthFor:string[]=[]) {
-    this.redisRequired = process.env.REDIS_REQUIRED === "true";
-    this.redisClient = new Redis(this.logger, this.redisRequired).get();
+    this.db = knex(knexfile[this.config.NODE_ENV]);
+    this.redisClient = new Redis(this.logger, this.config).get();
 
     // >>> Middlewares >>>
-    this.authenticationMiddleware = new AuthenticationMiddleware(
-      this.logger, this.db, this.redisClient, this.redisRequired
-    );
-    this.permissionMiddleware = new PermissionMiddleware(
-      this.logger, this.db, this.redisClient, this.redisRequired
-    );
+    this.authenticationMiddleware = new AuthenticationMiddleware(this.logger, this.db, this.redisClient, this.config);
+    this.permissionMiddleware = new PermissionMiddleware(this.logger, this.db, this.redisClient, this.config);
     this.errorMiddleware = new ErrorMiddleware(this.logger);
     // <<< Middlewares <<<
 
@@ -96,7 +93,7 @@ export default class App {
         this.db,
         this.redisClient,
         this.logger,
-        this.redisRequired
+        this.config
       );
 
       this.endpoints[routerName] = endpointClassObject;
@@ -107,7 +104,7 @@ export default class App {
 
   listen(): void {
     this.app.listen(process.env.APP_PORT, () => {
-      this.logger.info(`[App] Server is running at http://localhost:${process.env.APP_PORT}`);
+      this.logger.info(`[App] Server is running at http://localhost:${this.config.APP_PORT}`);
     });
   }
 }

@@ -3,9 +3,8 @@
   "version": "InDev",
   "license": "GPL-3.0-only",
   "scripts": {
-    "start": "nodemon app.ts",
-    "migrate": "knex migrate:latest --knexfile db/knexfile.js",
-    "seed": "knex seed:run --knexfile db/knexfile.js"
+    "start": "nodemon main.ts",
+    "migrate": "knex migrate:latest --knexfile knexfile.js --migrations-directory db/migrations"
   },
   "dependencies": {
     "bcrypt": "^5.1.0",
@@ -18,6 +17,7 @@
     "http-errors": "~1.6.3",
     "joi": "^17.7.0",
     "knex": "^2.3.0",
+    "middleware-async": "^1.3.5",
     "morgan": "~1.9.1",
     "pg": "^8.8.0",
     "redis": "^4.5.1",

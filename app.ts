@@ -1,75 +1,110 @@
 import dotenv from "dotenv";
-import express, { Express,Request, Response } from "express";
+import express, { Express, Response } from "express";
 import asyncHandler from "express-async-handler";
 import knex, { Knex } from "knex";
+import asyncMiddleware from "middleware-async";
 import { RedisClientType } from "redis";
 import winston from "winston";
 
 import { IBaseEndpoint } from "./common/base_endpoint";
-import knexfile from "./db/knexfile";
-import UserEndpoint from "./endpoints/user/user_endpoint";
-import ErrorMiddleware from "./ErrorMiddleware";
-import Logger from "./Logger";
-import Redis from "./Redis";
+import { RequestWithUser } from "./common/types";
+import ENV, { Config } from "./config";
+import knexfile from "./knexfile";
+import Logger from "./logger";
+import AuthenticationMiddleware from "./middlewares/authentication_middleware";
+import ErrorMiddleware from "./middlewares/error_middleware";
+import PermissionMiddleware from "./middlewares/permission_middleware";
+import Redis from "./redis";
 
 dotenv.config();
 
-interface TEndpointTypes { [key: string]: typeof IBaseEndpoint }
-interface TEndpointObjects { [key: string]: IBaseEndpoint }
+export interface TEndpointTypes {
+  [key: string]: typeof IBaseEndpoint
+}
+export interface TEndpointObjects {
+  [key: string]: IBaseEndpoint
+}
 
-class App {
-  db: Knex = knex(knexfile[process.env.NODE_ENV || "development"]);
-  redisClient: RedisClientType;
+export default class App {
   app: Express = express();
+  config: ENV = new Config(process.env).getConfig();
+  db: Knex;
+  redisClient: RedisClientType;
   endpoints: TEndpointObjects = {};
   logger: winston.Logger = new Logger().get();
+
+  // >>> Middlewares >>>
+  authenticationMiddleware: AuthenticationMiddleware;
+  permissionMiddleware: PermissionMiddleware;
   errorMiddleware: ErrorMiddleware;
+  // <<< Middlewares <<<
 
-  constructor(endpoints: TEndpointTypes) {
-    this.redisClient = new Redis(this.logger).get();
+  //! Disabling auth you also disabling permission check
+  constructor(endpoints: TEndpointTypes, disableAuthFor:string[]=[]) {
+    this.db = knex(knexfile[this.config.NODE_ENV]);
+    this.redisClient = new Redis(this.logger, this.config).get();
+
+    // >>> Middlewares >>>
+    this.authenticationMiddleware = new AuthenticationMiddleware(this.logger, this.db, this.redisClient, this.config);
+    this.permissionMiddleware = new PermissionMiddleware(this.logger, this.db, this.redisClient, this.config);
     this.errorMiddleware = new ErrorMiddleware(this.logger);
+    // <<< Middlewares <<<
 
-    this.app.use(express.json());
-    this.app.use(express.urlencoded({ extended: true }));
-
-    Object.keys(endpoints).map((routerName: string) => {
-      this.logger.debug(`[app] Creating ${routerName} object...`);
-      this.endpoints[routerName] = new endpoints[routerName](
-        this.db,
-        this.redisClient,
-        this.logger
-      );
-    });
+    this.setupApp(endpoints, disableAuthFor);
   }
 
   registerRouters(): App {
+    this.logger.info("[App] Registering endpoint objects");
     Object.keys(this.endpoints).map((routerName: string) => {
-      this.app.post(`${routerName}/:endPoint`, asyncHandler(async (req: Request, res: Response) => {
-        const endpoint = this.endpoints[routerName];
-        const result = await endpoint.callEndpoint(req.params.endPoint, req.body);
+      this.app.post(`${routerName}/:endPoint`, asyncHandler(async (req: RequestWithUser, res: Response) => {
+        this.logger.debug(
+          `[App] Incoming request to ${routerName}/${req.params.endPoint}: ${JSON.stringify(req.body)}`
+        );
+
+        const classObject = this.endpoints[routerName];
+        const result = await classObject.callEndpoint(req.params.endPoint, req.body, req.user);
 
         this.logger.debug(`[App] Request result: ${JSON.stringify(result)}`);
 
         res.json(result);
-      }));
+      })
+    );
 
-      this.logger.info(`[endpoints]: ${routerName} router was registered`);
+    this.logger.debug(`[App] The ${routerName} endpoint object is registered`);
     });
 
+    this.logger.debug("[App] Enabling the error-catching middleware");
     this.app.use(this.errorMiddleware.middleware.bind(this.errorMiddleware));
 
     return this;
   }
 
+  private setupApp(endpoints: TEndpointTypes, disableAuthFor: string[]): void {
+    this.logger.info("[App] Configure the application settings and enable the middlewares");
+    this.app.use(express.json());
+    this.app.use(express.urlencoded({ extended: true }));
+    this.app.use(asyncMiddleware(this.authenticationMiddleware.middleware(disableAuthFor)));
+    this.app.use(asyncMiddleware(this.permissionMiddleware.middleware()));
+
+    this.logger.info("[App] Create endpoint objects");
+    Object.keys(endpoints).map((routerName: string) => {
+      const endpointClass = endpoints[routerName];
+      const endpointClassObject = new endpointClass(
+        this.db,
+        this.redisClient,
+        this.logger,
+        this.config
+      );
+
+      this.endpoints[routerName] = endpointClassObject;
+
+      this.logger.debug(`[App] The ${routerName} endpoint object is created`);
+    });
+  }
+
   listen(): void {
     this.app.listen(process.env.APP_PORT, () => {
-      this.logger.info(`[server]: Server is running at http://localhost:${process.env.APP_PORT}`);
+      this.logger.info(`[App] Server is running at http://localhost:${this.config.APP_PORT}`);
     });
   }
 }
-
-const endpoints: TEndpointTypes = {
-  "/user": UserEndpoint
-};
-
-new App(endpoints).registerRouters().listen();

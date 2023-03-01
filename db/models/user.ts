@@ -1,60 +1,74 @@
 import { Knex } from "knex";
+import { RedisClientType } from "redis";
 import winston from "winston";
 
 import { SafeUserObject } from "../../common/types";
+import ENV from "../../config";
 
 export interface TUser {
   id: number
   email: string
   password: string
-  isFreezen: boolean
+  isFreezen: 0 | 1
 }
-
-export type Value<Type extends boolean> = Type extends true ? SafeUserObject : TUser;
 
 export default class UserModel {
   constructor(
     public db: Knex,
-    public logger: winston.Logger
+    public logger: winston.Logger,
+    public redisClient: RedisClientType, 
+    public config: ENV
   ) {}
 
-  public async insertUser(email: string, hash: string): Promise<void|never> {
+  public async insertUser(email: string, hash: string): Promise<void> {
     this.logger.debug(`[UserModel] Trying to insert user ${email}`);
     await this.db<TUser>("user").insert({ email: email, password: hash });
   }
 
-  public async getUser<Type extends boolean>(email: string, safe: Type): Promise<Value<Type>|undefined> {
+  public async getSafeUser(email: string): Promise<SafeUserObject | undefined> {
+    this.logger.debug(`[UserModel] Getting safe user ${email}`);
+
+    const user = (await this.db<TUser>("user")
+                            .where({ email })
+                            .select("id", "email", "isFreezen")
+                            .first()) as SafeUserObject | undefined;
+
+    return user;
+  }
+
+  public async getUnsafeUser(email: string): Promise<TUser | undefined> {
     this.logger.debug(`[UserModel] Getting unsafe user ${email}`);
 
-    const selectRows = safe ? ["id", "email", "isFreezen"] : [];
-
-    const user = await this.db<TUser>("user").where({email}).select(selectRows).first() as Value<Type>|undefined;
+    const user = await this.db<TUser>("user").where({ email }).select().first();
 
     return user;
   }
 
   public async changePassword(email: string, newHash: string): Promise<void> {
-    this.logger.debug(`[UserModel] Changing user(${email}) password...`);
+    this.logger.debug(`[UserModel] Changing user's(${email}) password`);
 
-    await this.db<TUser>("user").where({email: email}).update({password: newHash});
+    await this.db<TUser>("user").where({ email: email }).update({ password: newHash });
   }
 
-  public async isFreezen(email: string): Promise<boolean> {
-    this.logger.debug(`[UserModel] Is ${email} freezen...`);
+  public async isFreezen(email: string): Promise<0 | 1> {
+    this.logger.debug(`[UserModel] Is ${email} freezen`);
 
-    const record = await this.db<TUser>("user")
-                             .where({email})
-                             .select("isFreezen")
-                             .first();
+    const record = await this.db<TUser>("user").where({ email }).select("isFreezen").first();
 
-    const result = record||{ isFreezen: false };
+    const result = record || { isFreezen: 0 };
 
     return result.isFreezen;
   }
 
-  public async changeIsFreezeUser(email: string, value=true): Promise<void> {
-    this.logger.debug(`[UserModel] Freezing ${email}...`);
+  public async unfreezeUser(email: string): Promise<void> {
+    this.logger.debug(`[UserModel] Unfreezing ${email}`);
 
-    await this.db<TUser>("user").where({email: email}).update({isFreezen: value});
+    await this.db<TUser>("user").where({ email: email }).update({ isFreezen: 0 });
+  }
+
+  public async freezeUser(email: string): Promise<void> {
+    this.logger.debug(`[UserModel] Freezing ${email}`);
+
+    await this.db<TUser>("user").where({ email: email }).update({ isFreezen: 1 });
   }
 }

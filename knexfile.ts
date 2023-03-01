@@ -8,12 +8,12 @@ const config: { [key: string]: Knex.Config } = {
   development: {
     client: "sqlite3",
     connection: {
-      filename: path.join(__dirname, "dev.db.sqlite3")
+      filename: path.join(__dirname, "dev.db.sqlite3"),
     },
     useNullAsDefault: true,
     migrations: {
-      tableName: "knex_migrations"
-    }
+      tableName: "knex_migrations",
+    },
   }
 
   // staging: {

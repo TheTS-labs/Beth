@@ -1,4 +1,3 @@
-import bcrypt from "bcrypt";
 import Joi from "joi";
 import { Knex } from "knex";
 import { RedisClientType } from "redis";
@@ -6,20 +5,19 @@ import winston from "winston";
 
 import { IBaseEndpoint } from "../../common/base_endpoint";
 import RequestError from "../../common/request_error";
-import { SafeUserObject } from "../../common/types";
 import ENV from "../../config";
 import CachingPermissionModel from "../../db/models/caching/caching_permission";
 import CachingUserModel from "../../db/models/caching/caching_user";
-import PermissionModel from "../../db/models/permission";
+import PermissionModel, { TPermissions } from "../../db/models/permission";
 import UserModel, { TUser } from "../../db/models/user";
 import * as type from "./types";
 
-type CallEndpointReturnType = { success: true } | {} | SafeUserObject;
+type CallEndpointReturnType = {} | TPermissions | {success: true};
 
-export default class UserEndpoint implements IBaseEndpoint {
-  allowNames: Array<string> = ["create", "view", "editPassword", "freeze"];
-  userModel: UserModel | CachingUserModel;
+export default class PermissionEndpoint implements IBaseEndpoint {
+  allowNames: Array<string> = ["view", "grant", "rescind"];
   permissionModel: PermissionModel | CachingPermissionModel;
+  userModel: UserModel | CachingUserModel;
 
   constructor(
     public db: Knex,
@@ -34,70 +32,55 @@ export default class UserEndpoint implements IBaseEndpoint {
     this.permissionModel = new PermissionModelType(this.db, this.logger, this.redisClient, this.config);
   }
 
-  // >>> Create >>>
-  async create(args: type.CreateArgs, _user: TUser | undefined): Promise<{ success: true }> {
-    await this.validate(type.CreateArgsSchema, args);
-
-    const hash = await bcrypt.hash(args.password, 3);
-
-    await this.userModel.insertUser(args.email, hash).catch((err: Error) => {
-      throw new RequestError("DatabaseError", err.message, 500);
-    });
-
-    await this.permissionModel.insertPermissions(args.email).catch((err: Error) => {
-      throw new RequestError("DatabaseError", err.message, 500);
-    });
-
-    return { success: true };
-  }
-  // <<< Create <<<
-
   // <<< View <<<
-  async view(args: type.ViewArgs, user: TUser): Promise<SafeUserObject | {}> {
+  async view(args: type.ViewArgs, user: TUser): Promise<TPermissions> {
     await this.abortIfUserDoesntExist(user);
     await this.validate(type.ViewArgsSchema, args);
     await this.abortIfFreezen(user.email);
 
-    const requestedUser = await this.userModel.getSafeUser(args.email);
+    const permissions = await this.permissionModel.getPermissions(args.email);
+    if (!permissions) {
+      throw new RequestError("DatabaseError", `User permissions with email ${args.email} not found`, 500);
+    }
 
-    return requestedUser||{};
+    return permissions;
   }
   // >>> View >>>
 
-  // <<< Edit Password <<<
-  async editPassword(args: type.EditPasswordArgs, user: TUser): Promise<{ success: true }> {
+  // <<< Grant <<<
+  async grant(args: type.GrantArgs, user: TUser): Promise<{success: true}|never> {
     await this.abortIfUserDoesntExist(user);
-    await this.validate(type.EditPasswordArgsSchema, args);
+    await this.validate(type.GrantArgsSchema, args);
     await this.abortIfFreezen(user.email);
 
-    const newHash = await bcrypt.hash(args.newPassword, 3);
-
-    await this.userModel.changePassword(user.email, newHash);
-    await this.redisClient.del(user.email);
-
-    return { success: true };
-  }
-  // >>> Edit Password >>>
-
-  // <<< Freeze <<<
-  async freeze(args: type.FreezeArgs, user: TUser): Promise<{ success: true }> {
-    await this.abortIfUserDoesntExist(user);
-    await this.validate(type.FreezeArgsSchema, args);
-
-    await this.userModel.freezeUser(user.email).catch((err: { message: string }) => {
+    await this.permissionModel.grantPermission(args.grantTo, args.grantPermission).catch((err: Error) => {
       throw new RequestError("DatabaseError", err.message, 500);
     });
 
     return { success: true };
   }
-  // >>> Freeze >>>
+  // >>> Grant >>>
+
+  // <<< Rescind <<<
+  async rescind(args: type.RescindArgs, user: TUser): Promise<{success: true}|never> {
+    await this.abortIfUserDoesntExist(user);
+    await this.validate(type.RescindArgsSchema, args);
+    await this.abortIfFreezen(user.email);
+
+    await this.permissionModel.rescindPermission(args.rescindFrom, args.rescindPermission).catch((err: Error) => {
+      throw new RequestError("DatabaseError", err.message, 500);
+    });
+
+    return { success: true };
+  }
+  // >>> Rescind >>>
 
   async callEndpoint(
-    name: string, args: type.UserRequestArgs, user: TUser | undefined
+    name: string, args: type.PermissionRequestArgs, user: TUser | undefined
   ): Promise<CallEndpointReturnType> {
-    const userIncludes = this.allowNames.includes(name);
-    if (!userIncludes) {
-      throw new RequestError("EndpointNotFound", `Endpoint user/${name} does not exist`, 404);
+    const permissionIncludes = this.allowNames.includes(name);
+    if (!permissionIncludes) {
+      throw new RequestError("EndpointNotFound", `Endpoint permission/${name} does not exist`, 404);
     }
 
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -107,7 +90,7 @@ export default class UserEndpoint implements IBaseEndpoint {
     return result;
   }
 
-  async validate(schema: Joi.ObjectSchema, args: type.UserRequestArgs): Promise<void> {
+  async validate(schema: Joi.ObjectSchema, args: type.PermissionRequestArgs): Promise<void> {
     const validationResult = schema.validate(args);
     if (validationResult.error) {
       throw new RequestError("ValidationError", validationResult.error.message, 400);

@@ -2,18 +2,18 @@ import { Knex } from "knex";
 import { RedisClientType } from "redis";
 import winston from "winston";
 
-import BaseValidator from "./base_validator";
+import ENV from "../config";
 
 declare class IBaseEndpoint {
-  public validator: BaseValidator;
   public allowNames: Array<string>;
 
   constructor(
     public db: Knex,
     public redisClient: RedisClientType,
-    public logger: winston.Logger
+    public logger: winston.Logger,
+    public config: ENV
   );
 
-  async callEndpoint(name: string, args: object): Promise<object|never>;
-  async validate(schema: unknown, args: object): Promise<void|never>;
+  async callEndpoint(name: string, args: object, user: TUser | undefined): Promise<object>;
+  async validate(schema: unknown, args: object): Promise<void>;
 }

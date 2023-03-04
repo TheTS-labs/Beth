@@ -12,6 +12,8 @@ export async function up(knex: Knex): Promise<void> {
     table.boolean("permission_view").defaultTo(1);
     table.boolean("permission_grand").defaultTo(0);
     table.boolean("permission_rescind").defaultTo(0);
+    table.boolean("post_create").defaultTo(1);
+    table.boolean("post_view").defaultTo(1);
   });
 }
 

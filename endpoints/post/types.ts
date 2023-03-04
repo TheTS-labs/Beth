@@ -6,7 +6,7 @@ export interface CreateArgs {
 }
 
 export const CreateArgsSchema = Joi.object({
-  text: Joi.string().base64().required()
+  text: Joi.string().required()
 });
 // <<< Create <<<
 
@@ -41,3 +41,5 @@ export const DeleteArgsSchema = Joi.object({
   id: Joi.number().integer().positive().required()
 });
 // <<< Delete <<<
+
+export type PostRequestArgs = CreateArgs | ViewArgs | EditArgs | DeleteArgs;

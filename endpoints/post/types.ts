@@ -23,12 +23,12 @@ export const ViewArgsSchema = Joi.object({
 // >>> Edit >>>
 export interface EditArgs {
   id: number
-  new_text: string
+  newText: string
 }
   
 export const EditArgsSchema = Joi.object({
   id: Joi.number().integer().positive().required(),
-  text: Joi.string().base64().required()
+  newText: Joi.string().required()
 });
 // <<< Edit <<<
 

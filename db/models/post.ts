@@ -26,11 +26,20 @@ export default class PostModel {
 
   public async getPost(id: number): Promise<TPost | undefined> {
     this.logger.debug(`[PostModel] Trying to get post ${id}`);
-    // await this.db<TPost>("post").insert({ author: author, text: text });
     const post = await this.db<TPost>("post")
                            .where({ id })
                            .first();
 
     return post;
+  }
+
+  public async editPost(id: number, newText: string): Promise<void> {
+    this.logger.debug(`[PostModel] Trying to edit post ${id}`);
+    await this.db<TPost>("post").where({ id: id }).update({ text: newText });
+  }
+
+  public async deletePost(id: number): Promise<void> {
+    this.logger.debug(`[PostModel] Trying to edit post ${id}`);
+    await this.db<TPost>("post").where({ id: id }).del();
   }
 }

@@ -14,6 +14,10 @@ export async function up(knex: Knex): Promise<void> {
     table.boolean("permission_rescind").defaultTo(0);
     table.boolean("post_create").defaultTo(1);
     table.boolean("post_view").defaultTo(1);
+    table.boolean("post_edit").defaultTo(1);
+    table.boolean("post_delete").defaultTo(1);
+    table.boolean("post_superEdit").defaultTo(0);
+    table.boolean("post_superDelete").defaultTo(0);
   });
 }
 

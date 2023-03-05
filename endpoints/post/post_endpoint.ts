@@ -6,7 +6,9 @@ import winston from "winston";
 import { IBaseEndpoint } from "../../common/base_endpoint";
 import RequestError from "../../common/request_error";
 import ENV from "../../config";
+import CachingPermissionModel from "../../db/models/caching/caching_permission";
 import CachingUserModel from "../../db/models/caching/caching_user";
+import PermissionModel, { TPermissions } from "../../db/models/permission";
 import PostModel, { TPost } from "../../db/models/post";
 import UserModel, { TUser } from "../../db/models/user";
 import * as type from "./types";
@@ -19,6 +21,7 @@ export default class PostEndpoint implements IBaseEndpoint {
     "edit", "delete"
   ];
   userModel: UserModel | CachingUserModel;
+  permissionModel: PermissionModel | CachingPermissionModel;
   postModel: PostModel;
 
   constructor(
@@ -28,8 +31,10 @@ export default class PostEndpoint implements IBaseEndpoint {
     public config: ENV
   ) {
     const UserModelType = this.config.REDIS_REQUIRED ? CachingUserModel : UserModel;
-    this.userModel = new UserModelType(this.db, this.logger, this.redisClient, this.config);
+    const PermissionModelType = this.config.REDIS_REQUIRED ? CachingPermissionModel : PermissionModel;
 
+    this.permissionModel = new PermissionModelType(this.db, this.logger, this.redisClient, this.config);
+    this.userModel = new UserModelType(this.db, this.logger, this.redisClient, this.config);
     this.postModel = new PostModel(this.db, this.logger, this.config);
   }
 
@@ -56,6 +61,51 @@ export default class PostEndpoint implements IBaseEndpoint {
     return post||{};
   }
   // <<< View <<<
+
+  // >>> Edit >>>
+  async edit(args: type.EditArgs, user: TUser): Promise<{ success: true }> {
+    await this.validate(type.EditArgsSchema, args);
+    await this.abortIfFreezen(user.email);
+
+    const post = await this.postModel.getPost(args.id);
+    const permissions = await this.permissionModel.getPermissions(user.email) as TPermissions;
+  
+    if (!post) {
+      //? Or maybe `return { success: true };`
+      throw new RequestError("DatabaseError", "Post doesn't exist", 404);
+    }
+
+    if (post.author != user.email && !permissions["post_superEdit"]) {
+      throw new RequestError("PermissionError", "You can only edit your own posts", 403);
+    }
+
+    await this.postModel.editPost(args.id, args.newText);
+
+    return { success: true };
+  }
+  // <<< Edit <<<
+
+  // >>> Delete >>>
+  async delete(args: type.DeleteArgs, user: TUser): Promise<{ success: true }> {
+    await this.validate(type.DeleteArgsSchema, args);
+    await this.abortIfFreezen(user.email);
+
+    const post = await this.postModel.getPost(args.id);
+    const permissions = await this.permissionModel.getPermissions(user.email) as TPermissions;
+
+    if (!post) {
+      return { success: true };
+    }
+
+    if (post.author != user.email && !permissions["post_superDelete"]) {
+      throw new RequestError("PermissionError", "You can only delete your own posts", 403);
+    }
+
+    await this.postModel.deletePost(args.id);
+
+    return { success: true };
+  }
+  // <<< Delete <<<
 
   async callEndpoint(
     name: string, args: type.PostRequestArgs, user: unknown | undefined

@@ -97,6 +97,10 @@ export default class UserEndpoint implements IBaseEndpoint {
       throw new RequestError("EndpointNotFound", `Endpoint user/${name} does not exist`, 404);
     }
 
+    // Element implicitly has an 'any' type
+    // because expression of type 'string' can't be used to index type 'UserEndpoint'.
+    // No index signature with a parameter of type 'string' was found on type 'UserEndpoint'.
+    // But it actually can be used
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
     const result: CallEndpointReturnType = await this[name](args, user);

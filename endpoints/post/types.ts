@@ -42,4 +42,17 @@ export const DeleteArgsSchema = Joi.object({
 });
 // <<< Delete <<<
 
-export type PostRequestArgs = CreateArgs | ViewArgs | EditArgs | DeleteArgs;
+// >>> Get List >>>
+export interface GetListArgs {
+  afterCursor: string
+  numberRecords: number
+}
+  
+export const GetListArgsSchema = Joi.object({
+  afterCursor: Joi.string(),
+  numberRecords: Joi.number().positive()
+});
+// <<< Get List <<<
+
+
+export type PostRequestArgs = CreateArgs | ViewArgs | EditArgs | DeleteArgs | GetListArgs;

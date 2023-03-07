@@ -1884,6 +1884,11 @@ json5@^1.0.1:
   dependencies:
     minimist "^1.2.0"
 
+knex-cursor-pagination@^0.3.0:
+  version "0.3.0"
+  resolved "https://registry.yarnpkg.com/knex-cursor-pagination/-/knex-cursor-pagination-0.3.0.tgz#b3e7b1e0b91b733f1b66d8c5348839320fb7624d"
+  integrity sha512-n5frpBYYDvGbnzF3Ncsfr60FlIG2SooFgHb/oEAbAQ81hwr4pEBJ03mBLIfSgVKCaciGKAUmr0X2JmfYY+PCTw==
+
 knex@^2.3.0:
   version "2.3.0"
   resolved "https://registry.yarnpkg.com/knex/-/knex-2.3.0.tgz#87fa2a9553d7cafb125d7a0645256fbe29ef5967"

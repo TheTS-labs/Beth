@@ -1,3 +1,4 @@
+import { privateEncrypt } from "crypto";
 import Joi from "joi";
 import { Knex } from "knex";
 import { RedisClientType } from "redis";
@@ -9,7 +10,7 @@ import ENV from "../../config";
 import CachingPermissionModel from "../../db/models/caching/caching_permission";
 import CachingUserModel from "../../db/models/caching/caching_user";
 import PermissionModel, { TPermissions } from "../../db/models/permission";
-import PostModel, { TPost } from "../../db/models/post";
+import PostModel, { GetListReturnType, TPost } from "../../db/models/post";
 import UserModel, { TUser } from "../../db/models/user";
 import * as type from "./types";
 
@@ -18,7 +19,8 @@ type CallEndpointReturnType = object;
 export default class PostEndpoint implements IBaseEndpoint {
   public allowNames: string[] = [
     "create", "view",
-    "edit", "delete"
+    "edit", "delete",
+    "getList"
   ];
   userModel: UserModel | CachingUserModel;
   permissionModel: PermissionModel | CachingPermissionModel;
@@ -71,7 +73,6 @@ export default class PostEndpoint implements IBaseEndpoint {
     const permissions = await this.permissionModel.getPermissions(user.email) as TPermissions;
   
     if (!post) {
-      //? Or maybe `return { success: true };`
       throw new RequestError("DatabaseError", "Post doesn't exist", 404);
     }
 
@@ -106,6 +107,19 @@ export default class PostEndpoint implements IBaseEndpoint {
     return { success: true };
   }
   // <<< Delete <<<
+
+  // <<< Get List <<<
+  async getList(args: type.GetListArgs, _user: TUser): Promise<GetListReturnType> {
+    await this.validate(type.GetListArgsSchema, args);
+
+    const result = await this.postModel.getList(args.afterCursor, args.numberRecords||3)
+                                       .catch((err: { message: string }) => {
+      throw new RequestError("DatabaseError", err.message, 500);
+    });
+
+    return result;
+  }
+  // >>> Get List >>>
 
   async callEndpoint(
     name: string, args: type.PostRequestArgs, user: unknown | undefined

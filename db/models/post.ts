@@ -1,7 +1,14 @@
 import { Knex } from "knex";
+import { getCursor, knexCursorPagination } from "knex-cursor-pagination";
 import winston from "winston";
 
 import ENV from "../../config";
+
+export type GetListReturnType = {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  results: any[]
+  endCursor: string
+};
 
 export interface TPost {
   id: number
@@ -41,5 +48,18 @@ export default class PostModel {
   public async deletePost(id: number): Promise<void> {
     this.logger.debug(`[PostModel] Trying to edit post ${id}`);
     await this.db<TPost>("post").where({ id: id }).del();
+  }
+
+  public async getList(afterCursor: string, numberRecords: number): Promise<GetListReturnType> {
+    let query = this.db.queryBuilder().select("post.*").from("post").orderBy("created_at", "DESC");
+    query = knexCursorPagination(query, { after: afterCursor, first: numberRecords });
+
+    const results = await query;
+    const endCursor = getCursor(results[results.length - 1]);
+
+    return {
+      results: results,
+      endCursor: endCursor
+    };
   }
 }

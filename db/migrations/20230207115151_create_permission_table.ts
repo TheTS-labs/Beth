@@ -18,6 +18,7 @@ export async function up(knex: Knex): Promise<void> {
     table.boolean("post_delete").defaultTo(1);
     table.boolean("post_superEdit").defaultTo(0);
     table.boolean("post_superDelete").defaultTo(0);
+    table.boolean("post_getList").defaultTo(1);
   });
 }
 

@@ -1,4 +1,3 @@
-import { privateEncrypt } from "crypto";
 import Joi from "joi";
 import { Knex } from "knex";
 import { RedisClientType } from "redis";
@@ -60,6 +59,10 @@ export default class PostEndpoint implements IBaseEndpoint {
 
     const post = await this.postModel.getPost(args.id);
 
+    if (post?.freezenAt) {
+      return {};
+    }
+
     return post||{};
   }
   // <<< View <<<
@@ -102,7 +105,7 @@ export default class PostEndpoint implements IBaseEndpoint {
       throw new RequestError("PermissionError", "You can only delete your own posts", 403);
     }
 
-    await this.postModel.deletePost(args.id);
+    await this.postModel.freezePost(args.id);
 
     return { success: true };
   }

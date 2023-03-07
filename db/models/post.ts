@@ -13,7 +13,8 @@ export type GetListReturnType = {
 export interface TPost {
   id: number
   author: string
-  created_at: Date
+  createdAt: Date
+  freezenAt: Date
   text: string
 }
 
@@ -46,12 +47,24 @@ export default class PostModel {
   }
 
   public async deletePost(id: number): Promise<void> {
-    this.logger.debug(`[PostModel] Trying to edit post ${id}`);
+    this.logger.debug(`[PostModel] Trying to delete post ${id}`);
     await this.db<TPost>("post").where({ id: id }).del();
   }
 
+  public async freezePost(id: number): Promise<void> {
+    this.logger.debug(`[PostModel] Trying to freeze post ${id}`);
+    await this.db<TPost>("post").where({ id: id }).update({
+      freezenAt: new Date(Date.now())
+    });
+  }
+
   public async getList(afterCursor: string, numberRecords: number): Promise<GetListReturnType> {
-    let query = this.db.queryBuilder().select("post.*").from("post").orderBy("created_at", "DESC");
+    let query = this.db.queryBuilder()
+                       .select("post.*")
+                       .from("post")
+                       .where({ "freezenAt": null })
+                       .orderBy("createdAt", "DESC");
+
     query = knexCursorPagination(query, { after: afterCursor, first: numberRecords });
 
     const results = await query;

@@ -54,7 +54,6 @@ export default class UserEndpoint implements IBaseEndpoint {
 
   // <<< View <<<
   async view(args: type.ViewArgs, user: TUser): Promise<SafeUserObject | {}> {
-    await this.abortIfUserDoesntExist(user);
     await this.validate(type.ViewArgsSchema, args);
     await this.abortIfFreezen(user.email);
 
@@ -66,7 +65,6 @@ export default class UserEndpoint implements IBaseEndpoint {
 
   // <<< Edit Password <<<
   async editPassword(args: type.EditPasswordArgs, user: TUser): Promise<{ success: true }> {
-    await this.abortIfUserDoesntExist(user);
     await this.validate(type.EditPasswordArgsSchema, args);
     await this.abortIfFreezen(user.email);
 
@@ -81,7 +79,6 @@ export default class UserEndpoint implements IBaseEndpoint {
 
   // <<< Freeze <<<
   async freeze(args: type.FreezeArgs, user: TUser): Promise<{ success: true }> {
-    await this.abortIfUserDoesntExist(user);
     await this.validate(type.FreezeArgsSchema, args);
 
     await this.userModel.freezeUser(user.email).catch((err: { message: string }) => {
@@ -100,6 +97,10 @@ export default class UserEndpoint implements IBaseEndpoint {
       throw new RequestError("EndpointNotFound", `Endpoint user/${name} does not exist`, 404);
     }
 
+    // Element implicitly has an 'any' type
+    // because expression of type 'string' can't be used to index type 'UserEndpoint'.
+    // No index signature with a parameter of type 'string' was found on type 'UserEndpoint'.
+    // But it actually can be used
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
     const result: CallEndpointReturnType = await this[name](args, user);
@@ -118,12 +119,6 @@ export default class UserEndpoint implements IBaseEndpoint {
     const result = await this.userModel.isFreezen(email);
     if (result) {
       throw new RequestError("UserIsFreezen", `User(${email}) is freezen`, 403);
-    }
-  }
-
-  async abortIfUserDoesntExist(user: TUser | undefined): Promise<void> {
-    if (!user) {
-      throw new RequestError("MiddlewareError", "User doesn't exist", 404);
     }
   }
 }

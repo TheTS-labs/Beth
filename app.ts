@@ -15,6 +15,7 @@ import AuthenticationMiddleware from "./middlewares/authentication_middleware";
 import ErrorMiddleware from "./middlewares/error_middleware";
 import PermissionMiddleware from "./middlewares/permission_middleware";
 import Redis from "./redis";
+import initScheduledJobs from "./scheduledJobs/init_scheduled_jobs";
 
 dotenv.config();
 
@@ -50,6 +51,7 @@ export default class App {
     this.errorMiddleware = new ErrorMiddleware(this.logger);
     // <<< Middlewares <<<
 
+    initScheduledJobs(this.db, this.logger);
     this.setupApp(endpoints, disableAuthFor);
   }
 

@@ -13,6 +13,14 @@ export interface TPermissions {
   permissions_view: 0 | 1
   permissions_grand: 0 | 1
   permissions_rescind: 0 | 1
+  post_create: 0 | 1
+  post_view: 0 | 1
+  post_edit: 0 | 1
+  post_delete: 0 | 1
+  post_superEdit: 0 | 1
+  post_superDelete: 0 | 1
+  post_getList: 0 | 1
+  post_forceDelete: 0 | 1
 }
 
 export default class PermissionsModel {

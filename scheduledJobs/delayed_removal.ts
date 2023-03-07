@@ -8,7 +8,7 @@ export default function getJob(
   db: Knex,
   logger: winston.Logger,
 ): CronJob.ScheduledTask {
-  return CronJob.schedule("*/10 * * * * *", async () => {
+  return CronJob.schedule("0 0 * * */1", async () => {
     const sevenDaysAgo: number = Date.now() - 7 * 24 * 60 * 60 * 1000;
 
     logger.info(`[DelayedRemoval] Deleting posts(freezenAt <= ${sevenDaysAgo})`);

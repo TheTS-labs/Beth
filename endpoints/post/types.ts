@@ -54,5 +54,15 @@ export const GetListArgsSchema = Joi.object({
 });
 // <<< Get List <<<
 
+// >>> Force Delete >>>
+export interface ForceDeleteArgs {
+  id: number
+}
+  
+export const ForceDeleteArgsSchema = Joi.object({
+  id: Joi.number().integer().positive().required()
+});
+// <<< Force Delete <<<
 
-export type PostRequestArgs = CreateArgs | ViewArgs | EditArgs | DeleteArgs | GetListArgs;
+
+export type PostRequestArgs = CreateArgs | ViewArgs | EditArgs | DeleteArgs | GetListArgs | ForceDeleteArgs;

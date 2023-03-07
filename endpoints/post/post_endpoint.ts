@@ -19,7 +19,7 @@ export default class PostEndpoint implements IBaseEndpoint {
   public allowNames: string[] = [
     "create", "view",
     "edit", "delete",
-    "getList"
+    "getList", "forceDelete"
   ];
   userModel: UserModel | CachingUserModel;
   permissionModel: PermissionModel | CachingPermissionModel;
@@ -112,8 +112,9 @@ export default class PostEndpoint implements IBaseEndpoint {
   // <<< Delete <<<
 
   // <<< Get List <<<
-  async getList(args: type.GetListArgs, _user: TUser): Promise<GetListReturnType> {
+  async getList(args: type.GetListArgs, user: TUser): Promise<GetListReturnType> {
     await this.validate(type.GetListArgsSchema, args);
+    await this.abortIfFreezen(user.email);
 
     const result = await this.postModel.getList(args.afterCursor, args.numberRecords||3)
                                        .catch((err: { message: string }) => {
@@ -123,6 +124,23 @@ export default class PostEndpoint implements IBaseEndpoint {
     return result;
   }
   // >>> Get List >>>
+
+  // <<< Force Delete <<<
+  async forceDelete(args: type.ForceDeleteArgs, user: TUser): Promise<{ success: true }> {
+    await this.validate(type.ForceDeleteArgsSchema, args);
+    await this.abortIfFreezen(user.email);
+
+    const post = await this.postModel.getPost(args.id);
+
+    if (!post) {
+      throw new RequestError("DatabaseError", "Post doesn't exist", 404);
+    }
+
+    await this.postModel.deletePost(args.id);
+
+    return { success: true };
+  }
+  // >>> Force Delete >>>
 
   async callEndpoint(
     name: string, args: type.PostRequestArgs, user: unknown | undefined

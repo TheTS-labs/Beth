@@ -59,6 +59,7 @@ export default class PostModel {
   }
 
   public async getList(afterCursor: string, numberRecords: number): Promise<GetListReturnType> {
+    this.logger.debug(`[PostModel] Trying to get list: ${afterCursor}, ${numberRecords}`);
     let query = this.db.queryBuilder()
                        .select("post.*")
                        .from("post")

@@ -95,7 +95,7 @@ export default class PostEndpoint implements IBaseEndpoint {
     const permissions = await this.permissionModel.getPermissions(user.email) as TPermissions;
 
     if (!post) {
-      return { success: true };
+      throw new RequestError("DatabaseError", "Post doesn't exist", 404);
     }
 
     if (post.author != user.email && !permissions["post_superDelete"]) {

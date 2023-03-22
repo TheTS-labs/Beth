@@ -1,5 +1,15 @@
 import Joi from "joi";
 
+// >>> Base >>>
+interface Base {
+  id: number
+}
+
+const base =  Joi.object().keys({
+  id: Joi.number().integer().positive().required()
+});
+// <<< Base <<< 
+
 // >>> Create >>>
 export interface CreateArgs {
   text: string
@@ -11,35 +21,25 @@ export const CreateArgsSchema = Joi.object({
 // <<< Create <<<
 
 // >>> View >>>
-export interface ViewArgs {
-  id: number
-}
-  
-export const ViewArgsSchema = Joi.object({
-  id: Joi.number().integer().positive().required()
-});
+export type ViewArgs = Base;
+
+export const ViewArgsSchema = base;
 // <<< View <<<
 
 // >>> Edit >>>
-export interface EditArgs {
-  id: number
+export interface EditArgs extends Base {
   newText: string
 }
   
-export const EditArgsSchema = Joi.object({
-  id: Joi.number().integer().positive().required(),
+export const EditArgsSchema = base.keys({
   newText: Joi.string().required()
 });
 // <<< Edit <<<
 
 // >>> Delete >>>
-export interface DeleteArgs {
-  id: number
-}
-  
-export const DeleteArgsSchema = Joi.object({
-  id: Joi.number().integer().positive().required()
-});
+export type DeleteArgs = Base;
+
+export const DeleteArgsSchema = base;
 // <<< Delete <<<
 
 // >>> Get List >>>
@@ -55,13 +55,9 @@ export const GetListArgsSchema = Joi.object({
 // <<< Get List <<<
 
 // >>> Force Delete >>>
-export interface ForceDeleteArgs {
-  id: number
-}
+export type ForceDeleteArgs = Base;
   
-export const ForceDeleteArgsSchema = Joi.object({
-  id: Joi.number().integer().positive().required()
-});
+export const ForceDeleteArgsSchema = base;
 // <<< Force Delete <<<
 
 

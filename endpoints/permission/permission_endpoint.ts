@@ -34,7 +34,6 @@ export default class PermissionEndpoint implements IBaseEndpoint {
 
   // <<< View <<<
   async view(args: type.ViewArgs, user: TUser): Promise<TPermissions> {
-    await this.abortIfUserDoesntExist(user);
     await this.validate(type.ViewArgsSchema, args);
     await this.abortIfFreezen(user.email);
 
@@ -49,7 +48,6 @@ export default class PermissionEndpoint implements IBaseEndpoint {
 
   // <<< Grant <<<
   async grant(args: type.GrantArgs, user: TUser): Promise<{success: true}|never> {
-    await this.abortIfUserDoesntExist(user);
     await this.validate(type.GrantArgsSchema, args);
     await this.abortIfFreezen(user.email);
 
@@ -63,7 +61,6 @@ export default class PermissionEndpoint implements IBaseEndpoint {
 
   // <<< Rescind <<<
   async rescind(args: type.RescindArgs, user: TUser): Promise<{success: true}|never> {
-    await this.abortIfUserDoesntExist(user);
     await this.validate(type.RescindArgsSchema, args);
     await this.abortIfFreezen(user.email);
 
@@ -105,12 +102,6 @@ export default class PermissionEndpoint implements IBaseEndpoint {
     const result = await this.userModel.isFreezen(email);
     if (result) {
       throw new RequestError("UserIsFreezen", `User(${email}) is freezen`, 403);
-    }
-  }
-
-  async abortIfUserDoesntExist(user: TUser | undefined): Promise<void> {
-    if (!user) {
-      throw new RequestError("MiddlewareError", "User doesn't exist", 404);
     }
   }
 }

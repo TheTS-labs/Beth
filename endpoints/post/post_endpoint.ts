@@ -13,13 +13,14 @@ import PostModel, { GetListReturnType, TPost } from "../../db/models/post";
 import UserModel, { TUser } from "../../db/models/user";
 import * as type from "./types";
 
-type CallEndpointReturnType = object;
+type CallEndpointReturnType = { success: true, id: number } | { success: true };
 
 export default class PostEndpoint implements IBaseEndpoint {
   public allowNames: string[] = [
     "create", "view",
     "edit", "delete",
-    "getList", "forceDelete"
+    "getList", "forceDelete",
+    "viewReplies"
   ];
   userModel: UserModel | CachingUserModel;
   permissionModel: PermissionModel | CachingPermissionModel;
@@ -44,7 +45,7 @@ export default class PostEndpoint implements IBaseEndpoint {
     await this.validate(type.CreateArgsSchema, args);
     await this.abortIfFreezen(user.email);
 
-    const { id } = await this.postModel.insertPost(user.email, args.text).catch((err: Error) => {
+    const { id } = await this.postModel.insertPost(user.email, args.text, args.replyTo||null).catch((err: Error) => {
       throw new RequestError("DatabaseError", err.message, 500);
     }) as Pick<TPost, "id">;
 
@@ -141,6 +142,20 @@ export default class PostEndpoint implements IBaseEndpoint {
     return { success: true };
   }
   // >>> Force Delete >>>
+
+  // <<< View Replies <<<
+  async viewReplies(args: type.ViewRepliesArgs, user: TUser): Promise<GetListReturnType> {
+    await this.validate(type.ViewRepliesArgsSchema, args);
+    await this.abortIfFreezen(user.email);
+
+    const result = await this.postModel.getReplies(args.repliesTo ,args.afterCursor, args.numberRecords||3)
+                                       .catch((err: { message: string }) => {
+      throw new RequestError("DatabaseError", err.message, 500);
+    });
+
+    return result;
+  }
+  // >>> Get List >>>
 
   async callEndpoint(
     name: string, args: type.PostRequestArgs, user: unknown | undefined

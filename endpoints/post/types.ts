@@ -13,10 +13,12 @@ const base =  Joi.object().keys({
 // >>> Create >>>
 export interface CreateArgs {
   text: string
+  replyTo: number | undefined
 }
 
 export const CreateArgsSchema = Joi.object({
-  text: Joi.string().required()
+  text: Joi.string().required(),
+  replyTo: Joi.number().positive()
 });
 // <<< Create <<<
 
@@ -60,5 +62,21 @@ export type ForceDeleteArgs = Base;
 export const ForceDeleteArgsSchema = base;
 // <<< Force Delete <<<
 
+// >>> ViewReplies >>>
+export interface ViewRepliesArgs {
+  repliesTo: number
+  afterCursor: string
+  numberRecords: number
+}
 
-export type PostRequestArgs = CreateArgs | ViewArgs | EditArgs | DeleteArgs | GetListArgs | ForceDeleteArgs;
+export const ViewRepliesArgsSchema = Joi.object({
+  repliesTo: Joi.number().positive().required(),
+  afterCursor: Joi.string(),
+  numberRecords: Joi.number().positive()
+});
+// <<< ViewReplies <<<
+
+
+export type PostRequestArgs = CreateArgs | ViewArgs | EditArgs |
+                              DeleteArgs | GetListArgs | ForceDeleteArgs |
+                              ViewRepliesArgs;

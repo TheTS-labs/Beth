@@ -4,7 +4,8 @@
   "license": "GPL-3.0-only",
   "scripts": {
     "start": "nodemon main.ts",
-    "migrate": "knex migrate:latest --knexfile knexfile.js --migrations-directory db/migrations"
+    "migrate": "knex migrate:latest --knexfile knexfile.js --migrations-directory db/migrations",
+    "seed": "knex seed:run"
   },
   "dependencies": {
     "bcrypt": "^5.1.0",

@@ -5,8 +5,7 @@ import winston from "winston";
 import ENV from "../../config";
 
 export type GetListReturnType = {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  results: any[]
+  results: TPost[]
   endCursor: string
 };
 
@@ -16,6 +15,7 @@ export interface TPost {
   createdAt: Date
   freezenAt: Date
   text: string
+  repliesTo: number | null
 }
 
 export default class PostModel {
@@ -25,9 +25,13 @@ export default class PostModel {
     public config: ENV
   ) {}
 
-  public async insertPost(author: string, text: string): Promise<Pick<TPost, "id"> | undefined | void> {
+  public async insertPost(
+    author: string,
+    text: string,
+    repliesTo: number | null
+  ): Promise<Pick<TPost, "id"> | undefined | void> {
     this.logger.debug("[PostModel] Trying to insert post");
-    const id = await this.db<TPost>("post").insert({ author: author, text: text }, "id");
+    const id = await this.db<TPost>("post").insert({ author: author, text: text, repliesTo: repliesTo }, "id");
 
     return id[0];
   }
@@ -64,6 +68,25 @@ export default class PostModel {
                        .select("post.*")
                        .from("post")
                        .where({ "freezenAt": null })
+                       .orderBy("createdAt", "DESC");
+
+    query = knexCursorPagination(query, { after: afterCursor, first: numberRecords });
+
+    const results = await query;
+    const endCursor = getCursor(results[results.length - 1]);
+
+    return {
+      results: results,
+      endCursor: endCursor
+    };
+  }
+
+  public async getReplies(repliesTo: number, afterCursor: string, numberRecords: number): Promise<GetListReturnType> {
+    this.logger.debug(`[PostModel] Trying to get replies to ${repliesTo}: ${afterCursor}, ${numberRecords}`);
+    let query = this.db.queryBuilder()
+                       .select("post.*")
+                       .from("post")
+                       .where({ "freezenAt": null, "repliesTo": repliesTo })
                        .orderBy("createdAt", "DESC");
 
     query = knexCursorPagination(query, { after: afterCursor, first: numberRecords });

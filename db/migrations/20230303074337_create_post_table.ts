@@ -9,6 +9,7 @@ export async function up(knex: Knex): Promise<void> {
     table.timestamp("freezenAt");
     table.text("text").notNullable();
     table.integer("repliesTo");
+    table.integer("parent");
   });
 }
 

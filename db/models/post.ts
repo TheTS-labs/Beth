@@ -16,6 +16,7 @@ export interface TPost {
   freezenAt: Date
   text: string
   repliesTo: number | null
+  parent: number | null
 }
 
 export default class PostModel {
@@ -28,10 +29,16 @@ export default class PostModel {
   public async insertPost(
     author: string,
     text: string,
-    repliesTo: number | null
+    repliesTo: number | null=null,
+    parent: number | null=null
   ): Promise<Pick<TPost, "id"> | undefined | void> {
     this.logger.debug("[PostModel] Trying to insert post");
-    const id = await this.db<TPost>("post").insert({ author: author, text: text, repliesTo: repliesTo }, "id");
+    const id = await this.db<TPost>("post").insert({
+      author: author,
+      text: text,
+      repliesTo: repliesTo,
+      parent: parent
+    }, "id");
 
     return id[0];
   }
@@ -81,12 +88,16 @@ export default class PostModel {
     };
   }
 
-  public async getReplies(repliesTo: number, afterCursor: string, numberRecords: number): Promise<GetListReturnType> {
-    this.logger.debug(`[PostModel] Trying to get replies to ${repliesTo}: ${afterCursor}, ${numberRecords}`);
+  public async getReplies(
+    parent: number,
+    afterCursor: string | undefined,
+    numberRecords: number
+  ): Promise<GetListReturnType> {
+    this.logger.debug(`[PostModel] Trying to get replies to ${parent}: ${afterCursor}, ${numberRecords}`);
     let query = this.db.queryBuilder()
                        .select("post.*")
                        .from("post")
-                       .where({ "freezenAt": null, "repliesTo": repliesTo })
+                       .where({ "freezenAt": null, "parent": parent })
                        .orderBy("createdAt", "DESC");
 
     query = knexCursorPagination(query, { after: afterCursor, first: numberRecords });
@@ -98,5 +109,26 @@ export default class PostModel {
       results: results,
       endCursor: endCursor
     };
+  }
+
+  public async findParent(id: number): Promise<number | null> {
+    const comment = await this.getPost(id);
+    if (!comment) {
+      return null;
+    }
+
+    let parent: number = comment.repliesTo||comment.id;
+    while (true) {
+      const comment = await this.getPost(parent);
+
+      if (!comment) {
+        return parent;
+      }
+
+      if (comment.repliesTo === null) {
+        return comment.id;
+      }
+      parent = comment.repliesTo;
+    }
   }
 }

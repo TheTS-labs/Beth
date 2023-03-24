@@ -64,13 +64,13 @@ export const ForceDeleteArgsSchema = base;
 
 // >>> ViewReplies >>>
 export interface ViewRepliesArgs {
-  repliesTo: number
-  afterCursor: string
-  numberRecords: number
+  parent: number
+  afterCursor: string | undefined
+  numberRecords: number | undefined
 }
 
 export const ViewRepliesArgsSchema = Joi.object({
-  repliesTo: Joi.number().positive().required(),
+  parent: Joi.number().positive().required(),
   afterCursor: Joi.string(),
   numberRecords: Joi.number().positive()
 });

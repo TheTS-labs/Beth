@@ -198,20 +198,17 @@ export default class PostEndpoint implements IBaseEndpoint {
   }
 
   getNestedChildren(arr: TPost[], repliesTo: number): NestedTPost[] {
-    const children: NestedTPost[] = [];
+    const children = arr.filter(post => post.repliesTo == repliesTo).map((post): NestedTPost  => {
+      const grandChildren = this.getNestedChildren(arr, post.id);
+      const newPost = post as NestedTPost;
 
-    for (const post of arr) {
-      if (post.repliesTo == repliesTo) {
-        const grandChildren = this.getNestedChildren(arr, post.id);
-        const newPost = post as NestedTPost & { comments: NestedTPost[] };
-
-        if (grandChildren.length) {
-          newPost.comments = grandChildren;
-        }
-
-        children.push(newPost);
+      if (grandChildren.length) {
+        newPost.comments = grandChildren;
       }
-    }
+
+      return newPost;
+    });
+
     return children;
   }
 }

@@ -9,12 +9,11 @@ import ENV from "../../config";
 import CachingPermissionModel from "../../db/models/caching/caching_permission";
 import CachingUserModel from "../../db/models/caching/caching_user";
 import PermissionModel, { TPermissions } from "../../db/models/permission";
-import PostModel, { GetListReturnType, TPost } from "../../db/models/post";
+import PostModel, { GetListReturnType, NestedTPost, TPost } from "../../db/models/post";
 import UserModel, { TUser } from "../../db/models/user";
 import * as type from "./types";
 
 type CallEndpointReturnType = { success: true, id: number } | { success: true } | NestedTPost[];
-type NestedTPost = (TPost & { comments: NestedTPost[] });
 
 export default class PostEndpoint implements IBaseEndpoint {
   public allowNames: string[] = [
@@ -155,12 +154,11 @@ export default class PostEndpoint implements IBaseEndpoint {
     await this.validate(type.ViewRepliesArgsSchema, args);
     await this.abortIfFreezen(user.email);
 
-    const result = await this.postModel.getReplies(args.parent, args.afterCursor, args.numberRecords||3)
-                                       .catch((err: { message: string }) => {
+    const results = await this.postModel.getReplies(args.parent).catch((err: { message: string }) => {
       throw new RequestError("DatabaseError", err.message, 500);
     });
 
-    return this.getNestedChildren(result.results, args.parent);
+    return this.getNestedChildren(results, args.parent);
   }
   // >>> Get List >>>
 

@@ -62,19 +62,15 @@ export type ForceDeleteArgs = Base;
 export const ForceDeleteArgsSchema = base;
 // <<< Force Delete <<<
 
-// >>> ViewReplies >>>
+// >>> View Replies >>>
 export interface ViewRepliesArgs {
   parent: number
-  afterCursor: string | undefined
-  numberRecords: number | undefined
 }
 
 export const ViewRepliesArgsSchema = Joi.object({
-  parent: Joi.number().positive().required(),
-  afterCursor: Joi.string(),
-  numberRecords: Joi.number().positive()
+  parent: Joi.number().positive().required()
 });
-// <<< ViewReplies <<<
+// <<< View Replies <<<
 
 
 export type PostRequestArgs = CreateArgs | ViewArgs | EditArgs |

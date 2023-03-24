@@ -4,6 +4,8 @@ import winston from "winston";
 
 import ENV from "../../config";
 
+export type NestedTPost = (TPost & { comments: NestedTPost[] });
+
 export type GetListReturnType = {
   results: TPost[]
   endCursor: string
@@ -88,27 +90,15 @@ export default class PostModel {
     };
   }
 
-  public async getReplies(
-    parent: number,
-    afterCursor: string | undefined,
-    numberRecords: number
-  ): Promise<GetListReturnType> {
-    this.logger.debug(`[PostModel] Trying to get replies to ${parent}: ${afterCursor}, ${numberRecords}`);
-    let query = this.db.queryBuilder()
-                       .select("post.*")
-                       .from("post")
-                       .where({ "freezenAt": null, "parent": parent })
-                       .orderBy("createdAt", "DESC");
+  public async getReplies(parent: number): Promise<TPost[]> {
+    this.logger.debug(`[PostModel] Trying to get replies to ${parent}`);
 
-    query = knexCursorPagination(query, { after: afterCursor, first: numberRecords });
+    const result = await this.db<TPost>("post").where("freezenAt", null)
+                                               .andWhere("parent", parent)
+                                               .select()
+                                               .orderBy("createdAt", "DESC");
 
-    const results = await query;
-    const endCursor = getCursor(results[results.length - 1]);
-
-    return {
-      results: results,
-      endCursor: endCursor
-    };
+    return result;
   }
 
   public async findParent(id: number): Promise<number | null> {

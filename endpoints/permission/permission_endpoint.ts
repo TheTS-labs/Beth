@@ -25,7 +25,7 @@ export default class PermissionEndpoint implements IBaseEndpoint {
     public logger: winston.Logger,
     public config: ENV
   ) {
-    const REDIS_REQUIRED = this.config.get("REDIS_REQUIRED").default("true").asBool();
+    const REDIS_REQUIRED = this.config.get("REDIS_REQUIRED").required().asBool();
     const UserModelType = REDIS_REQUIRED ? CachingUserModel : UserModel;
     const PermissionModelType = REDIS_REQUIRED ? CachingPermissionModel : PermissionModel;
 

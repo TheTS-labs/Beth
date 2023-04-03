@@ -46,7 +46,7 @@ export default class CachingPostModel implements PostModel {
                            .first();
 
     await this.redisClient.set(`post_${id}`, JSON.stringify(post), {
-      EX: this.config.get("POST_EX").default("300").asIntPositive(),
+      EX: this.config.get("POST_EX").required().asIntPositive(),
       NX: true
     });
 

@@ -23,7 +23,7 @@ export default class PermissionMiddleware {
     private config: ENV
   ) {
     const PermissionModelType = this.config.get("REDIS_REQUIRED")
-                                           .default("true")
+                                           .required()
                                            .asBool() ? CachingPermissionModel : PermissionModel;
 
     this.permissionModel = new PermissionModelType(this.db, this.logger, this.redisClient, this.config);

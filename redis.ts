@@ -23,7 +23,7 @@ export default class Redis {
       this.logger.warn("[Redis] The client disconnected the connection to the server via .quit() or .disconnect()");
     });
 
-    if (this.config.get("REDIS_REQUIRED").default("true").asBool()) {
+    if (this.config.get("REDIS_REQUIRED").required().asBool()) {
       redisClient.connect();
     }
 

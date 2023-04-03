@@ -33,7 +33,7 @@ export default class PostEndpoint implements IBaseEndpoint {
     public logger: winston.Logger,
     public config: ENV
   ) {
-    const REDIS_REQUIRED = this.config.get("REDIS_REQUIRED").default("true").asBool();
+    const REDIS_REQUIRED = this.config.get("REDIS_REQUIRED").required().asBool();
     const UserModelType = REDIS_REQUIRED ? CachingUserModel : UserModel;
     const PermissionModelType = REDIS_REQUIRED ? CachingPermissionModel : PermissionModel;
     const PostModelType = REDIS_REQUIRED ? CachingPostModel : PostModel;
@@ -244,7 +244,7 @@ export default class PostEndpoint implements IBaseEndpoint {
 
       await this.redisClient.set(`post_comments_${post.id}`, JSON.stringify(grandChildren), {
         NX: true,
-        EX: this.config.get("POST_COMMENTS_EX").default("600").asIntPositive()
+        EX: this.config.get("POST_COMMENTS_EX").required().asIntPositive()
       });
     }
 
@@ -253,7 +253,7 @@ export default class PostEndpoint implements IBaseEndpoint {
 
     await this.redisClient.set(`post_comments_${repliesTo}`, JSON.stringify(result), {
       NX: true,
-      EX: this.config.get("POST_COMMENTS_EX").default("600").asIntPositive()
+      EX: this.config.get("POST_COMMENTS_EX").required().asIntPositive()
     });
 
     return result;

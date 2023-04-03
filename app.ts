@@ -46,7 +46,7 @@ export default class App {
   //! Disabling auth you also disabling permission check
   constructor(endpoints: TEndpointTypes, disableAuthFor:string[]=[]) {
     this.config = from(process.env, {}, (varname: string, str: string): void => this.envLoggerFn(varname, str));
-    this.db = knex(knexfile[this.config.get("NODE_ENV").default("development").asEnum(["development", "production"])]);
+    this.db = knex(knexfile[this.config.get("NODE_ENV").required().asEnum(["development", "production"])]);
     this.redisClient = new Redis(this.logger, this.config).get();
 
     // >>> Middlewares >>>
@@ -109,7 +109,7 @@ export default class App {
   }
 
   listen(): void {
-    const port = this.config.get("APP_PORT").default("8081").asPortNumber();
+    const port = this.config.get("APP_PORT").required().asPortNumber();
 
     this.app.listen(port, () => {
       this.logger.info(`[App] Server is running at http://localhost:${port}`);

@@ -43,7 +43,7 @@ export default class CachingPermissionModel implements PermissionsModel {
 
     this.logger.debug("[CachingPermissionModel] Caching user permissions");
     await this.redisClient.set(`${email}_permissions`, JSON.stringify(permissions), {
-      EX: this.config.get("USER_PERMISSIONS_EX").default("300").asIntPositive(),
+      EX: this.config.get("USER_PERMISSIONS_EX").required().asIntPositive(),
       NX: true
     });
 

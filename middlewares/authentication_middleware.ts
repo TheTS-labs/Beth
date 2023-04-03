@@ -21,7 +21,7 @@ export default class AuthenticationMiddleware {
     private redisClient: RedisClientType,
     private config: ENV
   ) {
-    const UserModelType = this.config.get("REDIS_REQUIRED").default("true").asBool() ? CachingUserModel : UserModel;
+    const UserModelType = this.config.get("REDIS_REQUIRED").required().asBool() ? CachingUserModel : UserModel;
     this.userModel = new UserModelType(this.db, this.logger, this.redisClient, this.config);
   }
 

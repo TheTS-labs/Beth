@@ -3,7 +3,7 @@ import { getCursor, knexCursorPagination } from "knex-cursor-pagination";
 import { RedisClientType } from "redis";
 import winston from "winston";
 
-import ENV from "../../config";
+import { ENV } from "../../app";
 
 export type NestedTPost = (TPost & { comments: NestedTPost[] });
 

@@ -3,9 +3,9 @@ import { Knex } from "knex";
 import { RedisClientType } from "redis";
 import winston from "winston";
 
+import { ENV } from "../../app";
 import { IBaseEndpoint } from "../../common/base_endpoint";
 import RequestError from "../../common/request_error";
-import ENV from "../../config";
 import CachingPermissionModel from "../../db/models/caching/caching_permission";
 import CachingUserModel from "../../db/models/caching/caching_user";
 import PermissionModel, { TPermissions } from "../../db/models/permission";
@@ -25,8 +25,9 @@ export default class PermissionEndpoint implements IBaseEndpoint {
     public logger: winston.Logger,
     public config: ENV
   ) {
-    const UserModelType = this.config.REDIS_REQUIRED ? CachingUserModel : UserModel;
-    const PermissionModelType = this.config.REDIS_REQUIRED ? CachingPermissionModel : PermissionModel;
+    const REDIS_REQUIRED = this.config.get("REDIS_REQUIRED").default("true").asBool();
+    const UserModelType = REDIS_REQUIRED ? CachingUserModel : UserModel;
+    const PermissionModelType = REDIS_REQUIRED ? CachingPermissionModel : PermissionModel;
 
     this.userModel = new UserModelType(this.db, this.logger, this.redisClient, this.config);
     this.permissionModel = new PermissionModelType(this.db, this.logger, this.redisClient, this.config);

@@ -3,7 +3,7 @@ import { getCursor, knexCursorPagination } from "knex-cursor-pagination";
 import { RedisClientType } from "redis";
 import winston from "winston";
 
-import ENV from "../../../config";
+import { ENV } from "../../../app";
 import PostModel, { GetListReturnType, TPost } from "../post";
 
 export default class CachingPostModel implements PostModel {
@@ -46,7 +46,7 @@ export default class CachingPostModel implements PostModel {
                            .first();
 
     await this.redisClient.set(`post_${id}`, JSON.stringify(post), {
-      EX: this.config.POST_EX,
+      EX: this.config.get("POST_EX").default("300").asIntPositive(),
       NX: true
     });
 

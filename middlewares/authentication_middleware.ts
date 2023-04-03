@@ -4,9 +4,9 @@ import { Knex } from "knex";
 import { RedisClientType } from "redis";
 import winston from "winston";
 
+import { ENV } from "../app";
 import RequestError from "../common/request_error";
 import { RequestWithUser } from "../common/types";
-import ENV from "../config";
 import CachingUserModel from "../db/models/caching/caching_user";
 import UserModel, { TUser } from "../db/models/user";
 
@@ -21,7 +21,7 @@ export default class AuthenticationMiddleware {
     private redisClient: RedisClientType,
     private config: ENV
   ) {
-    const UserModelType = this.config.REDIS_REQUIRED ? CachingUserModel : UserModel;
+    const UserModelType = this.config.get("REDIS_REQUIRED").default("true").asBool() ? CachingUserModel : UserModel;
     this.userModel = new UserModelType(this.db, this.logger, this.redisClient, this.config);
   }
 

@@ -3,9 +3,9 @@ import { Knex } from "knex";
 import { RedisClientType } from "redis";
 import winston from "winston";
 
+import { ENV } from "../../app";
 import { IBaseEndpoint } from "../../common/base_endpoint";
 import RequestError from "../../common/request_error";
-import ENV from "../../config";
 import CachingPermissionModel from "../../db/models/caching/caching_permission";
 import CachingPostModel from "../../db/models/caching/caching_post";
 import CachingUserModel from "../../db/models/caching/caching_user";
@@ -33,9 +33,10 @@ export default class PostEndpoint implements IBaseEndpoint {
     public logger: winston.Logger,
     public config: ENV
   ) {
-    const UserModelType = this.config.REDIS_REQUIRED ? CachingUserModel : UserModel;
-    const PermissionModelType = this.config.REDIS_REQUIRED ? CachingPermissionModel : PermissionModel;
-    const PostModelType = this.config.REDIS_REQUIRED ? CachingPostModel : PostModel;
+    const REDIS_REQUIRED = this.config.get("REDIS_REQUIRED").default("true").asBool();
+    const UserModelType = REDIS_REQUIRED ? CachingUserModel : UserModel;
+    const PermissionModelType = REDIS_REQUIRED ? CachingPermissionModel : PermissionModel;
+    const PostModelType = REDIS_REQUIRED ? CachingPostModel : PostModel;
 
     this.permissionModel = new PermissionModelType(this.db, this.logger, this.redisClient, this.config);
     this.userModel = new UserModelType(this.db, this.logger, this.redisClient, this.config);
@@ -243,7 +244,7 @@ export default class PostEndpoint implements IBaseEndpoint {
 
       await this.redisClient.set(`post_comments_${post.id}`, JSON.stringify(grandChildren), {
         NX: true,
-        EX: this.config.POST_COMMENTS_EX
+        EX: this.config.get("POST_COMMENTS_EX").default("600").asIntPositive()
       });
     }
 
@@ -252,7 +253,7 @@ export default class PostEndpoint implements IBaseEndpoint {
 
     await this.redisClient.set(`post_comments_${repliesTo}`, JSON.stringify(result), {
       NX: true,
-      EX: this.config.POST_COMMENTS_EX
+      EX: this.config.get("POST_COMMENTS_EX").default("600").asIntPositive()
     });
 
     return result;

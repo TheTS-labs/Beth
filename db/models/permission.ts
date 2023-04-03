@@ -2,7 +2,7 @@ import { Knex } from "knex";
 import { RedisClientType } from "redis";
 import winston from "winston";
 
-import ENV from "../../config";
+import { ENV } from "../../app";
 
 export interface TPermissions {
   id: number

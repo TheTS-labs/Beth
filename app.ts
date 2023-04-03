@@ -1,4 +1,5 @@
 import dotenv from "dotenv";
+import { ExtenderTypeOptional, from, IEnv, IOptionalVariable } from "env-var";
 import express, { Express, Response } from "express";
 import asyncHandler from "express-async-handler";
 import knex, { Knex } from "knex";
@@ -8,7 +9,7 @@ import winston from "winston";
 
 import { IBaseEndpoint } from "./common/base_endpoint";
 import { RequestWithUser } from "./common/types";
-import ENV, { Config } from "./config";
+// import ENV, { Config } from "./config";
 import knexfile from "./knexfile";
 import Logger from "./logger";
 import AuthenticationMiddleware from "./middlewares/authentication_middleware";
@@ -26,13 +27,15 @@ export interface TEndpointObjects {
   [key: string]: IBaseEndpoint
 }
 
+export type ENV = IEnv<IOptionalVariable<{}> & ExtenderTypeOptional<{}>, NodeJS.ProcessEnv>;
+
 export default class App {
   app: Express = express();
-  config: ENV = new Config(process.env).getConfig();
   db: Knex;
   redisClient: RedisClientType;
   endpoints: TEndpointObjects = {};
   logger: winston.Logger = new Logger().get();
+  config: ENV;
 
   // >>> Middlewares >>>
   authenticationMiddleware: AuthenticationMiddleware;
@@ -42,7 +45,8 @@ export default class App {
 
   //! Disabling auth you also disabling permission check
   constructor(endpoints: TEndpointTypes, disableAuthFor:string[]=[]) {
-    this.db = knex(knexfile[this.config.NODE_ENV]);
+    this.config = from(process.env, {}, (varname: string, str: string): void => this.envLoggerFn(varname, str));
+    this.db = knex(knexfile[this.config.get("NODE_ENV").default("development").asEnum(["development", "production"])]);
     this.redisClient = new Redis(this.logger, this.config).get();
 
     // >>> Middlewares >>>
@@ -105,8 +109,14 @@ export default class App {
   }
 
   listen(): void {
-    this.app.listen(process.env.APP_PORT, () => {
-      this.logger.info(`[App] Server is running at http://localhost:${this.config.APP_PORT}`);
+    const port = this.config.get("APP_PORT").default("8081").asPortNumber();
+
+    this.app.listen(port, () => {
+      this.logger.info(`[App] Server is running at http://localhost:${port}`);
     });
+  }
+
+  envLoggerFn(varname: string, str: string): void {
+    this.logger.debug(`[App] ${varname}: ${str}`);
   }
 }

@@ -7,6 +7,7 @@ import { IBaseEndpoint } from "../../common/base_endpoint";
 import RequestError from "../../common/request_error";
 import ENV from "../../config";
 import CachingPermissionModel from "../../db/models/caching/caching_permission";
+import CachingPostModel from "../../db/models/caching/caching_post";
 import CachingUserModel from "../../db/models/caching/caching_user";
 import PermissionModel, { TPermissions } from "../../db/models/permission";
 import PostModel, { GetListReturnType, NestedTPost, TPost } from "../../db/models/post";
@@ -34,10 +35,11 @@ export default class PostEndpoint implements IBaseEndpoint {
   ) {
     const UserModelType = this.config.REDIS_REQUIRED ? CachingUserModel : UserModel;
     const PermissionModelType = this.config.REDIS_REQUIRED ? CachingPermissionModel : PermissionModel;
+    const PostModelType = this.config.REDIS_REQUIRED ? CachingPostModel : PostModel;
 
     this.permissionModel = new PermissionModelType(this.db, this.logger, this.redisClient, this.config);
     this.userModel = new UserModelType(this.db, this.logger, this.redisClient, this.config);
-    this.postModel = new PostModel(this.db, this.logger, this.config);
+    this.postModel = new PostModelType(this.db, this.logger, this.redisClient, this.config);
   }
 
   // >>> Create >>>
@@ -195,18 +197,65 @@ export default class PostEndpoint implements IBaseEndpoint {
     }
   }
 
-  getNestedChildren(arr: TPost[], repliesTo: number): NestedTPost[] {
-    const children = arr.filter(post => post.repliesTo == repliesTo).map((post): NestedTPost  => {
-      const grandChildren = this.getNestedChildren(arr, post.id);
-      const newPost = post as NestedTPost;
+  async getNestedChildren(arr: TPost[], repliesTo: number): Promise<NestedTPost[]> {
+    const doesKeyExist = await this.redisClient.exists(`post_comments_${repliesTo}`);
+    if (doesKeyExist) {
+      const result = await this.redisClient.get(`post_comments_${repliesTo}`) as string;
+      return JSON.parse(result) as NestedTPost[];
+    }
 
-      if (grandChildren.length) {
-        newPost.comments = grandChildren;
+    const stack: TPost[] = [];
+    const map = new Map<number, NestedTPost>();
+
+    for (const post of arr) {
+      const nestedPost = post as NestedTPost;
+
+      if (post.repliesTo == repliesTo) {
+        const doesNestedKeyExist = await this.redisClient.exists(`post_comments_${post.id}`);
+        if (doesNestedKeyExist) {
+          const nestedResult = await this.redisClient.get(`post_comments_${post.id}`) as string;
+          nestedPost.comments = JSON.parse(nestedResult) as NestedTPost[];
+        } else {
+          nestedPost.comments = [];
+          stack.push(post);
+        }
       }
+      map.set(post.id, nestedPost);
+    }
 
-      return newPost;
+    while (stack.length) {
+      const post = stack.pop() as TPost;
+      const nestedPost = map.get(post.id) as NestedTPost;
+      const grandChildrenCache = await this.redisClient.get(`post_comments_${post.id}`) as string;
+
+      const grandChildren = nestedPost.comments = nestedPost.comments.concat(
+        JSON.parse(grandChildrenCache) ?? [],
+        arr.filter((tpost) => tpost.repliesTo == post.id)
+           .map((tpost) => {
+              if (!map.get(tpost.id)?.comments) {
+                stack.push(tpost);
+                map.set(tpost.id, { ...tpost, comments: [] });
+              }
+              
+              return map.get(tpost.id) as NestedTPost;
+            }),
+      );
+
+      await this.redisClient.set(`post_comments_${post.id}`, JSON.stringify(grandChildren), {
+        NX: true,
+        EX: this.config.POST_COMMENTS_EX
+      });
+    }
+
+    const result = arr.filter((post) => post.repliesTo == repliesTo)
+                      .map((post) => map.get(post.id) as NestedTPost);
+
+    await this.redisClient.set(`post_comments_${repliesTo}`, JSON.stringify(result), {
+      NX: true,
+      EX: this.config.POST_COMMENTS_EX
     });
 
-    return children;
+    return result;
   }
+  
 }

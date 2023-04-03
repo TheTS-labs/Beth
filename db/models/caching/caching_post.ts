@@ -3,26 +3,10 @@ import { getCursor, knexCursorPagination } from "knex-cursor-pagination";
 import { RedisClientType } from "redis";
 import winston from "winston";
 
-import ENV from "../../config";
+import ENV from "../../../config";
+import PostModel, { GetListReturnType, TPost } from "../post";
 
-export type NestedTPost = (TPost & { comments: NestedTPost[] });
-
-export type GetListReturnType = {
-  results: TPost[]
-  endCursor: string
-};
-
-export interface TPost {
-  id: number
-  author: string
-  createdAt: Date
-  freezenAt: Date
-  text: string
-  repliesTo: number | null
-  parent: number | null
-}
-
-export default class PostModel {
+export default class CachingPostModel implements PostModel {
   constructor(
     public db: Knex,
     public logger: winston.Logger,
@@ -49,9 +33,22 @@ export default class PostModel {
 
   public async getPost(id: number): Promise<TPost | undefined> {
     this.logger.debug(`[PostModel] Trying to get post ${id}`);
+
+    const cachedPostString = await this.redisClient.get(`post_${id}`);
+    const cachedPost: TPost = JSON.parse(cachedPostString||"null");
+
+    if (cachedPost) {
+      return cachedPost;
+    }
+
     const post = await this.db<TPost>("post")
                            .where({ id })
                            .first();
+
+    await this.redisClient.set(`post_${id}`, JSON.stringify(post), {
+      EX: this.config.POST_EX,
+      NX: true
+    });
 
     return post;
   }
@@ -92,7 +89,7 @@ export default class PostModel {
     };
   }
 
-  public async getReplies(parent: number): Promise<TPost[]> {
+  public async getReplies(parent: number): Promise<TPost[]> { // <--- Probably Cache
     this.logger.debug(`[PostModel] Trying to get replies to ${parent}`);
 
     const result = await this.db<TPost>("post").where("freezenAt", null)

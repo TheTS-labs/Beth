@@ -34,7 +34,7 @@ export default class CachingUserModel implements UserModel {
       if (user) {
         this.logger.debug("[CachingUserModel] Caching user");
         await this.redisClient.set(email, JSON.stringify(user), {
-          EX: this.config.USER_EX_SECS,
+          EX: this.config.USER_EX,
           NX: true
         });
       }

@@ -9,9 +9,11 @@ export class Config {
       POSTGRES_DB: this.env.POSTGRES_DB,
       POSTGRES_HOST: this.env.POSTGRES_HOST,
       REDIS_REQUIRED: this.env.REDIS_REQUIRED ? Boolean(this.env.REDIS_REQUIRED) : undefined,
-      USER_EX_SECS: this.env.USER_EX_SECS ? Number(this.env.USER_EX_SECS) : undefined,
-      USER_REPMISSIONS_EX_SECS: this.env.USER_REPMISSIONS_EX_SECS ? 
-                                Number(this.env.USER_REPMISSIONS_EX_SECS) : undefined,
+      USER_EX: this.env.USER_EX ? Number(this.env.USER_EX) : undefined,
+      USER_PERMISSIONS_EX: this.env.USER_PERMISSIONS_EX ? 
+                                Number(this.env.USER_PERMISSIONS_EX) : undefined,
+      POST_EX: this.env.POST_EX ? Number(this.env.USER_EX) : undefined,
+      POST_COMMENTS_EX: this.env.POST_EX ? Number(this.env.USER_EX) : undefined,
       NODE_ENV: this.env.NODE_ENV ? this.env.NODE_ENV : "development"
     };
 
@@ -34,8 +36,11 @@ export default interface ENV {
   POSTGRES_PORT: number
   REDIS_REQUIRED: boolean
 
-  USER_EX_SECS: number
-  USER_REPMISSIONS_EX_SECS: number
+  USER_EX: number
+  USER_PERMISSIONS_EX: number
+
+  POST_EX: number
+  POST_COMMENTS_EX: number
 
   NODE_ENV: "development" | string
 }

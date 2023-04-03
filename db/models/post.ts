@@ -33,8 +33,8 @@ export default class PostModel {
   public async insertPost(
     author: string,
     text: string,
-    repliesTo: number | null=null,
-    parent: number | null=null
+    repliesTo: number | undefined=undefined,
+    parent: number | undefined=undefined
   ): Promise<Pick<TPost, "id"> | undefined | void> {
     this.logger.debug("[PostModel] Trying to insert post");
     const id = await this.db<TPost>("post").insert({
@@ -103,10 +103,10 @@ export default class PostModel {
     return result;
   }
 
-  public async findParent(id: number): Promise<number | null> {
+  public async findParent(id: number): Promise<number | undefined> {
     const comment = await this.getPost(id);
     if (!comment) {
-      return null;
+      return;
     }
 
     let parent: number = comment.repliesTo || comment.id;

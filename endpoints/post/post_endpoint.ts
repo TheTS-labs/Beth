@@ -47,12 +47,12 @@ export default class PostEndpoint implements IBaseEndpoint {
     await this.validate(type.CreateArgsSchema, args);
     await this.abortIfFreezen(user.email);
 
-    const parent = args.replyTo ? await this.postModel.findParent(args.replyTo) : null;
+    const parent = args.replyTo ? await this.postModel.findParent(args.replyTo) : undefined;
 
     const { id } = await this.postModel.insertPost(
       user.email,
       args.text,
-      args.replyTo||null, parent
+      args.replyTo, parent
     ).catch((err: Error) => {
       throw new RequestError("DatabaseError", err.message, 500);
     }) as Pick<TPost, "id">;

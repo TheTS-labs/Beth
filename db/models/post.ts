@@ -23,6 +23,7 @@ export interface TPost {
   parent: number | null
   upvotes: number
   downvotes: number
+  tags: string
 }
 
 export default class PostModel {
@@ -144,5 +145,9 @@ export default class PostModel {
     }
 
     await this.db<TPost>("post").where({ id }).update({ downvotes: post.downvotes+1 });
+  }
+
+  public async editTags(id: number, newTags: string): Promise<void> {
+    await this.db<TPost>("post").where({ id }).update({ tags: newTags });
   }
 }

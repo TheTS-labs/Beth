@@ -140,4 +140,9 @@ export default class CachingPostModel implements PostModel {
 
     await this.db<TPost>("post").where({ id }).update({ downvotes: post.downvotes+1 });
   }
+
+  public async editTags(id: number, newTags: string): Promise<void> {
+    await this.db<TPost>("post").where({ id }).update({ tags: newTags });
+    await this.redisClient.del(`post_${id}`);
+  }
 }

@@ -84,6 +84,17 @@ export type DownvoteArgs = Base;
 export const DownvoteArgsSchema = base;
 // <<< Downvote <<<
 
+// >>> Edit Tags >>>
+export interface EditTagsArgs extends Base {
+  newTags: string
+}
+
+export const EditTagsArgsSchema = base.keys({
+  newTags: Joi.string().pattern(/^[a-zA-Z0-9]+(?:,[a-zA-Z0-9]+)*$/).required()
+});
+// <<< Edit Tags <<<
+
 export type PostRequestArgs = CreateArgs | ViewArgs | EditArgs |
                               DeleteArgs | GetListArgs | ForceDeleteArgs |
-                              ViewRepliesArgs | UpvoteArgs | DownvoteArgs;
+                              ViewRepliesArgs | UpvoteArgs | DownvoteArgs |
+                              EditTagsArgs;

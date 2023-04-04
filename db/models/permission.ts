@@ -22,6 +22,10 @@ export interface TPermissions {
   post_getList: 0 | 1
   post_forceDelete: 0 | 1
   post_viewReplies: 0 | 1
+  post_upvote: 0 | 1
+  post_downvote: 0 | 1
+  post_editTags: 0 | 1
+  post_superTagsEdit: 0 | 1
 }
 
 export default class PermissionsModel {

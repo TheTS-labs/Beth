@@ -23,6 +23,8 @@ export async function up(knex: Knex): Promise<void> {
     table.boolean("post_viewReplies").defaultTo(1);
     table.boolean("post_upvote").defaultTo(1);
     table.boolean("post_downvote").defaultTo(1);
+    table.boolean("post_editTags").defaultTo(1);
+    table.boolean("post_superTagsEdit").defaultTo(0);
   });
 }
 

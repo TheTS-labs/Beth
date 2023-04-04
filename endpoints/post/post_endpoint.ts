@@ -21,7 +21,8 @@ export default class PostEndpoint implements IBaseEndpoint {
     "create", "view", "edit", 
     "delete", "getList", 
     "forceDelete", "upvote",
-    "viewReplies", "downvote"
+    "viewReplies", "downvote",
+    "editTags"
   ];
   userModel: UserModel | CachingUserModel;
   permissionModel: PermissionModel | CachingPermissionModel;
@@ -190,6 +191,30 @@ export default class PostEndpoint implements IBaseEndpoint {
     return { success: true };
   }
   // >>> Downvote >>>
+
+  // <<< Edit Tags <<<
+  async editTags(args: type.EditTagsArgs, user: TUser): Promise<{ success: true }> {
+    await this.validate(type.EditTagsArgsSchema, args);
+    await this.abortIfFreezen(user.email);
+
+    const post = await this.postModel.getPost(args.id);
+    const permissions = await this.permissionModel.getPermissions(user.email) as TPermissions;
+
+    if (!post) {
+      throw new RequestError("DatabaseError", "Post doesn't exist", 404);
+    }
+
+    if (post.author != user.email && !permissions["post_superTagsEdit"]) {
+      throw new RequestError("PermissionError", "You can only edit tags of your own posts", 403);
+    }
+
+    await this.postModel.editTags(args.id, args.newTags).catch((err: { message: string }) => {
+      throw new RequestError("DatabaseError", err.message, 500);
+    });
+
+    return { success: true };
+  }
+  // >>> Edit Tags >>>
 
   async callEndpoint(
     name: string, args: type.PostRequestArgs, user: unknown | undefined

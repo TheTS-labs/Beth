@@ -8,6 +8,8 @@ export async function up(knex: Knex): Promise<void> {
     table.timestamp("createdAt").defaultTo(knex.fn.now());
     table.timestamp("freezenAt");
     table.text("text").notNullable();
+    table.integer("repliesTo");
+    table.integer("parent");
   });
 }
 

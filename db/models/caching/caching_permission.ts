@@ -2,7 +2,7 @@ import { Knex } from "knex";
 import { RedisClientType } from "redis";
 import winston from "winston";
 
-import ENV from "../../../config";
+import { ENV } from "../../../app";
 import PermissionsModel, { TPermissions } from "../permission";
 
 export default class CachingPermissionModel implements PermissionsModel {
@@ -43,7 +43,7 @@ export default class CachingPermissionModel implements PermissionsModel {
 
     this.logger.debug("[CachingPermissionModel] Caching user permissions");
     await this.redisClient.set(`${email}_permissions`, JSON.stringify(permissions), {
-      EX: this.config.USER_REPMISSIONS_EX_SECS,
+      EX: this.config.get("USER_PERMISSIONS_EX").required().asIntPositive(),
       NX: true
     });
 

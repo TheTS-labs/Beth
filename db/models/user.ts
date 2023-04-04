@@ -2,8 +2,8 @@ import { Knex } from "knex";
 import { RedisClientType } from "redis";
 import winston from "winston";
 
+import { ENV } from "../../app";
 import { SafeUserObject } from "../../common/types";
-import ENV from "../../config";
 
 export interface TUser {
   id: number

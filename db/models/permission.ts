@@ -2,7 +2,7 @@ import { Knex } from "knex";
 import { RedisClientType } from "redis";
 import winston from "winston";
 
-import ENV from "../../config";
+import { ENV } from "../../app";
 
 export interface TPermissions {
   id: number
@@ -21,6 +21,7 @@ export interface TPermissions {
   post_superDelete: 0 | 1
   post_getList: 0 | 1
   post_forceDelete: 0 | 1
+  post_viewReplies: 0 | 1
 }
 
 export default class PermissionsModel {

@@ -2,8 +2,8 @@ import { Knex } from "knex";
 import { RedisClientType } from "redis";
 import winston from "winston";
 
+import { ENV } from "../../../app";
 import { SafeUserObject } from "../../../common/types";
-import ENV from "../../../config";
 import UserModel, { TUser } from "../user";
 
 export default class CachingUserModel implements UserModel {
@@ -34,7 +34,7 @@ export default class CachingUserModel implements UserModel {
       if (user) {
         this.logger.debug("[CachingUserModel] Caching user");
         await this.redisClient.set(email, JSON.stringify(user), {
-          EX: this.config.USER_EX_SECS,
+          EX: this.config.get("USER_EX").required().asIntPositive(),
           NX: true
         });
       }

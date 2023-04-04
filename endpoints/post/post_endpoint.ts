@@ -18,10 +18,10 @@ type CallEndpointReturnType = { success: true, id: number } | { success: true } 
 
 export default class PostEndpoint implements IBaseEndpoint {
   public allowNames: string[] = [
-    "create", "view",
-    "edit", "delete",
-    "getList", "forceDelete",
-    "viewReplies"
+    "create", "view", "edit", 
+    "delete", "getList", 
+    "forceDelete", "upvote",
+    "viewReplies", "downvote"
   ];
   userModel: UserModel | CachingUserModel;
   permissionModel: PermissionModel | CachingPermissionModel;
@@ -163,7 +163,33 @@ export default class PostEndpoint implements IBaseEndpoint {
 
     return this.getNestedChildren(results, args.parent);
   }
-  // >>> Get List >>>
+  // >>> View Replies >>>
+
+  // <<< Upvote <<<
+  async upvote(args: type.UpvoteArgs, user: TUser): Promise<{ success: true }> {
+    await this.validate(type.UpvoteArgsSchema, args);
+    await this.abortIfFreezen(user.email);
+
+    await this.postModel.upvote(args.id).catch((err: { message: string }) => {
+      throw new RequestError("DatabaseError", err.message, 500);
+    });
+
+    return { success: true };
+  }
+  // >>> Upvote >>>
+
+  // <<< Downvote <<<
+  async downvote(args: type.DownvoteArgs, user: TUser): Promise<{ success: true }> {
+    await this.validate(type.DownvoteArgsSchema, args);
+    await this.abortIfFreezen(user.email);
+
+    await this.postModel.downvote(args.id).catch((err: { message: string }) => {
+      throw new RequestError("DatabaseError", err.message, 500);
+    });
+
+    return { success: true };
+  }
+  // >>> Downvote >>>
 
   async callEndpoint(
     name: string, args: type.PostRequestArgs, user: unknown | undefined

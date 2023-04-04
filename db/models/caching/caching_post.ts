@@ -4,6 +4,7 @@ import { RedisClientType } from "redis";
 import winston from "winston";
 
 import { ENV } from "../../../app";
+import RequestError from "../../../common/request_error";
 import PostModel, { GetListReturnType, TPost } from "../post";
 
 export default class CachingPostModel implements PostModel {
@@ -120,5 +121,23 @@ export default class CachingPostModel implements PostModel {
     }
 
     return parent;
+  }
+
+  public async upvote(id: number): Promise<void> {
+    const post = await this.db<TPost>("post").where({ id }).first();
+    if (!post) {
+      throw new RequestError("DatabaseError", "Post doesn't exist", 404);
+    }
+
+    await this.db<TPost>("post").where({ id }).update({ upvotes: post.upvotes+1 });
+  }
+
+  public async downvote(id: number): Promise<void> {
+    const post = await this.db<TPost>("post").where({ id }).first();
+    if (!post) {
+      throw new RequestError("DatabaseError", "Post doesn't exist", 404);
+    }
+
+    await this.db<TPost>("post").where({ id }).update({ downvotes: post.downvotes+1 });
   }
 }

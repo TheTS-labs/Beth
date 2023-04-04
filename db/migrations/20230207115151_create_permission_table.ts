@@ -21,6 +21,8 @@ export async function up(knex: Knex): Promise<void> {
     table.boolean("post_getList").defaultTo(1);
     table.boolean("post_forceDelete").defaultTo(0);
     table.boolean("post_viewReplies").defaultTo(1);
+    table.boolean("post_upvote").defaultTo(1);
+    table.boolean("post_downvote").defaultTo(1);
   });
 }
 

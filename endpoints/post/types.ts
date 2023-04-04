@@ -72,7 +72,18 @@ export const ViewRepliesArgsSchema = Joi.object({
 });
 // <<< View Replies <<<
 
+// >>> Upvote >>>
+export type UpvoteArgs = Base;
+
+export const UpvoteArgsSchema = base;
+// <<< Upvote <<<
+
+// >>> Downvote >>>
+export type DownvoteArgs = Base;
+
+export const DownvoteArgsSchema = base;
+// <<< Downvote <<<
 
 export type PostRequestArgs = CreateArgs | ViewArgs | EditArgs |
                               DeleteArgs | GetListArgs | ForceDeleteArgs |
-                              ViewRepliesArgs;
+                              ViewRepliesArgs | UpvoteArgs | DownvoteArgs;

@@ -54,9 +54,8 @@ export default class UserEndpoint implements IBaseEndpoint {
   // <<< Create <<<
 
   // <<< View <<<
-  async view(args: type.ViewArgs, user: TUser): Promise<SafeUserObject | {}> {
+  async view(args: type.ViewArgs, _user: TUser): Promise<SafeUserObject | {}> {
     args = await this.validate(type.ViewArgsSchema, args);
-    await this.abortIfFreezen(user.email);
 
     const requestedUser = await this.userModel.getSafeUser(args.email);
 
@@ -67,7 +66,6 @@ export default class UserEndpoint implements IBaseEndpoint {
   // <<< Edit Password <<<
   async editPassword(args: type.EditPasswordArgs, user: TUser): Promise<{ success: true }> {
     args = await this.validate(type.EditPasswordArgsSchema, args);
-    await this.abortIfFreezen(user.email);
 
     const newHash = await bcrypt.hash(args.newPassword, 3);
 
@@ -111,12 +109,5 @@ export default class UserEndpoint implements IBaseEndpoint {
     }
 
     return value as EType;
-  }
-
-  async abortIfFreezen(email: string): Promise<void> {
-    const result = await this.userModel.isFreezen(email);
-    if (result) {
-      throw new RequestError("UserIsFreezen", `User(${email}) is freezen`, 403);
-    }
   }
 }

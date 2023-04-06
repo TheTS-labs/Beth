@@ -47,7 +47,6 @@ export default class PostEndpoint implements IBaseEndpoint {
   // >>> Create >>>
   async create(args: type.CreateArgs, user: TUser): Promise<{ success: true, id: number }> {
     args = await this.validate(type.CreateArgsSchema, args);
-    await this.abortIfFreezen(user.email);
 
     const parent = args.replyTo ? await this.postModel.findParent(args.replyTo) : undefined;
 
@@ -64,9 +63,8 @@ export default class PostEndpoint implements IBaseEndpoint {
   // <<< Create <<<
 
   // >>> View >>>
-  async view(args: type.ViewArgs, user: TUser): Promise<{ success: true }|{}> {
+  async view(args: type.ViewArgs, _user: TUser): Promise<{ success: true }|{}> {
     args = await this.validate(type.ViewArgsSchema, args);
-    await this.abortIfFreezen(user.email);
 
     const post = await this.postModel.getPost(args.id);
 
@@ -81,7 +79,6 @@ export default class PostEndpoint implements IBaseEndpoint {
   // >>> Edit >>>
   async edit(args: type.EditArgs, user: TUser): Promise<{ success: true }> {
     args = await this.validate(type.EditArgsSchema, args);
-    await this.abortIfFreezen(user.email);
 
     const post = await this.postModel.getPost(args.id);
     const permissions = await this.permissionModel.getPermissions(user.email) as TPermissions;
@@ -103,7 +100,6 @@ export default class PostEndpoint implements IBaseEndpoint {
   // >>> Delete >>>
   async delete(args: type.DeleteArgs, user: TUser): Promise<{ success: true }> {
     args = await this.validate(type.DeleteArgsSchema, args);
-    await this.abortIfFreezen(user.email);
 
     const post = await this.postModel.getPost(args.id);
     const permissions = await this.permissionModel.getPermissions(user.email) as TPermissions;
@@ -123,9 +119,8 @@ export default class PostEndpoint implements IBaseEndpoint {
   // <<< Delete <<<
 
   // <<< Get List <<<
-  async getList(args: type.GetListArgs, user: TUser): Promise<GetListReturnType> {
+  async getList(args: type.GetListArgs, _user: TUser): Promise<GetListReturnType> {
     args = await this.validate(type.GetListArgsSchema, args);
-    await this.abortIfFreezen(user.email);
 
     const result = await this.postModel.getList(args.afterCursor, args.numberRecords||3)
                                        .catch((err: { message: string }) => {
@@ -137,9 +132,8 @@ export default class PostEndpoint implements IBaseEndpoint {
   // >>> Get List >>>
 
   // <<< Force Delete <<<
-  async forceDelete(args: type.ForceDeleteArgs, user: TUser): Promise<{ success: true }> {
+  async forceDelete(args: type.ForceDeleteArgs, _user: TUser): Promise<{ success: true }> {
     args = await this.validate(type.ForceDeleteArgsSchema, args);
-    await this.abortIfFreezen(user.email);
 
     const post = await this.postModel.getPost(args.id);
 
@@ -154,9 +148,8 @@ export default class PostEndpoint implements IBaseEndpoint {
   // >>> Force Delete >>>
 
   // <<< View Replies <<<
-  async viewReplies(args: type.ViewRepliesArgs, user: TUser): Promise<NestedTPost[]> {
+  async viewReplies(args: type.ViewRepliesArgs, _user: TUser): Promise<NestedTPost[]> {
     args = await this.validate(type.ViewRepliesArgsSchema, args);
-    await this.abortIfFreezen(user.email);
 
     const results = await this.postModel.getReplies(args.parent).catch((err: { message: string }) => {
       throw new RequestError("DatabaseError", err.message, 500);
@@ -169,7 +162,6 @@ export default class PostEndpoint implements IBaseEndpoint {
   // <<< Edit Tags <<<
   async editTags(args: type.EditTagsArgs, user: TUser): Promise<{ success: true }> {
     args = await this.validate(type.EditTagsArgsSchema, args);
-    await this.abortIfFreezen(user.email);
 
     const post = await this.postModel.getPost(args.id);
     const permissions = await this.permissionModel.getPermissions(user.email) as TPermissions;
@@ -211,13 +203,6 @@ export default class PostEndpoint implements IBaseEndpoint {
     }
 
     return value as EType;
-  }
-
-  async abortIfFreezen(email: string): Promise<void> {
-    const result = await this.userModel.isFreezen(email);
-    if (result) {
-      throw new RequestError("UserIsFreezen", `User(${email}) is freezen`, 403);
-    }
   }
 
   async getNestedChildren(arr: TPost[], repliesTo: number): Promise<NestedTPost[]> {

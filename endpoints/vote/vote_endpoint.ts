@@ -50,7 +50,6 @@ export default class VoteEndpoint implements IBaseEndpoint {
   // >>> Vote >>>
   async vote(args: type.VoteArgs, user: TUser): Promise<CallEndpointReturnType>{
     args = await this.validate(type.VoteArgsSchema, args);
-    await this.abortIfFreezen(user.email);
 
     const post = await this.postModel.getPost(args.postId);
     if (!post) {
@@ -73,7 +72,6 @@ export default class VoteEndpoint implements IBaseEndpoint {
   // >>> Unvote >>>
   async unvote(args: type.UnvoteArgs, user: TUser): Promise<CallEndpointReturnType>{
     args = await this.validate(type.UnvoteArgsSchema, args);
-    await this.abortIfFreezen(user.email);
 
     const post = await this.postModel.getPost(args.postId);
     if (!post) {
@@ -94,9 +92,8 @@ export default class VoteEndpoint implements IBaseEndpoint {
   // <<< Unvote <<<
 
   // >>> Vote count >>>
-  async voteCount(args: type.VoteCountArgs, user: TUser): Promise<CallEndpointReturnType>{
+  async voteCount(args: type.VoteCountArgs, _user: TUser): Promise<CallEndpointReturnType>{
     args = await this.validate(type.VoteCountArgsSchema, args);
-    await this.abortIfFreezen(user.email);
 
     const post = await this.postModel.getPost(args.postId);
     if (!post) {
@@ -110,9 +107,8 @@ export default class VoteEndpoint implements IBaseEndpoint {
   // <<< Vote count <<<
 
   // >>> Get votes >>>
-  async getVotes(args: type.GetVotesArgs, user: TUser): Promise<CallEndpointReturnType>{
+  async getVotes(args: type.GetVotesArgs, _user: TUser): Promise<CallEndpointReturnType>{
     args = await this.validate(type.GetVotesArgsSchema, args);
-    await this.abortIfFreezen(user.email);
 
     const post = await this.postModel.getPost(args.postId);
     if (!post) {
@@ -150,12 +146,5 @@ export default class VoteEndpoint implements IBaseEndpoint {
     }
 
     return value as EType;
-  }
-
-  async abortIfFreezen(email: string): Promise<void> {
-    const result = await this.userModel.isFreezen(email);
-    if (result) {
-      throw new RequestError("UserIsFreezen", `User(${email}) is freezen`, 403);
-    }
   }
 }

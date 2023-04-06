@@ -35,9 +35,8 @@ export default class PermissionEndpoint implements IBaseEndpoint {
   }
 
   // <<< View <<<
-  async view(args: type.ViewArgs, user: TUser): Promise<TPermissions> {
+  async view(args: type.ViewArgs, _user: TUser): Promise<TPermissions> {
     args = await this.validate(type.ViewArgsSchema, args);
-    await this.abortIfFreezen(user.email);
 
     const permissions = await this.permissionModel.getPermissions(args.email);
     if (!permissions) {
@@ -49,9 +48,8 @@ export default class PermissionEndpoint implements IBaseEndpoint {
   // >>> View >>>
 
   // <<< Grant <<<
-  async grant(args: type.GrantArgs, user: TUser): Promise<{success: true}|never> {
+  async grant(args: type.GrantArgs, _user: TUser): Promise<{success: true}|never> {
     args = await this.validate(type.GrantArgsSchema, args);
-    await this.abortIfFreezen(user.email);
 
     await this.permissionModel.grantPermission(args.grantTo, args.grantPermission).catch((err: Error) => {
       throw new RequestError("DatabaseError", err.message, 500);
@@ -62,9 +60,8 @@ export default class PermissionEndpoint implements IBaseEndpoint {
   // >>> Grant >>>
 
   // <<< Rescind <<<
-  async rescind(args: type.RescindArgs, user: TUser): Promise<{success: true}|never> {
+  async rescind(args: type.RescindArgs, _user: TUser): Promise<{success: true}|never> {
     args = await this.validate(type.RescindArgsSchema, args);
-    await this.abortIfFreezen(user.email);
 
     await this.permissionModel.rescindPermission(args.rescindFrom, args.rescindPermission).catch((err: Error) => {
       throw new RequestError("DatabaseError", err.message, 500);
@@ -95,12 +92,5 @@ export default class PermissionEndpoint implements IBaseEndpoint {
     }
 
     return value as EType;
-  }
-
-  async abortIfFreezen(email: string): Promise<void> {
-    const result = await this.userModel.isFreezen(email);
-    if (result) {
-      throw new RequestError("UserIsFreezen", `User(${email}) is freezen`, 403);
-    }
   }
 }

@@ -14,6 +14,7 @@ import knexfile from "./knexfile";
 import Logger from "./logger";
 import AuthenticationMiddleware from "./middlewares/authentication_middleware";
 import ErrorMiddleware from "./middlewares/error_middleware";
+import FreezenMiddleware from "./middlewares/freezen_middleware";
 import PermissionMiddleware from "./middlewares/permission_middleware";
 import Redis from "./redis";
 import initScheduledJobs from "./scheduledJobs/init_scheduled_jobs";
@@ -40,6 +41,7 @@ export default class App {
   // >>> Middlewares >>>
   authenticationMiddleware: AuthenticationMiddleware;
   permissionMiddleware: PermissionMiddleware;
+  freezenMiddleware: FreezenMiddleware;
   errorMiddleware: ErrorMiddleware;
   // <<< Middlewares <<<
 
@@ -52,6 +54,7 @@ export default class App {
     // >>> Middlewares >>>
     this.authenticationMiddleware = new AuthenticationMiddleware(this.logger, this.db, this.redisClient, this.config);
     this.permissionMiddleware = new PermissionMiddleware(this.logger, this.db, this.redisClient, this.config);
+    this.freezenMiddleware = new FreezenMiddleware(this.logger, this.db, this.redisClient, this.config);
     this.errorMiddleware = new ErrorMiddleware(this.logger);
     // <<< Middlewares <<<
 
@@ -91,6 +94,7 @@ export default class App {
     this.app.use(express.urlencoded({ extended: true }));
     this.app.use(asyncMiddleware(this.authenticationMiddleware.middleware(disableAuthFor)));
     this.app.use(asyncMiddleware(this.permissionMiddleware.middleware()));
+    this.app.use(asyncMiddleware(this.freezenMiddleware.middleware()));
 
     this.logger.info("[App] Create endpoint objects");
     Object.keys(endpoints).map((routerName: string) => {

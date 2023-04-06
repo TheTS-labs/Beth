@@ -15,5 +15,5 @@ declare class IBaseEndpoint {
   );
 
   async callEndpoint(name: string, args: object, user: TUser | undefined): Promise<object>;
-  async validate(schema: unknown, args: object): Promise<void>;
+  async validate<EType>(schema: unknown, args: EType): Promise<EType>;
 }

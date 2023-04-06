@@ -72,18 +72,6 @@ export const ViewRepliesArgsSchema = Joi.object({
 });
 // <<< View Replies <<<
 
-// >>> Upvote >>>
-export type UpvoteArgs = Base;
-
-export const UpvoteArgsSchema = base;
-// <<< Upvote <<<
-
-// >>> Downvote >>>
-export type DownvoteArgs = Base;
-
-export const DownvoteArgsSchema = base;
-// <<< Downvote <<<
-
 // >>> Edit Tags >>>
 export interface EditTagsArgs extends Base {
   newTags: string
@@ -96,5 +84,4 @@ export const EditTagsArgsSchema = base.keys({
 
 export type PostRequestArgs = CreateArgs | ViewArgs | EditArgs |
                               DeleteArgs | GetListArgs | ForceDeleteArgs |
-                              ViewRepliesArgs | UpvoteArgs | DownvoteArgs |
-                              EditTagsArgs;
+                              ViewRepliesArgs | EditTagsArgs;

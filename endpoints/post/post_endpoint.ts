@@ -6,6 +6,7 @@ import winston from "winston";
 import { ENV } from "../../app";
 import { IBaseEndpoint } from "../../common/base_endpoint";
 import RequestError from "../../common/request_error";
+import { EndpointThisType } from "../../common/types";
 import CachingPermissionModel from "../../db/models/caching/caching_permission";
 import CachingPostModel from "../../db/models/caching/caching_post";
 import CachingUserModel from "../../db/models/caching/caching_user";
@@ -20,13 +21,12 @@ export default class PostEndpoint implements IBaseEndpoint {
   public allowNames: string[] = [
     "create", "view", "edit", 
     "delete", "getList", 
-    "forceDelete", "upvote",
-    "viewReplies", "downvote",
+    "forceDelete", "viewReplies", 
     "editTags"
   ];
   userModel: UserModel | CachingUserModel;
   permissionModel: PermissionModel | CachingPermissionModel;
-  postModel: PostModel;
+  postModel: PostModel | CachingPostModel;
 
   constructor(
     public db: Knex,
@@ -46,7 +46,7 @@ export default class PostEndpoint implements IBaseEndpoint {
 
   // >>> Create >>>
   async create(args: type.CreateArgs, user: TUser): Promise<{ success: true, id: number }> {
-    await this.validate(type.CreateArgsSchema, args);
+    args = await this.validate(type.CreateArgsSchema, args);
     await this.abortIfFreezen(user.email);
 
     const parent = args.replyTo ? await this.postModel.findParent(args.replyTo) : undefined;
@@ -65,7 +65,7 @@ export default class PostEndpoint implements IBaseEndpoint {
 
   // >>> View >>>
   async view(args: type.ViewArgs, user: TUser): Promise<{ success: true }|{}> {
-    await this.validate(type.ViewArgsSchema, args);
+    args = await this.validate(type.ViewArgsSchema, args);
     await this.abortIfFreezen(user.email);
 
     const post = await this.postModel.getPost(args.id);
@@ -80,7 +80,7 @@ export default class PostEndpoint implements IBaseEndpoint {
 
   // >>> Edit >>>
   async edit(args: type.EditArgs, user: TUser): Promise<{ success: true }> {
-    await this.validate(type.EditArgsSchema, args);
+    args = await this.validate(type.EditArgsSchema, args);
     await this.abortIfFreezen(user.email);
 
     const post = await this.postModel.getPost(args.id);
@@ -102,7 +102,7 @@ export default class PostEndpoint implements IBaseEndpoint {
 
   // >>> Delete >>>
   async delete(args: type.DeleteArgs, user: TUser): Promise<{ success: true }> {
-    await this.validate(type.DeleteArgsSchema, args);
+    args = await this.validate(type.DeleteArgsSchema, args);
     await this.abortIfFreezen(user.email);
 
     const post = await this.postModel.getPost(args.id);
@@ -124,7 +124,7 @@ export default class PostEndpoint implements IBaseEndpoint {
 
   // <<< Get List <<<
   async getList(args: type.GetListArgs, user: TUser): Promise<GetListReturnType> {
-    await this.validate(type.GetListArgsSchema, args);
+    args = await this.validate(type.GetListArgsSchema, args);
     await this.abortIfFreezen(user.email);
 
     const result = await this.postModel.getList(args.afterCursor, args.numberRecords||3)
@@ -138,7 +138,7 @@ export default class PostEndpoint implements IBaseEndpoint {
 
   // <<< Force Delete <<<
   async forceDelete(args: type.ForceDeleteArgs, user: TUser): Promise<{ success: true }> {
-    await this.validate(type.ForceDeleteArgsSchema, args);
+    args = await this.validate(type.ForceDeleteArgsSchema, args);
     await this.abortIfFreezen(user.email);
 
     const post = await this.postModel.getPost(args.id);
@@ -155,7 +155,7 @@ export default class PostEndpoint implements IBaseEndpoint {
 
   // <<< View Replies <<<
   async viewReplies(args: type.ViewRepliesArgs, user: TUser): Promise<NestedTPost[]> {
-    await this.validate(type.ViewRepliesArgsSchema, args);
+    args = await this.validate(type.ViewRepliesArgsSchema, args);
     await this.abortIfFreezen(user.email);
 
     const results = await this.postModel.getReplies(args.parent).catch((err: { message: string }) => {
@@ -166,35 +166,9 @@ export default class PostEndpoint implements IBaseEndpoint {
   }
   // >>> View Replies >>>
 
-  // <<< Upvote <<<
-  async upvote(args: type.UpvoteArgs, user: TUser): Promise<{ success: true }> {
-    await this.validate(type.UpvoteArgsSchema, args);
-    await this.abortIfFreezen(user.email);
-
-    await this.postModel.upvote(args.id).catch((err: { message: string }) => {
-      throw new RequestError("DatabaseError", err.message, 500);
-    });
-
-    return { success: true };
-  }
-  // >>> Upvote >>>
-
-  // <<< Downvote <<<
-  async downvote(args: type.DownvoteArgs, user: TUser): Promise<{ success: true }> {
-    await this.validate(type.DownvoteArgsSchema, args);
-    await this.abortIfFreezen(user.email);
-
-    await this.postModel.downvote(args.id).catch((err: { message: string }) => {
-      throw new RequestError("DatabaseError", err.message, 500);
-    });
-
-    return { success: true };
-  }
-  // >>> Downvote >>>
-
   // <<< Edit Tags <<<
   async editTags(args: type.EditTagsArgs, user: TUser): Promise<{ success: true }> {
-    await this.validate(type.EditTagsArgsSchema, args);
+    args = await this.validate(type.EditTagsArgsSchema, args);
     await this.abortIfFreezen(user.email);
 
     const post = await this.postModel.getPost(args.id);
@@ -217,29 +191,26 @@ export default class PostEndpoint implements IBaseEndpoint {
   // >>> Edit Tags >>>
 
   async callEndpoint(
-    name: string, args: type.PostRequestArgs, user: unknown | undefined
+    this: EndpointThisType<PostEndpoint, type.PostRequestArgs, Promise<CallEndpointReturnType>>,
+    name: string, args: type.PostRequestArgs, user: TUser | undefined
   ): Promise<CallEndpointReturnType> {
     const userIncludes = this.allowNames.includes(name);
     if (!userIncludes) {
       throw new RequestError("EndpointNotFound", `Endpoint post/${name} does not exist`, 404);
     }
 
-    // Element implicitly has an 'any' type
-    // because expression of type 'string' can't be used to index type 'PostEndpoint'.
-    // No index signature with a parameter of type 'string' was found on type 'PostEndpoint'.
-    // But it actually can be used
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore
     const result: CallEndpointReturnType = await this[name](args, user);
 
     return result;
   }
 
-  async validate(schema: Joi.ObjectSchema, args: type.PostRequestArgs): Promise<void> {
-    const validationResult = schema.validate(args);
-    if (validationResult.error) {
-      throw new RequestError("ValidationError", validationResult.error.message, 400);
+  async validate<EType>(schema: Joi.ObjectSchema, args: EType): Promise<EType> {
+    const { error, value } = schema.validate(args);
+    if (error) {
+      throw new RequestError("ValidationError", error.message, 400);
     }
+
+    return value as EType;
   }
 
   async abortIfFreezen(email: string): Promise<void> {

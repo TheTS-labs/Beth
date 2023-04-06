@@ -15,7 +15,7 @@ import PostModel, { GetListReturnType, NestedTPost, TPost } from "../../db/model
 import UserModel, { TUser } from "../../db/models/user";
 import * as type from "./types";
 
-type CallEndpointReturnType = { success: true, id: number } | { success: true } | NestedTPost[];
+type CallEndpointReturnType = { success: true, id: number } | { success: true } | NestedTPost[] | {};
 
 export default class PostEndpoint implements IBaseEndpoint {
   public allowNames: string[] = [
@@ -63,7 +63,7 @@ export default class PostEndpoint implements IBaseEndpoint {
   // <<< Create <<<
 
   // >>> View >>>
-  async view(args: type.ViewArgs, _user: TUser): Promise<{ success: true }|{}> {
+  async view(args: type.ViewArgs, _user: TUser): Promise<CallEndpointReturnType> {
     args = await this.validate(type.ViewArgsSchema, args);
 
     const post = await this.postModel.getPost(args.id);
@@ -77,7 +77,7 @@ export default class PostEndpoint implements IBaseEndpoint {
   // <<< View <<<
 
   // >>> Edit >>>
-  async edit(args: type.EditArgs, user: TUser): Promise<{ success: true }> {
+  async edit(args: type.EditArgs, user: TUser): Promise<CallEndpointReturnType> {
     args = await this.validate(type.EditArgsSchema, args);
 
     const post = await this.postModel.getPost(args.id);
@@ -98,7 +98,7 @@ export default class PostEndpoint implements IBaseEndpoint {
   // <<< Edit <<<
 
   // >>> Delete >>>
-  async delete(args: type.DeleteArgs, user: TUser): Promise<{ success: true }> {
+  async delete(args: type.DeleteArgs, user: TUser): Promise<CallEndpointReturnType> {
     args = await this.validate(type.DeleteArgsSchema, args);
 
     const post = await this.postModel.getPost(args.id);
@@ -132,7 +132,7 @@ export default class PostEndpoint implements IBaseEndpoint {
   // >>> Get List >>>
 
   // <<< Force Delete <<<
-  async forceDelete(args: type.ForceDeleteArgs, _user: TUser): Promise<{ success: true }> {
+  async forceDelete(args: type.ForceDeleteArgs, _user: TUser): Promise<CallEndpointReturnType> {
     args = await this.validate(type.ForceDeleteArgsSchema, args);
 
     const post = await this.postModel.getPost(args.id);
@@ -148,7 +148,7 @@ export default class PostEndpoint implements IBaseEndpoint {
   // >>> Force Delete >>>
 
   // <<< View Replies <<<
-  async viewReplies(args: type.ViewRepliesArgs, _user: TUser): Promise<NestedTPost[]> {
+  async viewReplies(args: type.ViewRepliesArgs, _user: TUser): Promise<CallEndpointReturnType> {
     args = await this.validate(type.ViewRepliesArgsSchema, args);
 
     const results = await this.postModel.getReplies(args.parent).catch((err: { message: string }) => {
@@ -160,7 +160,7 @@ export default class PostEndpoint implements IBaseEndpoint {
   // >>> View Replies >>>
 
   // <<< Edit Tags <<<
-  async editTags(args: type.EditTagsArgs, user: TUser): Promise<{ success: true }> {
+  async editTags(args: type.EditTagsArgs, user: TUser): Promise<CallEndpointReturnType> {
     args = await this.validate(type.EditTagsArgsSchema, args);
 
     const post = await this.postModel.getPost(args.id);

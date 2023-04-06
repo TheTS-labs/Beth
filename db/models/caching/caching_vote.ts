@@ -15,10 +15,12 @@ export default class CachingVoteModel implements VoteModel {
   ) {}
 
   public async vote(userId: number, postId: number, voteType: 0 | 1): Promise<void> {
+    this.logger.debug(`[CachingVoteModel] ${userId} voted ${postId}: ${voteType}`);
     await this.db<TVote>("vote").insert({ userId, postId, voteType });
   }
 
   public async unvote(postId: number, userId: number): Promise<void> {
+    this.logger.debug(`[CachingVoteModel] ${userId} unvoted ${postId}`);
     const deletedId = await this.db<TVote>("vote").where({ postId, userId }).del(["id"]);
     await this.redisClient.del(`vote_${deletedId}`);
   }
@@ -28,6 +30,7 @@ export default class CachingVoteModel implements VoteModel {
     afterCursor: string | undefined,
     numberRecords: number
   ): Promise<GetVotesReturnType> {
+    this.logger.debug(`[CachingVoteModel] Trying to get list: ${afterCursor}, ${numberRecords}`);
     let query = this.db.queryBuilder()
                        .select("vote.*")
                        .from("vote")
@@ -45,30 +48,14 @@ export default class CachingVoteModel implements VoteModel {
     };
   }
 
-  public async getVoteById(id: number): Promise<TVote | undefined> {
-    const cachedVoteString = await this.redisClient.get(`vote_${id}`)||"null";
-    const cachedVote: TVote = JSON.parse(cachedVoteString);
-
-    if (cachedVote) {
-      return cachedVote;
-    }
-
-    const vote = await this.db<TVote>("vote").where({ id }).first();
-
-    await this.redisClient.set(`vote_${id}`, JSON.stringify(vote), {
-      EX: this.config.get("VOTE_EX").required().asIntPositive(),
-      NX: true
-    });
-
-    return vote;
-  }
-
   public async getVoteByPostAndUser(postId: number, userId: number): Promise<TVote | undefined> {
+    this.logger.debug(`[CachingVoteModel] Getting a vote: userId ${userId}, postId ${postId}`);
     const vote = await this.db<TVote>("vote").where({ postId, userId }).first();
     return vote;
   }
 
   public async getVoteCount(postId: number, voteType: 0 | 1): Promise<number> {
+    this.logger.debug(`[CachingVoteModel] Getting a vote count: voteType ${voteType}, postId ${postId}`);
     const count = await this.db<TVote>("vote").count("*")
                                               .where({ postId, voteType }) as unknown as [{ "count(*)": number }];
 

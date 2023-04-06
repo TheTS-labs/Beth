@@ -105,8 +105,11 @@ export default class PostModel {
   }
 
   public async findParent(id: number): Promise<number | undefined> {
+    this.logger.debug(`[PostModel] Finding parent for ${id}`);
+  
     const comment = await this.getPost(id);
     if (!comment) {
+      this.logger.debug(`[PostModel] ${id} is the parent`);
       return;
     }
 
@@ -114,19 +117,24 @@ export default class PostModel {
     let commentOfParent = await this.getPost(parent) as TPost;
 
     while (commentOfParent) {
+      this.logger.debug(`[PostModel] Probably ${parent}, checking`);
       commentOfParent = await this.getPost(parent) as TPost;
 
       if (commentOfParent.repliesTo === null) {
+        this.logger.debug(`[PostModel] Yeah, ${commentOfParent.id} is the parent`);
         return commentOfParent.id;
       }
   
+      this.logger.debug(`[PostModel] Nah, ${commentOfParent.id} is not a parent`);
       parent = commentOfParent.repliesTo;
     }
 
+    this.logger.debug(`[PostModel] Done, ${parent} is the parent`);
     return parent;
   }
 
   public async editTags(id: number, newTags: string): Promise<void> {
+    this.logger.debug(`[PostModel] Editing tags for ${id}: ${newTags}`);
     await this.db<TPost>("post").where({ id }).update({ tags: newTags });
   }
 }

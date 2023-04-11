@@ -1,12 +1,13 @@
 import bcrypt from "bcrypt";
+import Joi from "joi";
 import { Knex } from "knex";
 import { RedisClientType } from "redis";
 import winston from "winston";
 
 import { ENV } from "../../app";
-import BaseEndpoint from "../../common/base_endpoint";
+import { IBaseEndpoint } from "../../common/base_endpoint";
 import RequestError from "../../common/request_error";
-import { SafeUserObject } from "../../common/types";
+import { EndpointThisType, SafeUserObject } from "../../common/types";
 import CachingPermissionModel from "../../db/models/caching/caching_permission";
 import CachingUserModel from "../../db/models/caching/caching_user";
 import PermissionModel from "../../db/models/permission";
@@ -15,7 +16,7 @@ import * as type from "./types";
 
 type CallEndpointReturnType = { success: true } | {} | SafeUserObject;
 
-export default class UserEndpoint extends BaseEndpoint<type.UserRequestArgs, CallEndpointReturnType> {
+export default class UserEndpoint implements IBaseEndpoint {
   allowNames: Array<string> = ["create", "view", "editPassword", "freeze"];
   userModel: UserModel | CachingUserModel;
   permissionModel: PermissionModel | CachingPermissionModel;
@@ -26,8 +27,6 @@ export default class UserEndpoint extends BaseEndpoint<type.UserRequestArgs, Cal
     public logger: winston.Logger,
     public config: ENV
   ) {
-    super(db, redisClient, logger, config, "user");
-
     const REDIS_REQUIRED = this.config.get("REDIS_REQUIRED").required().asBool();
     const UserModelType = REDIS_REQUIRED ? CachingUserModel : UserModel;
     const PermissionModelType = REDIS_REQUIRED ? CachingPermissionModel : PermissionModel;
@@ -88,4 +87,27 @@ export default class UserEndpoint extends BaseEndpoint<type.UserRequestArgs, Cal
     return { success: true };
   }
   // >>> Freeze >>>
+
+  async callEndpoint(
+    this: EndpointThisType<UserEndpoint, type.UserRequestArgs, Promise<CallEndpointReturnType>>,
+    name: string, args: type.UserRequestArgs, user: TUser | undefined
+  ): Promise<CallEndpointReturnType> {
+    const userIncludes = this.allowNames.includes(name);
+    if (!userIncludes) {
+      throw new RequestError("EndpointNotFound", `Endpoint user/${name} does not exist`, 404);
+    }
+
+    const result: CallEndpointReturnType = await this[name](args, user);
+
+    return result;
+  }
+
+  async validate<EType>(schema: Joi.ObjectSchema, args: EType): Promise<EType> {
+    const { error, value } = schema.validate(args);
+    if (error) {
+      throw new RequestError("ValidationError", error.message, 400);
+    }
+
+    return value as EType;
+  }
 }

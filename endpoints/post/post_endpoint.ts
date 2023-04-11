@@ -1,10 +1,12 @@
+import Joi from "joi";
 import { Knex } from "knex";
 import { RedisClientType } from "redis";
 import winston from "winston";
 
 import { ENV } from "../../app";
-import BaseEndpoint from "../../common/base_endpoint";
+import { IBaseEndpoint } from "../../common/base_endpoint";
 import RequestError from "../../common/request_error";
+import { EndpointThisType } from "../../common/types";
 import CachingPermissionModel from "../../db/models/caching/caching_permission";
 import CachingPostModel from "../../db/models/caching/caching_post";
 import CachingUserModel from "../../db/models/caching/caching_user";
@@ -15,7 +17,7 @@ import * as type from "./types";
 
 type CallEndpointReturnType = { success: true, id: number } | { success: true } | NestedTPost[] | {};
 
-export default class PostEndpoint extends BaseEndpoint<type.PostRequestArgs, CallEndpointReturnType> {
+export default class PostEndpoint implements IBaseEndpoint {
   public allowNames: string[] = [
     "create", "view", "edit", 
     "delete", "getList", 
@@ -32,8 +34,6 @@ export default class PostEndpoint extends BaseEndpoint<type.PostRequestArgs, Cal
     public logger: winston.Logger,
     public config: ENV
   ) {
-    super(db, redisClient, logger, config, "post");
-
     const REDIS_REQUIRED = this.config.get("REDIS_REQUIRED").required().asBool();
     const UserModelType = REDIS_REQUIRED ? CachingUserModel : UserModel;
     const PermissionModelType = REDIS_REQUIRED ? CachingPermissionModel : PermissionModel;
@@ -181,6 +181,29 @@ export default class PostEndpoint extends BaseEndpoint<type.PostRequestArgs, Cal
     return { success: true };
   }
   // >>> Edit Tags >>>
+
+  async callEndpoint(
+    this: EndpointThisType<PostEndpoint, type.PostRequestArgs, Promise<CallEndpointReturnType>>,
+    name: string, args: type.PostRequestArgs, user: TUser | undefined
+  ): Promise<CallEndpointReturnType> {
+    const userIncludes = this.allowNames.includes(name);
+    if (!userIncludes) {
+      throw new RequestError("EndpointNotFound", `Endpoint post/${name} does not exist`, 404);
+    }
+
+    const result: CallEndpointReturnType = await this[name](args, user);
+
+    return result;
+  }
+
+  async validate<EType>(schema: Joi.ObjectSchema, args: EType): Promise<EType> {
+    const { error, value } = schema.validate(args);
+    if (error) {
+      throw new RequestError("ValidationError", error.message, 400);
+    }
+
+    return value as EType;
+  }
 
   async getNestedChildren(arr: TPost[], repliesTo: number): Promise<NestedTPost[]> {
     const doesKeyExist = await this.redisClient.exists(`post_comments_${repliesTo}`);

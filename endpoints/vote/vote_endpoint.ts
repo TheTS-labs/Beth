@@ -14,10 +14,10 @@ import CachingVoteModel from "../../db/models/caching/caching_vote";
 import PermissionModel from "../../db/models/permission";
 import PostModel from "../../db/models/post";
 import UserModel, { TUser } from "../../db/models/user";
-import VoteModel, { GetVotesReturnType, Vote } from "../../db/models/vote";
+import VoteModel, { Vote } from "../../db/models/vote";
 import * as type from "./types";
 
-type CallEndpointReturnType = { success: true } | { count: number, voteType: Vote } | GetVotesReturnType;
+type CallEndpointReturnType = { success: true } | { count: number, voteType: Vote };
 
 export default class VoteEndpoint implements IBaseEndpoint {
   public allowNames: string[] = [
@@ -105,25 +105,6 @@ export default class VoteEndpoint implements IBaseEndpoint {
     return { count: count, voteType: args.voteType };
   }
   // <<< Vote count <<<
-
-  // >>> Get votes >>>
-  async getVotes(args: type.GetVotesArgs, _user: TUser): Promise<CallEndpointReturnType>{
-    args = await this.validate(type.GetVotesArgsSchema, args);
-
-    const post = await this.postModel.getPost(args.postId);
-    if (!post) {
-      throw new RequestError("DatabaseError", "Post doesn't exist", 404);
-    }
-
-    const votes = await this.voteModel.getVotes(args.postId,
-                                                args.afterCursor,
-                                                args.numberRecords).catch((err: { message: string }) => {
-      throw new RequestError("DatabaseError", err.message, 500);
-    });
-
-    return votes;
-  }
-  // <<< Get votes <<<
 
   async callEndpoint(
     this: EndpointThisType<VoteEndpoint, type.VoteRequestArgs, Promise<CallEndpointReturnType>>,

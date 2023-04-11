@@ -1,10 +1,9 @@
 import { Knex } from "knex";
-import { getCursor, knexCursorPagination } from "knex-cursor-pagination";
 import { RedisClientType } from "redis";
 import winston from "winston";
 
 import { ENV } from "../../../app";
-import VoteModel, { GetVotesReturnType, TVote, Vote } from "../vote";
+import VoteModel, { TVote, Vote } from "../vote";
 
 export default class CachingVoteModel implements VoteModel {
   constructor(
@@ -23,29 +22,6 @@ export default class CachingVoteModel implements VoteModel {
     this.logger.debug(`[CachingVoteModel] ${userId} unvoted ${postId}`);
     const deletedId = await this.db<TVote>("vote").where({ postId, userId }).del(["id"]);
     await this.redisClient.del(`vote_${deletedId}`);
-  }
-
-  public async getVotes(
-    postId: number,
-    afterCursor: string | undefined,
-    numberRecords: number
-  ): Promise<GetVotesReturnType> {
-    this.logger.debug(`[CachingVoteModel] Trying to get list: ${afterCursor}, ${numberRecords}`);
-    let query = this.db.queryBuilder()
-                       .select("vote.*")
-                       .from("vote")
-                       .where({ postId })
-                       .orderBy("createdAt", "DESC");
-
-    query = knexCursorPagination(query, { after: afterCursor, first: numberRecords });
-
-    const results = await query;
-    const endCursor = getCursor(results[results.length - 1]);
-
-    return {
-      results: results,
-      endCursor: endCursor
-    };
   }
 
   public async getVoteByPostAndUser(postId: number, userId: number): Promise<TVote | undefined> {

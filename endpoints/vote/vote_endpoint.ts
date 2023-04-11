@@ -20,8 +20,7 @@ type CallEndpointReturnType = { success: true } | { count: number, voteType: Vot
 
 export default class VoteEndpoint implements IBaseEndpoint {
   public allowNames: string[] = [
-    "vote", "unvote", "voteCount",
-    "getVotes"
+    "vote", "voteCount"
   ];
   userModel: UserModel | CachingUserModel;
   permissionModel: PermissionModel | CachingPermissionModel;

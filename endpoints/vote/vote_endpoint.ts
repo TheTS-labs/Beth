@@ -14,10 +14,10 @@ import CachingVoteModel from "../../db/models/caching/caching_vote";
 import PermissionModel from "../../db/models/permission";
 import PostModel from "../../db/models/post";
 import UserModel, { TUser } from "../../db/models/user";
-import VoteModel, { GetVotesReturnType } from "../../db/models/vote";
+import VoteModel, { GetVotesReturnType, Vote } from "../../db/models/vote";
 import * as type from "./types";
 
-type CallEndpointReturnType = { success: true } | { count: number, voteType: 0 | 1 } | GetVotesReturnType;
+type CallEndpointReturnType = { success: true } | { count: number, voteType: Vote } | GetVotesReturnType;
 
 export default class VoteEndpoint implements IBaseEndpoint {
   public allowNames: string[] = [

@@ -15,7 +15,12 @@ export interface TVote {
   userId: number
   postId: number
   createdAt: Date
-  voteType: 0 | 1
+  voteType: Vote
+}
+
+export enum Vote {
+  Up = 1,
+  Down = 0
 }
 
 export default class VoteModel {
@@ -26,7 +31,7 @@ export default class VoteModel {
     public config: ENV
   ) {}
 
-  public async vote(userId: number, postId: number, voteType: 0 | 1): Promise<void> {
+  public async vote(userId: number, postId: number, voteType: Vote): Promise<void> {
     this.logger.debug(`[VoteModel] ${userId} voted ${postId}: ${voteType}`);
     await this.db<TVote>("vote").insert({ userId, postId, voteType });
   }
@@ -65,7 +70,7 @@ export default class VoteModel {
     return vote;
   }
 
-  public async getVoteCount(postId: number, voteType: 0 | 1): Promise<number> {
+  public async getVoteCount(postId: number, voteType: Vote): Promise<number> {
     this.logger.debug(`[VoteModel] Getting a vote count: voteType ${voteType}, postId ${postId}`);
     const count = await this.db<TVote>("vote").count("*")
                                               .where({ postId, voteType }) as unknown as [{ "count(*)": number }];

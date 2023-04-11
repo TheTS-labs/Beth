@@ -1,9 +1,11 @@
 import Joi from "joi";
 
+import { Vote } from "../../db/models/vote";
+
 // >>> Vote >>>
 export interface VoteArgs {
   postId: number
-  voteType: 0 | 1
+  voteType: Vote
 }
 
 export const VoteArgsSchema = Joi.object({
@@ -25,7 +27,7 @@ export const UnvoteArgsSchema = Joi.object({
 // >>> Vote count >>>
 export interface VoteCountArgs {
   postId: number
-  voteType: 0 | 1
+  voteType: Vote
 }
 
 export const VoteCountArgsSchema = Joi.object({

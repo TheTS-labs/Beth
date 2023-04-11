@@ -4,7 +4,7 @@ import { RedisClientType } from "redis";
 import winston from "winston";
 
 import { ENV } from "../../../app";
-import VoteModel, { GetVotesReturnType, TVote } from "../vote";
+import VoteModel, { GetVotesReturnType, TVote, Vote } from "../vote";
 
 export default class CachingVoteModel implements VoteModel {
   constructor(
@@ -14,7 +14,7 @@ export default class CachingVoteModel implements VoteModel {
     public config: ENV
   ) {}
 
-  public async vote(userId: number, postId: number, voteType: 0 | 1): Promise<void> {
+  public async vote(userId: number, postId: number, voteType: Vote): Promise<void> {
     this.logger.debug(`[CachingVoteModel] ${userId} voted ${postId}: ${voteType}`);
     await this.db<TVote>("vote").insert({ userId, postId, voteType });
   }
@@ -54,7 +54,7 @@ export default class CachingVoteModel implements VoteModel {
     return vote;
   }
 
-  public async getVoteCount(postId: number, voteType: 0 | 1): Promise<number> {
+  public async getVoteCount(postId: number, voteType: Vote): Promise<number> {
     this.logger.debug(`[CachingVoteModel] Getting a vote count: voteType ${voteType}, postId ${postId}`);
     const count = await this.db<TVote>("vote").count("*")
                                               .where({ postId, voteType }) as unknown as [{ "count(*)": number }];

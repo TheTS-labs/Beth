@@ -25,17 +25,19 @@ export default class VoteModel {
     public config: ENV
   ) {}
 
-  public async vote(userId: number, postId: number, voteType: Vote): Promise<void> {
+  public async vote(postId: number, userId: number, unvote=false, voteType=Vote.Up): Promise<void> {
+    if (unvote) {
+      this.logger.debug(`[VoteModel] ${userId} unvoted ${postId}`);
+      await this.db<TVote>("vote").where({ postId, userId }).del();
+
+      return;
+    }
+
     this.logger.debug(`[VoteModel] ${userId} voted ${postId}: ${voteType}`);
     await this.db<TVote>("vote").insert({ userId, postId, voteType });
   }
 
-  public async unvote(postId: number, userId: number): Promise<void> {
-    this.logger.debug(`[VoteModel] ${userId} unvoted ${postId}`);
-    await this.db<TVote>("vote").where({ postId, userId }).del();
-  }
-
-  public async getVoteByPostAndUser(postId: number, userId: number): Promise<TVote | undefined> {
+  public async getVote(postId: number, userId: number): Promise<TVote | undefined> {
     this.logger.debug(`[VoteModel] Getting a vote: userId ${userId}, postId ${postId}`);
     const vote = await this.db<TVote>("vote").where({ postId, userId }).first();
     return vote;

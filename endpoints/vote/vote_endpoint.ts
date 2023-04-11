@@ -10,7 +10,6 @@ import { EndpointThisType } from "../../common/types";
 import CachingPermissionModel from "../../db/models/caching/caching_permission";
 import CachingPostModel from "../../db/models/caching/caching_post";
 import CachingUserModel from "../../db/models/caching/caching_user";
-import CachingVoteModel from "../../db/models/caching/caching_vote";
 import PermissionModel from "../../db/models/permission";
 import PostModel from "../../db/models/post";
 import UserModel, { TUser } from "../../db/models/user";
@@ -27,7 +26,7 @@ export default class VoteEndpoint implements IBaseEndpoint {
   userModel: UserModel | CachingUserModel;
   permissionModel: PermissionModel | CachingPermissionModel;
   postModel: PostModel | CachingPostModel;
-  voteModel: CachingVoteModel | VoteModel;
+  voteModel: VoteModel;
 
   constructor(
     public db: Knex,
@@ -39,12 +38,11 @@ export default class VoteEndpoint implements IBaseEndpoint {
     const UserModelType = REDIS_REQUIRED ? CachingUserModel : UserModel;
     const PermissionModelType = REDIS_REQUIRED ? CachingPermissionModel : PermissionModel;
     const PostModelType = REDIS_REQUIRED ? CachingPostModel : PostModel;
-    const VoteModelType = REDIS_REQUIRED ? CachingVoteModel : VoteModel;
 
     this.permissionModel = new PermissionModelType(this.db, this.logger, this.redisClient, this.config);
     this.userModel = new UserModelType(this.db, this.logger, this.redisClient, this.config);
     this.postModel = new PostModelType(this.db, this.logger, this.redisClient, this.config);
-    this.voteModel = new VoteModelType(this.db, this.logger, this.redisClient, this.config);
+    this.voteModel = new VoteModel(this.db, this.logger, this.redisClient, this.config);
   }
 
   // >>> Vote >>>
@@ -56,40 +54,18 @@ export default class VoteEndpoint implements IBaseEndpoint {
       throw new RequestError("DatabaseError", "Post doesn't exist", 404);
     }
 
-    const vote = await this.voteModel.getVoteByPostAndUser(args.postId, user.id);
+    const vote = await this.voteModel.getVote(args.postId, user.id);
     if (vote) {
       throw new RequestError("DatabaseError", "You already voted", 403);
     }
 
-    await this.voteModel.vote(user.id, args.postId, args.voteType).catch((err: { message: string }) => {
+    await this.voteModel.vote(user.id, args.postId, args.unvote, args.voteType).catch((err: { message: string }) => {
       throw new RequestError("DatabaseError", err.message, 500);
     });
 
     return { success: true };
   }
   // <<< Vote <<<
-
-  // >>> Unvote >>>
-  async unvote(args: type.UnvoteArgs, user: TUser): Promise<CallEndpointReturnType>{
-    args = await this.validate(type.UnvoteArgsSchema, args);
-
-    const post = await this.postModel.getPost(args.postId);
-    if (!post) {
-      throw new RequestError("DatabaseError", "Post doesn't exist", 404);
-    }
-
-    const vote = await this.voteModel.getVoteByPostAndUser(args.postId, user.id);
-    if (!vote) {
-      throw new RequestError("DatabaseError", "You didn't vote", 403);
-    }
-
-    await this.voteModel.unvote(args.postId, user.id).catch((err: { message: string }) => {
-      throw new RequestError("DatabaseError", err.message, 500);
-    });
-
-    return { success: true };
-  }
-  // <<< Unvote <<<
 
   // >>> Vote count >>>
   async voteCount(args: type.VoteCountArgs, _user: TUser): Promise<CallEndpointReturnType>{

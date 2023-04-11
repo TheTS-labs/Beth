@@ -6,23 +6,15 @@ import { Vote } from "../../db/models/vote";
 export interface VoteArgs {
   postId: number
   voteType: Vote
+  unvote: boolean
 }
 
 export const VoteArgsSchema = Joi.object({
   postId: Joi.number().positive().required(),
-  voteType: Joi.number().min(0).max(1).required()
+  voteType: Joi.number().min(0).max(1).required(),
+  unvote: Joi.boolean().default(false)
 });
 // <<< Vote <<<
-
-// >>> Unvote >>>
-export interface UnvoteArgs {
-  postId: number
-}
-
-export const UnvoteArgsSchema = Joi.object({
-  postId: Joi.number().positive().required(),
-});
-// <<< Unvote <<<
 
 // >>> Vote count >>>
 export interface VoteCountArgs {
@@ -50,4 +42,4 @@ export const GetVotesArgsSchema = Joi.object({
 });
 // <<< Get votes <<<
 
-export type VoteRequestArgs = VoteArgs | UnvoteArgs | VoteCountArgs | GetVotesArgs;
+export type VoteRequestArgs = VoteArgs | VoteCountArgs | GetVotesArgs;

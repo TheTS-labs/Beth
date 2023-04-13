@@ -20,7 +20,11 @@ export default class CachingPostModel implements PostModel {
     repliesTo: number | undefined=undefined,
     parent: number | undefined=undefined
   ): Promise<Pick<TPost, "id"> | undefined | void> {
-    this.logger.debug("[CachingPostModel] Trying to insert post");
+    this.logger.debug({
+      message: "Trying to insert post",
+      path: module.filename,
+      context: { author, text: "[SKIP]", repliesTo, parent }
+    });
     const id = await this.db<TPost>("post").insert({
       author: author,
       text: text,
@@ -32,7 +36,7 @@ export default class CachingPostModel implements PostModel {
   }
 
   public async getPost(id: number): Promise<TPost | undefined> {
-    this.logger.debug(`[CachingPostModel] Trying to get post ${id}`);
+    this.logger.debug({ message: "Trying to get post", path: module.filename, context: { id } });
 
     const cachedPostString = await this.redisClient.get(`post_${id}`);
     const cachedPost: TPost = JSON.parse(cachedPostString||"null");
@@ -56,24 +60,28 @@ export default class CachingPostModel implements PostModel {
   }
 
   public async editPost(id: number, newText: string): Promise<void> {
-    this.logger.debug(`[CachingPostModel] Trying to edit post ${id}`);
+    this.logger.debug({ message: "Trying to edit post", path: module.filename, context: { id } });
     await this.db<TPost>("post").where({ id: id }).update({ text: newText });
   }
 
   public async deletePost(id: number): Promise<void> {
-    this.logger.debug(`[CachingPostModel] Trying to delete post ${id}`);
+    this.logger.debug({ message: "Trying to delete post", path: module.filename, context: { id } });
     await this.db<TPost>("post").where({ id: id }).del();
   }
 
   public async freezePost(id: number): Promise<void> {
-    this.logger.debug(`[CachingPostModel] Trying to freeze post ${id}`);
+    this.logger.debug({ message: "Trying to freeze post", path: module.filename, context: { id } });
     await this.db<TPost>("post").where({ id: id }).update({
       freezenAt: new Date(Date.now())
     });
   }
 
   public async getList(afterCursor: string, numberRecords: number): Promise<GetListReturnType> {
-    this.logger.debug(`[CachingPostModel] Trying to get list: ${afterCursor}, ${numberRecords}`);
+    this.logger.debug({
+      message: "Trying to get list",
+      path: module.filename,
+      context: { afterCursor, numberRecords }
+    });
     let query = this.db.queryBuilder()
                        .select("post.*")
                        .from("post")
@@ -92,7 +100,7 @@ export default class CachingPostModel implements PostModel {
   }
 
   public async getReplies(parent: number): Promise<TPost[]> {
-    this.logger.debug(`[CachingPostModel] Trying to get replies to ${parent}`);
+    this.logger.debug({ message: "Trying to get replies", path: module.filename, context: { parent } });
 
     const result = await this.db<TPost>("post").where("freezenAt", null)
                                                .andWhere("parent", parent)
@@ -103,11 +111,11 @@ export default class CachingPostModel implements PostModel {
   }
 
   public async findParent(id: number): Promise<number | undefined> {
-    this.logger.debug(`[CachingPostModel] Finding parent for ${id}`);
+    this.logger.debug({ message: "Finding parent", path: module.filename, context: { id } });
   
     const comment = await this.getPost(id);
     if (!comment) {
-      this.logger.debug(`[CachingPostModel] ${id} is the parent`);
+      this.logger.debug({ message: `${id} is the parent`, path: module.filename });
       return;
     }
 
@@ -115,24 +123,24 @@ export default class CachingPostModel implements PostModel {
     let commentOfParent = await this.getPost(parent) as TPost;
 
     while (commentOfParent) {
-      this.logger.debug(`[CachingPostModel] Probably ${parent}, checking`);
+      this.logger.debug({ message: `Probably ${parent}, checking`, path: module.filename });
       commentOfParent = await this.getPost(parent) as TPost;
 
       if (commentOfParent.repliesTo === null) {
-        this.logger.debug(`[CachingPostModel] Yeah, ${commentOfParent.id} is the parent`);
+        this.logger.debug({ message: `Yeah, ${commentOfParent.id} is the parent`, path: module.filename });
         return commentOfParent.id;
       }
   
-      this.logger.debug(`[CachingPostModel] Nah, ${commentOfParent.id} is not a parent`);
+      this.logger.debug({ message: `Nah, ${commentOfParent.id} is not a parent`, path: module.filename });
       parent = commentOfParent.repliesTo;
     }
 
-    this.logger.debug(`[CachingPostModel] Done, ${parent} is the parent`);
+    this.logger.debug({ message: `Done, ${parent} is the parent`, path: module.filename });
     return parent;
   }
 
   public async editTags(id: number, newTags: string): Promise<void> {
-    this.logger.debug(`[CachingPostModel] Editing tags for ${id}: ${newTags}`);
+    this.logger.debug({ message: "Editing tags", path: module.filename, context: { id, newTags } });
     await this.db<TPost>("post").where({ id }).update({ tags: newTags });
     await this.redisClient.del(`post_${id}`);
   }

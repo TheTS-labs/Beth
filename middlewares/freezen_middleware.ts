@@ -21,7 +21,7 @@ export default class FreezenMiddleware {
   public middleware(): MiddlewareFunction {
     return async (req: RequestWithUser & { user: TUser }, res: Response, next: NextFunction): Promise<void> => {
       if (!req.user) {
-        this.logger.debug("[FreezenMiddleware] Excluded path. Skip");
+        this.logger.debug({ message: "Excluded path. Skip", path: module.filename });
         next();
       }
 

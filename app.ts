@@ -63,40 +63,44 @@ export default class App {
   }
 
   registerRouters(): App {
-    this.logger.info("[App] Registering endpoint objects");
+    this.logger.info({ message: "Registering endpoint objects", path: module.filename });
     Object.keys(this.endpoints).map((routerName: string) => {
       this.app.post(`${routerName}/:endPoint`, asyncHandler(async (req: RequestWithUser, res: Response) => {
-        this.logger.debug(
-          `[App] Incoming request to ${routerName}/${req.params.endPoint}: ${JSON.stringify(req.body)}`
-        );
+        this.logger.debug({
+          message: `Incoming request to ${routerName}/${req.params.endPoint}: ${JSON.stringify(req.body)}`,
+          path: module.filename 
+        });
 
         const classObject = this.endpoints[routerName];
         const result = await classObject.callEndpoint(req.params.endPoint, req.body, req.user);
 
-        this.logger.debug(`[App] Request result: ${JSON.stringify(result)}`);
+        this.logger.debug({ message: `Request result: ${JSON.stringify(result)}`, path: module.filename });
 
         res.json(result);
       })
     );
 
-    this.logger.debug(`[App] The ${routerName} endpoint object is registered`);
+    this.logger.debug({ message: `The ${routerName} endpoint object is registered`, path: module.filename });
     });
 
-    this.logger.debug("[App] Enabling the error-catching middleware");
+    this.logger.debug({ message: "Enabling the error-catching middleware", path: module.filename });
     this.app.use(this.errorMiddleware.middleware.bind(this.errorMiddleware));
 
     return this;
   }
 
   private setupApp(endpoints: TEndpointTypes, disableAuthFor: string[]): void {
-    this.logger.info("[App] Configure the application settings and enable the middlewares");
+    this.logger.info({
+      message: "Configure the application settings and enable the middlewares",
+      path: module.filename
+    });
     this.app.use(express.json());
     this.app.use(express.urlencoded({ extended: true }));
     this.app.use(asyncMiddleware(this.authenticationMiddleware.middleware(disableAuthFor)));
     this.app.use(asyncMiddleware(this.permissionMiddleware.middleware()));
     this.app.use(asyncMiddleware(this.freezenMiddleware.middleware()));
 
-    this.logger.info("[App] Create endpoint objects");
+    this.logger.info({ message: "Create endpoint objects", path: module.filename });
     Object.keys(endpoints).map((routerName: string) => {
       const endpointClass = endpoints[routerName];
       const endpointClassObject = new endpointClass(
@@ -108,7 +112,7 @@ export default class App {
 
       this.endpoints[routerName] = endpointClassObject;
 
-      this.logger.debug(`[App] The ${routerName} endpoint object is created`);
+      this.logger.debug({message: `The ${routerName} endpoint object is created`, path: module.filename });
     });
   }
 
@@ -116,11 +120,11 @@ export default class App {
     const port = this.config.get("APP_PORT").required().asPortNumber();
 
     this.app.listen(port, () => {
-      this.logger.info(`[App] Server is running at http://localhost:${port}`);
+      this.logger.info({ message: `Server is running at http://localhost:${port}`, path: module.filename });
     });
   }
 
   envLoggerFn(varname: string, str: string): void {
-    this.logger.debug(`[App] ${varname}: ${str}`);
+    this.logger.debug({ message: `${varname}: ${str}`, path: module.filename });
   }
 }

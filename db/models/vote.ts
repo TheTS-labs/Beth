@@ -27,24 +27,24 @@ export default class VoteModel {
 
   public async vote(postId: number, userId: number, unvote=false, voteType=Vote.Up): Promise<void> {
     if (unvote) {
-      this.logger.debug(`[VoteModel] ${userId} unvoted ${postId}`);
+      this.logger.debug({ message: "Unvoted", path: module.filename, context: { userId, postId } });
       await this.db<TVote>("vote").where({ postId, userId }).del();
 
       return;
     }
 
-    this.logger.debug(`[VoteModel] ${userId} voted ${postId}: ${voteType}`);
+    this.logger.debug({ message: "Voted", path: module.filename, context: { userId, postId } });
     await this.db<TVote>("vote").insert({ userId, postId, voteType });
   }
 
   public async getVote(postId: number, userId: number): Promise<TVote | undefined> {
-    this.logger.debug(`[VoteModel] Getting a vote: userId ${userId}, postId ${postId}`);
+    this.logger.debug({ message: "Getting a vote", path: module.filename, context: { userId, postId } });
     const vote = await this.db<TVote>("vote").where({ postId, userId }).first();
     return vote;
   }
 
   public async getVoteCount(postId: number, voteType: Vote): Promise<number> {
-    this.logger.debug(`[VoteModel] Getting a vote count: voteType ${voteType}, postId ${postId}`);
+    this.logger.debug({ message: "Getting a vote count", path: module.filename, context: { voteType, postId } });
     const count = await this.db<TVote>("vote").count("*")
                                               .where({ postId, voteType }) as unknown as [{ "count(*)": number }];
 

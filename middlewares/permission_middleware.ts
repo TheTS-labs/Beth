@@ -32,12 +32,12 @@ export default class PermissionMiddleware {
   public middleware(): MiddlewareFunction {
     return async (req: RequestWithUser & { user: TUser }, res: Response, next: NextFunction): Promise<void> => {
       if (!req.user) {
-        this.logger.debug("[PermissionMiddleware] Excluded path. Skip");
+        this.logger.debug({ message: "Excluded path. Skip", path: module.filename });
         next();
       }
 
       const permission = req.originalUrl.replace("/", "").replaceAll("/", "_");
-      this.logger.debug(`[PermissionMiddleware] Checking for ${permission} permission`);
+      this.logger.debug({ message: `Checking for ${permission} permission`, path: module.filename });
       const permissions = await this.permissionModel.getPermissions(req.user.email) as TPermissionsIndex;
   
       if (!permissions[permission]) {

@@ -29,7 +29,7 @@ export default class AuthenticationMiddleware {
     return async (req: RequestWithUser, res: Response, next: NextFunction): Promise<void> => {
       const excludedPath = exculdePaths.includes(req.originalUrl);
       if (excludedPath) {
-        this.logger.debug("[AuthenticationMiddleware] Excluded path. Skip");
+        this.logger.debug({ message: "Excluded path. Skip", path: module.filename });
         next();
       }
 
@@ -37,14 +37,18 @@ export default class AuthenticationMiddleware {
       const user = await this.authenticate(email, password);
       req.user = user;
 
-      this.logger.debug("[AuthenticationMiddleware] User is authorized");
+      this.logger.debug({ message: "User is authorized", path: module.filename });
   
       next();
     };
   }
 
   private getCreds(authorization: string|undefined): string[] {
-    this.logger.debug("[AuthenticationMiddleware] Getting credentials from the Basic Auth header");
+    this.logger.debug({
+      message: "Getting credentials from the Basic Auth header",
+      path: module.filename,
+      context: { authorization }
+    });
     if (!authorization) {
       throw new RequestError("AuthError", "Basic Auth header is required", 400);
     }
@@ -54,7 +58,7 @@ export default class AuthenticationMiddleware {
   }
 
   private async authenticate(email: string, password: string): Promise<TUser> {
-    this.logger.debug("[AuthenticationMiddleware] User authentication");
+    this.logger.debug({ message: "User authentication", path: module.filename });
     const user = await this.userModel.getUnsafeUser(email);
 
     if (!user) {

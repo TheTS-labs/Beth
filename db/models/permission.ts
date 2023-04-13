@@ -39,24 +39,24 @@ export default class PermissionsModel {
   ) {}
 
   public async insertPermissions(email: string): Promise<void> {
-    this.logger.debug(`[PermissionsModel] Instering permission for ${email}`);
+    this.logger.debug({ message: "Instering permission", path: module.filename, context: { email } });
     await this.db<TPermissions>("permission").insert({ email });
   }
 
   public async getPermissions(email: string): Promise<TPermissions | undefined> {
-    this.logger.debug(`[PermissionsModel] Getting permission for ${email}`);
+    this.logger.debug({ message: "Getting permissions", path: module.filename, context: { email } });
     const permissions = await this.db<TPermissions>("permission").where({ email }).first();
 
     return permissions;
   }
 
   public async grantPermission(email: string, permission: string): Promise<void> {
-    this.logger.debug(`[PermissionsModel] Granting ${permission} to ${email}`);
+    this.logger.debug({ message: "Granting permission", path: module.filename, context: { email, permission } });
     await this.db<TPermissions>("permission").where({ email: email }).update({ [permission]: 1 });
   }
 
   public async rescindPermission(email: string, permission: string): Promise<void> {
-    this.logger.debug(`[PermissionsModel] Rescinding ${permission} from ${email}`);
+    this.logger.debug({ message: "Rescinding permission", path: module.filename, context: { email, permission } });
     await this.db<TPermissions>("permission").where({ email: email }).update({ [permission]: 0 });
   }
 }

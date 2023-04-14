@@ -3,7 +3,7 @@ import { RedisClientType } from "redis";
 import winston from "winston";
 
 import { ENV } from "../../../app";
-import PermissionsModel, { TPermissions } from "../permission";
+import PermissionsModel, { PermissionStatus, TPermissions } from "../permission";
 
 export default class CachingPermissionModel implements PermissionsModel {
   constructor(
@@ -52,11 +52,11 @@ export default class CachingPermissionModel implements PermissionsModel {
 
   public async grantPermission(email: string, permission: string): Promise<void> {
     this.logger.debug({ message: "Granting permission", path: module.filename, context: { email, permission } });
-    await this.db<TPermissions>("permission").where({ email: email }).update({ [permission]: 1 });
+    await this.db<TPermissions>("permission").where({ email: email }).update({ [permission]: PermissionStatus.Has });
   }
 
   public async rescindPermission(email: string, permission: string): Promise<void> {
     this.logger.debug({ message: "Rescinding permission", path: module.filename, context: { email, permission } });
-    await this.db<TPermissions>("permission").where({ email: email }).update({ [permission]: 0 });
+    await this.db<TPermissions>("permission").where({ email: email }).update({ [permission]: PermissionStatus.Hasnt });
   }
 }

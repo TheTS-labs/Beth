@@ -58,7 +58,7 @@ export default class VoteEndpoint implements IBaseEndpoint {
       throw new RequestError("DatabaseError", "You already voted", 403);
     }
 
-    await this.voteModel.vote(user.id, args.postId, args.unvote, args.voteType).catch((err: { message: string }) => {
+    await this.voteModel.vote(args.postId, user.id, args.unvote, args.voteType).catch((err: { message: string }) => {
       throw new RequestError("DatabaseError", err.message, 500);
     });
 

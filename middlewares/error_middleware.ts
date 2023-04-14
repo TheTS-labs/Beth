@@ -8,7 +8,7 @@ export default class ErrorMiddleware {
 
   public middleware = (err: Error, req: Request, res: Response, _next: NextFunction): void => {
     if (err instanceof RequestError) {
-      this.logger.debug({ message: err.message(), path: module.filename });
+      this.logger.error({ message: err.message(), path: module.filename });
       res.status(err.status).json(err.object());
       return;
     }

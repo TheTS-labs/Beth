@@ -4,30 +4,35 @@ import winston from "winston";
 
 import { ENV } from "../../app";
 
+export enum PermissionStatus {
+  Hasnt = 0,
+  Has = 1
+}
+
 export interface TPermissions {
   id: number
   email: string
-  user_view: 0 | 1
-  user_editPassword: 0 | 1
-  user_freeze: 0 | 1
-  permissions_view: 0 | 1
-  permissions_grand: 0 | 1
-  permissions_rescind: 0 | 1
-  post_create: 0 | 1
-  post_view: 0 | 1
-  post_edit: 0 | 1
-  post_delete: 0 | 1
-  post_superEdit: 0 | 1
-  post_superDelete: 0 | 1
-  post_getList: 0 | 1
-  post_forceDelete: 0 | 1
-  post_viewReplies: 0 | 1
-  post_editTags: 0 | 1
-  post_superTagsEdit: 0 | 1
-  voting_vote: 0 | 1
-  voting_unvote: 0 | 1
-  voting_voteCount: 0 | 1
-  voting_getVotes: 0 | 1
+  UserView: PermissionStatus
+  UserEditPassword: PermissionStatus
+  UserFreeze: PermissionStatus
+  PermissionsView: PermissionStatus
+  PermissionsGrand: PermissionStatus
+  PermissionsRescind: PermissionStatus
+  PostCreate: PermissionStatus
+  PostView: PermissionStatus
+  PostEdit: PermissionStatus
+  PostDelete: PermissionStatus
+  PostSuperEdit: PermissionStatus
+  PostSuperDelete: PermissionStatus
+  PostGetList: PermissionStatus
+  PostForceDelete: PermissionStatus
+  PostViewReplies: PermissionStatus
+  PostEditTags: PermissionStatus
+  PostSuperTagsEdit: PermissionStatus
+  VotingVote: PermissionStatus
+  VotingUnvote: PermissionStatus
+  VotingVoteCount: PermissionStatus
+  VotingGetVotes: PermissionStatus
 }
 
 export default class PermissionsModel {
@@ -52,11 +57,11 @@ export default class PermissionsModel {
 
   public async grantPermission(email: string, permission: string): Promise<void> {
     this.logger.debug({ message: "Granting permission", path: module.filename, context: { email, permission } });
-    await this.db<TPermissions>("permission").where({ email: email }).update({ [permission]: 1 });
+    await this.db<TPermissions>("permission").where({ email: email }).update({ [permission]: PermissionStatus.Has });
   }
 
   public async rescindPermission(email: string, permission: string): Promise<void> {
     this.logger.debug({ message: "Rescinding permission", path: module.filename, context: { email, permission } });
-    await this.db<TPermissions>("permission").where({ email: email }).update({ [permission]: 0 });
+    await this.db<TPermissions>("permission").where({ email: email }).update({ [permission]: PermissionStatus.Hasnt });
   }
 }

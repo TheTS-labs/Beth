@@ -10,7 +10,7 @@ import { EndpointThisType } from "../../common/types";
 import CachingPermissionModel from "../../db/models/caching/caching_permission";
 import CachingPostModel from "../../db/models/caching/caching_post";
 import CachingUserModel from "../../db/models/caching/caching_user";
-import PermissionModel, { TPermissions } from "../../db/models/permission";
+import PermissionModel, { PermissionStatus, TPermissions } from "../../db/models/permission";
 import PostModel, { GetListReturnType, NestedTPost, TPost } from "../../db/models/post";
 import UserModel, { TUser } from "../../db/models/user";
 import * as type from "./types";
@@ -87,7 +87,7 @@ export default class PostEndpoint implements IBaseEndpoint {
       throw new RequestError("DatabaseError", "Post doesn't exist", 404);
     }
 
-    if (post.author != user.email && !permissions["post_superEdit"]) {
+    if (post.author != user.email && permissions["PostSuperEdit"] == PermissionStatus.Hasnt) {
       throw new RequestError("PermissionError", "You can only edit your own posts", 403);
     }
 
@@ -108,7 +108,7 @@ export default class PostEndpoint implements IBaseEndpoint {
       throw new RequestError("DatabaseError", "Post doesn't exist", 404);
     }
 
-    if (post.author != user.email && !permissions["post_superDelete"]) {
+    if (post.author != user.email && permissions["PostSuperDelete"] == PermissionStatus.Hasnt) {
       throw new RequestError("PermissionError", "You can only delete your own posts", 403);
     }
 
@@ -170,7 +170,7 @@ export default class PostEndpoint implements IBaseEndpoint {
       throw new RequestError("DatabaseError", "Post doesn't exist", 404);
     }
 
-    if (post.author != user.email && !permissions["post_superTagsEdit"]) {
+    if (post.author != user.email && permissions["PostSuperTagsEdit"] == PermissionStatus.Hasnt) {
       throw new RequestError("PermissionError", "You can only edit tags of your own posts", 403);
     }
 

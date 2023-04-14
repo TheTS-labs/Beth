@@ -7,10 +7,10 @@ import { ENV } from "../app";
 import RequestError from "../common/request_error";
 import { RequestWithUser } from "../common/types";
 import CachingPermissionModel from "../db/models/caching/caching_permission";
-import PermissionModel, { TPermissions } from "../db/models/permission";
+import PermissionModel, { PermissionStatus, TPermissions } from "../db/models/permission";
 import { TUser } from "../db/models/user";
 
-type TPermissionsIndex = TPermissions & { [key: string]: 0|1 };
+type TPermissionsIndex = TPermissions & { [key: string]: PermissionStatus };
 type MiddlewareFunction = (req: RequestWithUser & { user: TUser }, res: Response, next: NextFunction) => Promise<void>;
 
 export default class PermissionMiddleware {
@@ -32,12 +32,16 @@ export default class PermissionMiddleware {
   public middleware(): MiddlewareFunction {
     return async (req: RequestWithUser & { user: TUser }, res: Response, next: NextFunction): Promise<void> => {
       if (!req.user) {
-        this.logger.debug("[PermissionMiddleware] Excluded path. Skip");
+        this.logger.debug({ message: "Excluded path. Skip", path: module.filename });
         next();
       }
 
-      const permission = req.originalUrl.replace("/", "").replaceAll("/", "_");
-      this.logger.debug(`[PermissionMiddleware] Checking for ${permission} permission`);
+      const splitted = req.originalUrl.replace("/", "").split("/");
+      const domain = splitted[0].charAt(0).toUpperCase() + splitted[0].slice(1);
+      const endpoint = splitted[1].charAt(0).toUpperCase() + splitted[1].slice(1);
+      const permission = domain + endpoint;
+
+      this.logger.debug({ message: `Checking for ${permission} permission`, path: module.filename });
       const permissions = await this.permissionModel.getPermissions(req.user.email) as TPermissionsIndex;
   
       if (!permissions[permission]) {

@@ -4,24 +4,35 @@ import winston from "winston";
 
 import { ENV } from "../../app";
 
+export enum PermissionStatus {
+  Hasnt = 0,
+  Has = 1
+}
+
 export interface TPermissions {
   id: number
   email: string
-  user_view: 0 | 1
-  user_editPassword: 0 | 1
-  user_freeze: 0 | 1
-  permissions_view: 0 | 1
-  permissions_grand: 0 | 1
-  permissions_rescind: 0 | 1
-  post_create: 0 | 1
-  post_view: 0 | 1
-  post_edit: 0 | 1
-  post_delete: 0 | 1
-  post_superEdit: 0 | 1
-  post_superDelete: 0 | 1
-  post_getList: 0 | 1
-  post_forceDelete: 0 | 1
-  post_viewReplies: 0 | 1
+  UserView: PermissionStatus
+  UserEditPassword: PermissionStatus
+  UserFreeze: PermissionStatus
+  PermissionsView: PermissionStatus
+  PermissionsGrand: PermissionStatus
+  PermissionsRescind: PermissionStatus
+  PostCreate: PermissionStatus
+  PostView: PermissionStatus
+  PostEdit: PermissionStatus
+  PostDelete: PermissionStatus
+  PostSuperEdit: PermissionStatus
+  PostSuperDelete: PermissionStatus
+  PostGetList: PermissionStatus
+  PostForceDelete: PermissionStatus
+  PostViewReplies: PermissionStatus
+  PostEditTags: PermissionStatus
+  PostSuperTagsEdit: PermissionStatus
+  VotingVote: PermissionStatus
+  VotingUnvote: PermissionStatus
+  VotingVoteCount: PermissionStatus
+  VotingGetVotes: PermissionStatus
 }
 
 export default class PermissionsModel {
@@ -33,24 +44,24 @@ export default class PermissionsModel {
   ) {}
 
   public async insertPermissions(email: string): Promise<void> {
-    this.logger.debug(`[PermissionsModel] Instering permission for ${email}`);
+    this.logger.debug({ message: "Instering permission", path: module.filename, context: { email } });
     await this.db<TPermissions>("permission").insert({ email });
   }
 
   public async getPermissions(email: string): Promise<TPermissions | undefined> {
-    this.logger.debug(`[PermissionsModel] Getting permission for ${email}`);
+    this.logger.debug({ message: "Getting permissions", path: module.filename, context: { email } });
     const permissions = await this.db<TPermissions>("permission").where({ email }).first();
 
     return permissions;
   }
 
   public async grantPermission(email: string, permission: string): Promise<void> {
-    this.logger.debug(`[PermissionsModel] Granting ${permission} to ${email}`);
-    await this.db<TPermissions>("permission").where({ email: email }).update({ [permission]: 1 });
+    this.logger.debug({ message: "Granting permission", path: module.filename, context: { email, permission } });
+    await this.db<TPermissions>("permission").where({ email: email }).update({ [permission]: PermissionStatus.Has });
   }
 
   public async rescindPermission(email: string, permission: string): Promise<void> {
-    this.logger.debug(`[PermissionsModel] Rescinding ${permission} from ${email}`);
-    await this.db<TPermissions>("permission").where({ email: email }).update({ [permission]: 0 });
+    this.logger.debug({ message: "Rescinding permission", path: module.filename, context: { email, permission } });
+    await this.db<TPermissions>("permission").where({ email: email }).update({ [permission]: PermissionStatus.Hasnt });
   }
 }

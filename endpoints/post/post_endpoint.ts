@@ -6,26 +6,27 @@ import winston from "winston";
 import { ENV } from "../../app";
 import { IBaseEndpoint } from "../../common/base_endpoint";
 import RequestError from "../../common/request_error";
+import { EndpointThisType } from "../../common/types";
 import CachingPermissionModel from "../../db/models/caching/caching_permission";
 import CachingPostModel from "../../db/models/caching/caching_post";
 import CachingUserModel from "../../db/models/caching/caching_user";
-import PermissionModel, { TPermissions } from "../../db/models/permission";
+import PermissionModel, { PermissionStatus, TPermissions } from "../../db/models/permission";
 import PostModel, { GetListReturnType, NestedTPost, TPost } from "../../db/models/post";
 import UserModel, { TUser } from "../../db/models/user";
 import * as type from "./types";
 
-type CallEndpointReturnType = { success: true, id: number } | { success: true } | NestedTPost[];
+type CallEndpointReturnType = { success: true, id: number } | { success: true } | NestedTPost[] | {};
 
 export default class PostEndpoint implements IBaseEndpoint {
   public allowNames: string[] = [
-    "create", "view",
-    "edit", "delete",
-    "getList", "forceDelete",
-    "viewReplies"
+    "create", "view", "edit", 
+    "delete", "getList", 
+    "forceDelete", "viewReplies", 
+    "editTags"
   ];
   userModel: UserModel | CachingUserModel;
   permissionModel: PermissionModel | CachingPermissionModel;
-  postModel: PostModel;
+  postModel: PostModel | CachingPostModel;
 
   constructor(
     public db: Knex,
@@ -45,8 +46,7 @@ export default class PostEndpoint implements IBaseEndpoint {
 
   // >>> Create >>>
   async create(args: type.CreateArgs, user: TUser): Promise<{ success: true, id: number }> {
-    await this.validate(type.CreateArgsSchema, args);
-    await this.abortIfFreezen(user.email);
+    args = await this.validate(type.CreateArgsSchema, args);
 
     const parent = args.replyTo ? await this.postModel.findParent(args.replyTo) : undefined;
 
@@ -63,9 +63,8 @@ export default class PostEndpoint implements IBaseEndpoint {
   // <<< Create <<<
 
   // >>> View >>>
-  async view(args: type.ViewArgs, user: TUser): Promise<{ success: true }|{}> {
-    await this.validate(type.ViewArgsSchema, args);
-    await this.abortIfFreezen(user.email);
+  async view(args: type.ViewArgs, _user: TUser): Promise<CallEndpointReturnType> {
+    args = await this.validate(type.ViewArgsSchema, args);
 
     const post = await this.postModel.getPost(args.id);
 
@@ -78,9 +77,8 @@ export default class PostEndpoint implements IBaseEndpoint {
   // <<< View <<<
 
   // >>> Edit >>>
-  async edit(args: type.EditArgs, user: TUser): Promise<{ success: true }> {
-    await this.validate(type.EditArgsSchema, args);
-    await this.abortIfFreezen(user.email);
+  async edit(args: type.EditArgs, user: TUser): Promise<CallEndpointReturnType> {
+    args = await this.validate(type.EditArgsSchema, args);
 
     const post = await this.postModel.getPost(args.id);
     const permissions = await this.permissionModel.getPermissions(user.email) as TPermissions;
@@ -89,7 +87,7 @@ export default class PostEndpoint implements IBaseEndpoint {
       throw new RequestError("DatabaseError", "Post doesn't exist", 404);
     }
 
-    if (post.author != user.email && !permissions["post_superEdit"]) {
+    if (post.author != user.email && permissions["PostSuperEdit"] == PermissionStatus.Hasnt) {
       throw new RequestError("PermissionError", "You can only edit your own posts", 403);
     }
 
@@ -100,9 +98,8 @@ export default class PostEndpoint implements IBaseEndpoint {
   // <<< Edit <<<
 
   // >>> Delete >>>
-  async delete(args: type.DeleteArgs, user: TUser): Promise<{ success: true }> {
-    await this.validate(type.DeleteArgsSchema, args);
-    await this.abortIfFreezen(user.email);
+  async delete(args: type.DeleteArgs, user: TUser): Promise<CallEndpointReturnType> {
+    args = await this.validate(type.DeleteArgsSchema, args);
 
     const post = await this.postModel.getPost(args.id);
     const permissions = await this.permissionModel.getPermissions(user.email) as TPermissions;
@@ -111,7 +108,7 @@ export default class PostEndpoint implements IBaseEndpoint {
       throw new RequestError("DatabaseError", "Post doesn't exist", 404);
     }
 
-    if (post.author != user.email && !permissions["post_superDelete"]) {
+    if (post.author != user.email && permissions["PostSuperDelete"] == PermissionStatus.Hasnt) {
       throw new RequestError("PermissionError", "You can only delete your own posts", 403);
     }
 
@@ -122,9 +119,8 @@ export default class PostEndpoint implements IBaseEndpoint {
   // <<< Delete <<<
 
   // <<< Get List <<<
-  async getList(args: type.GetListArgs, user: TUser): Promise<GetListReturnType> {
-    await this.validate(type.GetListArgsSchema, args);
-    await this.abortIfFreezen(user.email);
+  async getList(args: type.GetListArgs, _user: TUser): Promise<GetListReturnType> {
+    args = await this.validate(type.GetListArgsSchema, args);
 
     const result = await this.postModel.getList(args.afterCursor, args.numberRecords||3)
                                        .catch((err: { message: string }) => {
@@ -136,9 +132,8 @@ export default class PostEndpoint implements IBaseEndpoint {
   // >>> Get List >>>
 
   // <<< Force Delete <<<
-  async forceDelete(args: type.ForceDeleteArgs, user: TUser): Promise<{ success: true }> {
-    await this.validate(type.ForceDeleteArgsSchema, args);
-    await this.abortIfFreezen(user.email);
+  async forceDelete(args: type.ForceDeleteArgs, _user: TUser): Promise<CallEndpointReturnType> {
+    args = await this.validate(type.ForceDeleteArgsSchema, args);
 
     const post = await this.postModel.getPost(args.id);
 
@@ -153,9 +148,8 @@ export default class PostEndpoint implements IBaseEndpoint {
   // >>> Force Delete >>>
 
   // <<< View Replies <<<
-  async viewReplies(args: type.ViewRepliesArgs, user: TUser): Promise<NestedTPost[]> {
-    await this.validate(type.ViewRepliesArgsSchema, args);
-    await this.abortIfFreezen(user.email);
+  async viewReplies(args: type.ViewRepliesArgs, _user: TUser): Promise<CallEndpointReturnType> {
+    args = await this.validate(type.ViewRepliesArgsSchema, args);
 
     const results = await this.postModel.getReplies(args.parent).catch((err: { message: string }) => {
       throw new RequestError("DatabaseError", err.message, 500);
@@ -163,39 +157,52 @@ export default class PostEndpoint implements IBaseEndpoint {
 
     return this.getNestedChildren(results, args.parent);
   }
-  // >>> Get List >>>
+  // >>> View Replies >>>
+
+  // <<< Edit Tags <<<
+  async editTags(args: type.EditTagsArgs, user: TUser): Promise<CallEndpointReturnType> {
+    args = await this.validate(type.EditTagsArgsSchema, args);
+
+    const post = await this.postModel.getPost(args.id);
+    const permissions = await this.permissionModel.getPermissions(user.email) as TPermissions;
+
+    if (!post) {
+      throw new RequestError("DatabaseError", "Post doesn't exist", 404);
+    }
+
+    if (post.author != user.email && permissions["PostSuperTagsEdit"] == PermissionStatus.Hasnt) {
+      throw new RequestError("PermissionError", "You can only edit tags of your own posts", 403);
+    }
+
+    await this.postModel.editTags(args.id, args.newTags).catch((err: { message: string }) => {
+      throw new RequestError("DatabaseError", err.message, 500);
+    });
+
+    return { success: true };
+  }
+  // >>> Edit Tags >>>
 
   async callEndpoint(
-    name: string, args: type.PostRequestArgs, user: unknown | undefined
+    this: EndpointThisType<PostEndpoint, type.PostRequestArgs, Promise<CallEndpointReturnType>>,
+    name: string, args: type.PostRequestArgs, user: TUser | undefined
   ): Promise<CallEndpointReturnType> {
     const userIncludes = this.allowNames.includes(name);
     if (!userIncludes) {
       throw new RequestError("EndpointNotFound", `Endpoint post/${name} does not exist`, 404);
     }
 
-    // Element implicitly has an 'any' type
-    // because expression of type 'string' can't be used to index type 'PostEndpoint'.
-    // No index signature with a parameter of type 'string' was found on type 'PostEndpoint'.
-    // But it actually can be used
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore
     const result: CallEndpointReturnType = await this[name](args, user);
 
     return result;
   }
 
-  async validate(schema: Joi.ObjectSchema, args: type.PostRequestArgs): Promise<void> {
-    const validationResult = schema.validate(args);
-    if (validationResult.error) {
-      throw new RequestError("ValidationError", validationResult.error.message, 400);
+  async validate<EType>(schema: Joi.ObjectSchema, args: EType): Promise<EType> {
+    const { error, value } = schema.validate(args);
+    if (error) {
+      throw new RequestError("ValidationError", error.message, 400);
     }
-  }
 
-  async abortIfFreezen(email: string): Promise<void> {
-    const result = await this.userModel.isFreezen(email);
-    if (result) {
-      throw new RequestError("UserIsFreezen", `User(${email}) is freezen`, 403);
-    }
+    return value as EType;
   }
 
   async getNestedChildren(arr: TPost[], repliesTo: number): Promise<NestedTPost[]> {

@@ -15,24 +15,24 @@ export default class CachingUserModel implements UserModel {
   ) {}
   
     public async insertUser(email: string, hash: string): Promise<void> {
-      this.logger.debug(`[CachingUserModel] Trying to insert user ${email}`);
+      this.logger.debug({ message: "Trying to insert user", path: module.filename, context: { email } });
       await this.db<TUser>("user").insert({ email: email, password: hash });
     }
   
     public async getSafeUser(email: string): Promise<SafeUserObject | undefined> {
-      this.logger.debug("[CachingUserModel] Getting safe user from cache");
+      this.logger.debug({ message: "Getting safe user from cache", path: module.filename, context: { email } });
       const cachedUserString = await this.redisClient.get(email);
       const cachedUser: SafeUserObject = JSON.parse(cachedUserString||"null");
   
       if (cachedUser) {
-        this.logger.debug("[CachingUserModel] Returning user from cache");
+        this.logger.debug({ message: "Returning user from cache", path: module.filename, context: { email } });
         return cachedUser;
       }
     
-      this.logger.debug("[CachingUserModel] Getting user from DB");
+      this.logger.debug({ message: "Getting user from DB", path: module.filename, context: { email } });
       const user = await this._getSafeUser(email);
       if (user) {
-        this.logger.debug("[CachingUserModel] Caching user");
+        this.logger.debug({ message: "Caching user", path: module.filename, context: { email } });
         await this.redisClient.set(email, JSON.stringify(user), {
           EX: this.config.get("USER_EX").required().asIntPositive(),
           NX: true
@@ -43,7 +43,7 @@ export default class CachingUserModel implements UserModel {
     }
   
     public async getUnsafeUser(email: string): Promise<TUser | undefined> {
-      this.logger.debug("[CachingUserModel] Getting unsafe user from DB");
+      this.logger.debug({ message: "Getting unsafe user from DB", path: module.filename, context: { email } });
       
       const user = await this.db<TUser>("user").where({ email }).select().first();
   
@@ -51,42 +51,42 @@ export default class CachingUserModel implements UserModel {
     }
   
     public async changePassword(email: string, newHash: string): Promise<void> {
-      this.logger.debug(`[CachingUserModel] Changing user's(${email}) password`);
+      this.logger.debug({ message: "Changing user's password", path: module.filename, context: { email } });
   
       await this.db<TUser>("user").where({ email: email }).update({ password: newHash });
     }
   
     public async isFreezen(email: string): Promise<0 | 1> {
-      this.logger.debug(`[CachingUserModel] Is ${email} freezen`);
-      this.logger.debug("[CachingUserModel] Getting safe user from cache");
+      this.logger.debug({ message: "Is the user freezen", path: module.filename, context: { email } });
+      this.logger.debug({ message: "Getting safe user from cache", path: module.filename, context: { email } });
       const cachedUserString = await this.redisClient.get(email);
       const cachedUser: SafeUserObject = JSON.parse(cachedUserString||"null");
   
       if (cachedUser) {
-        this.logger.debug("[CachingUserModel] Using user from cache");
+        this.logger.debug({ message: "Using user from cache", path: module.filename, context: { email } });
         return cachedUser.isFreezen;
       }
   
-      this.logger.debug("[CachingUserModel] Using user from DB");
+      this.logger.debug({ message: "Using user from DB", path: module.filename, context: { email } });
       const record = await this.db<TUser>("user").where({ email }).select("isFreezen").first();
       const result = record || { isFreezen: 0 };
       return result.isFreezen;
     }
   
     public async unfreezeUser(email: string): Promise<void> {
-      this.logger.debug(`[CachingUserModel] Unfreezing ${email}`);
+      this.logger.debug({ message: `Unfreezing ${email}`, path: module.filename });
   
       await this.db<TUser>("user").where({ email: email }).update({ isFreezen: 0 });
     }
   
     public async freezeUser(email: string): Promise<void> {
-      this.logger.debug(`[CachingUserModel] Freezing ${email}`);
+      this.logger.debug({ message: `Freezing ${email}`, path: module.filename });
   
       await this.db<TUser>("user").where({ email: email }).update({ isFreezen: 1 });
     }
   
     private async _getSafeUser(email: string): Promise<SafeUserObject | undefined> {
-      this.logger.debug(`[CachingUserModel] Getting safe user ${email}`);
+      this.logger.debug({ message: "Getting safe user", path: module.filename, context: { email } });
   
       const user = (await this.db<TUser>("user")
                               .where({ email })

@@ -6,6 +6,7 @@ import winston from "winston";
 import { ENV } from "../../app";
 import { IBaseEndpoint } from "../../common/base_endpoint";
 import RequestError from "../../common/request_error";
+import { EndpointThisType } from "../../common/types";
 import CachingPermissionModel from "../../db/models/caching/caching_permission";
 import CachingUserModel from "../../db/models/caching/caching_user";
 import PermissionModel, { TPermissions } from "../../db/models/permission";
@@ -34,9 +35,8 @@ export default class PermissionEndpoint implements IBaseEndpoint {
   }
 
   // <<< View <<<
-  async view(args: type.ViewArgs, user: TUser): Promise<TPermissions> {
-    await this.validate(type.ViewArgsSchema, args);
-    await this.abortIfFreezen(user.email);
+  async view(args: type.ViewArgs, _user: TUser): Promise<TPermissions> {
+    args = await this.validate(type.ViewArgsSchema, args);
 
     const permissions = await this.permissionModel.getPermissions(args.email);
     if (!permissions) {
@@ -48,9 +48,8 @@ export default class PermissionEndpoint implements IBaseEndpoint {
   // >>> View >>>
 
   // <<< Grant <<<
-  async grant(args: type.GrantArgs, user: TUser): Promise<{success: true}|never> {
-    await this.validate(type.GrantArgsSchema, args);
-    await this.abortIfFreezen(user.email);
+  async grant(args: type.GrantArgs, _user: TUser): Promise<{success: true}|never> {
+    args = await this.validate(type.GrantArgsSchema, args);
 
     await this.permissionModel.grantPermission(args.grantTo, args.grantPermission).catch((err: Error) => {
       throw new RequestError("DatabaseError", err.message, 500);
@@ -61,9 +60,8 @@ export default class PermissionEndpoint implements IBaseEndpoint {
   // >>> Grant >>>
 
   // <<< Rescind <<<
-  async rescind(args: type.RescindArgs, user: TUser): Promise<{success: true}|never> {
-    await this.validate(type.RescindArgsSchema, args);
-    await this.abortIfFreezen(user.email);
+  async rescind(args: type.RescindArgs, _user: TUser): Promise<{success: true}|never> {
+    args = await this.validate(type.RescindArgsSchema, args);
 
     await this.permissionModel.rescindPermission(args.rescindFrom, args.rescindPermission).catch((err: Error) => {
       throw new RequestError("DatabaseError", err.message, 500);
@@ -74,6 +72,7 @@ export default class PermissionEndpoint implements IBaseEndpoint {
   // >>> Rescind >>>
 
   async callEndpoint(
+    this: EndpointThisType<PermissionEndpoint, type.PermissionRequestArgs, Promise<CallEndpointReturnType>>,
     name: string, args: type.PermissionRequestArgs, user: TUser | undefined
   ): Promise<CallEndpointReturnType> {
     const permissionIncludes = this.allowNames.includes(name);
@@ -81,28 +80,17 @@ export default class PermissionEndpoint implements IBaseEndpoint {
       throw new RequestError("EndpointNotFound", `Endpoint permission/${name} does not exist`, 404);
     }
 
-    // Element implicitly has an 'any' type
-    // because expression of type 'string' can't be used to index type 'PermissionEndpoint'.
-    // No index signature with a parameter of type 'string' was found on type 'PermissionEndpoint'.
-    // But it actually can be used
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore
     const result: CallEndpointReturnType = await this[name](args, user);
 
     return result;
   }
 
-  async validate(schema: Joi.ObjectSchema, args: type.PermissionRequestArgs): Promise<void> {
-    const validationResult = schema.validate(args);
-    if (validationResult.error) {
-      throw new RequestError("ValidationError", validationResult.error.message, 400);
+  async validate<EType>(schema: Joi.ObjectSchema, args: EType): Promise<EType> {
+    const { error, value } = schema.validate(args);
+    if (error) {
+      throw new RequestError("ValidationError", error.message, 400);
     }
-  }
 
-  async abortIfFreezen(email: string): Promise<void> {
-    const result = await this.userModel.isFreezen(email);
-    if (result) {
-      throw new RequestError("UserIsFreezen", `User(${email}) is freezen`, 403);
-    }
+    return value as EType;
   }
 }

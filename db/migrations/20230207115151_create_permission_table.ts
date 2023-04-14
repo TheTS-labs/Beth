@@ -1,26 +1,34 @@
 import { Knex } from "knex";
 
+import { PermissionStatus } from "../models/permission";
+
 export async function up(knex: Knex): Promise<void> {
   return knex.schema.createTable("permission", function (table: Knex.CreateTableBuilder) {
     table.increments("id");
     table.string("email").unique().notNullable();
 
     // Permissions
-    table.boolean("user_view").defaultTo(1);
-    table.boolean("user_editPassword").defaultTo(1);
-    table.boolean("user_freeze").defaultTo(1);
-    table.boolean("permission_view").defaultTo(1);
-    table.boolean("permission_grand").defaultTo(0);
-    table.boolean("permission_rescind").defaultTo(0);
-    table.boolean("post_create").defaultTo(1);
-    table.boolean("post_view").defaultTo(1);
-    table.boolean("post_edit").defaultTo(1);
-    table.boolean("post_delete").defaultTo(1);
-    table.boolean("post_superEdit").defaultTo(0);
-    table.boolean("post_superDelete").defaultTo(0);
-    table.boolean("post_getList").defaultTo(1);
-    table.boolean("post_forceDelete").defaultTo(0);
-    table.boolean("post_viewReplies").defaultTo(1);
+    table.boolean("UserView").defaultTo(PermissionStatus.Has);
+    table.boolean("UserEditPassword").defaultTo(PermissionStatus.Has);
+    table.boolean("UserFreeze").defaultTo(PermissionStatus.Has);
+    table.boolean("PermissionView").defaultTo(PermissionStatus.Has);
+    table.boolean("PermissionGrand").defaultTo(PermissionStatus.Hasnt);
+    table.boolean("PermissionRescind").defaultTo(PermissionStatus.Hasnt);
+    table.boolean("PostCreate").defaultTo(PermissionStatus.Has);
+    table.boolean("PostView").defaultTo(PermissionStatus.Has);
+    table.boolean("PostEdit").defaultTo(PermissionStatus.Has);
+    table.boolean("PostDelete").defaultTo(PermissionStatus.Has);
+    table.boolean("PostSuperEdit").defaultTo(PermissionStatus.Hasnt);
+    table.boolean("PostSuperDelete").defaultTo(PermissionStatus.Hasnt);
+    table.boolean("PostGetList").defaultTo(PermissionStatus.Has);
+    table.boolean("PostForceDelete").defaultTo(PermissionStatus.Hasnt);
+    table.boolean("PostViewReplies").defaultTo(PermissionStatus.Has);
+    table.boolean("PostEditTags").defaultTo(PermissionStatus.Has);
+    table.boolean("PostSuperTagsEdit").defaultTo(PermissionStatus.Hasnt);
+    table.boolean("VotingVote").defaultTo(PermissionStatus.Has);
+    table.boolean("VotingUnvote").defaultTo(PermissionStatus.Has);
+    table.boolean("VotingVoteCount").defaultTo(PermissionStatus.Has);
+    table.boolean("VotingGetVotes").defaultTo(PermissionStatus.Has);
   });
 }
 

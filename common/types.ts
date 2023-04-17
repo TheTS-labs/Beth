@@ -9,7 +9,7 @@ export type RequestErrorObject = {
   errorStatus: number
 };
 export type RequestWithUser = Request & {
-  user?: undefined|TUser
+  user?: undefined | TUser
 };
 export type EndpointThisType<CType, AType, RType> = CType & {
   [name: string]: (args: AType, user: TUser | undefined) => RType

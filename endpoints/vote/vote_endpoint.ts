@@ -85,8 +85,8 @@ export default class VoteEndpoint implements IBaseEndpoint {
     this: EndpointThisType<VoteEndpoint, type.VoteRequestArgs, Promise<CallEndpointReturnType>>,
     name: string, args: type.VoteRequestArgs, user: TUser | undefined
   ): Promise<CallEndpointReturnType> {
-    const userIncludes = this.allowNames.includes(name);
-    if (!userIncludes) {
+    const voteIncludes = this.allowNames.includes(name);
+    if (!voteIncludes) {
       throw new RequestError("EndpointNotFound", `Endpoint vote/${name} does not exist`, 404);
     }
 

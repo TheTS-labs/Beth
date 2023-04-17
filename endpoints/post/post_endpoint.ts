@@ -186,8 +186,8 @@ export default class PostEndpoint implements IBaseEndpoint {
     this: EndpointThisType<PostEndpoint, type.PostRequestArgs, Promise<CallEndpointReturnType>>,
     name: string, args: type.PostRequestArgs, user: TUser | undefined
   ): Promise<CallEndpointReturnType> {
-    const userIncludes = this.allowNames.includes(name);
-    if (!userIncludes) {
+    const postIncludes = this.allowNames.includes(name);
+    if (!postIncludes) {
       throw new RequestError("EndpointNotFound", `Endpoint post/${name} does not exist`, 404);
     }
 

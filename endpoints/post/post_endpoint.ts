@@ -43,7 +43,6 @@ export default class PostEndpoint extends BaseEndpoint<type.PostRequestArgs, Cal
     this.postModel = new PostModelType(this.db, this.logger, this.redisClient, this.config);
   }
 
-  // >>> Create >>>
   async create(args: type.CreateArgs, user: TUser): Promise<{ success: true, id: number }> {
     args = await this.validate(type.CreateArgsSchema, args);
 
@@ -59,9 +58,7 @@ export default class PostEndpoint extends BaseEndpoint<type.PostRequestArgs, Cal
 
     return { success: true, id: id };
   }
-  // <<< Create <<<
 
-  // >>> View >>>
   async view(args: type.ViewArgs, _user: TUser): Promise<CallEndpointReturnType> {
     args = await this.validate(type.ViewArgsSchema, args);
 
@@ -73,9 +70,7 @@ export default class PostEndpoint extends BaseEndpoint<type.PostRequestArgs, Cal
 
     return post||{};
   }
-  // <<< View <<<
 
-  // >>> Edit >>>
   async edit(args: type.EditArgs, user: TUser): Promise<CallEndpointReturnType> {
     args = await this.validate(type.EditArgsSchema, args);
 
@@ -94,9 +89,7 @@ export default class PostEndpoint extends BaseEndpoint<type.PostRequestArgs, Cal
 
     return { success: true };
   }
-  // <<< Edit <<<
 
-  // >>> Delete >>>
   async delete(args: type.DeleteArgs, user: TUser): Promise<CallEndpointReturnType> {
     args = await this.validate(type.DeleteArgsSchema, args);
 
@@ -115,9 +108,7 @@ export default class PostEndpoint extends BaseEndpoint<type.PostRequestArgs, Cal
 
     return { success: true };
   }
-  // <<< Delete <<<
 
-  // <<< Get List <<<
   async getList(args: type.GetListArgs, _user: TUser): Promise<GetListReturnType> {
     args = await this.validate(type.GetListArgsSchema, args);
 
@@ -128,9 +119,7 @@ export default class PostEndpoint extends BaseEndpoint<type.PostRequestArgs, Cal
 
     return result;
   }
-  // >>> Get List >>>
 
-  // <<< Force Delete <<<
   async forceDelete(args: type.ForceDeleteArgs, _user: TUser): Promise<CallEndpointReturnType> {
     args = await this.validate(type.ForceDeleteArgsSchema, args);
 
@@ -144,9 +133,7 @@ export default class PostEndpoint extends BaseEndpoint<type.PostRequestArgs, Cal
 
     return { success: true };
   }
-  // >>> Force Delete >>>
 
-  // <<< View Replies <<<
   async viewReplies(args: type.ViewRepliesArgs, _user: TUser): Promise<CallEndpointReturnType> {
     args = await this.validate(type.ViewRepliesArgsSchema, args);
 
@@ -156,9 +143,7 @@ export default class PostEndpoint extends BaseEndpoint<type.PostRequestArgs, Cal
 
     return this.getNestedChildren(results, args.parent);
   }
-  // >>> View Replies >>>
 
-  // <<< Edit Tags <<<
   async editTags(args: type.EditTagsArgs, user: TUser): Promise<CallEndpointReturnType> {
     args = await this.validate(type.EditTagsArgsSchema, args);
 
@@ -179,7 +164,6 @@ export default class PostEndpoint extends BaseEndpoint<type.PostRequestArgs, Cal
 
     return { success: true };
   }
-  // >>> Edit Tags >>>
 
   async getNestedChildren(arr: TPost[], repliesTo: number): Promise<NestedTPost[]> {
     const doesKeyExist = await this.redisClient.exists(`post_comments_${repliesTo}`);

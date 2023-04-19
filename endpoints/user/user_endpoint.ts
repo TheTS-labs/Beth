@@ -35,7 +35,6 @@ export default class UserEndpoint extends BaseEndpoint<type.UserRequestArgs, Cal
     this.permissionModel = new PermissionModelType(this.db, this.logger, this.redisClient, this.config);
   }
 
-  // >>> Create >>>
   async create(args: type.CreateArgs, _user: TUser | undefined): Promise<{ success: true }> {
     args = await this.validate(type.CreateArgsSchema, args);
 
@@ -51,9 +50,7 @@ export default class UserEndpoint extends BaseEndpoint<type.UserRequestArgs, Cal
 
     return { success: true };
   }
-  // <<< Create <<<
 
-  // <<< View <<<
   async view(args: type.ViewArgs, _user: TUser): Promise<SafeUserObject | {}> {
     args = await this.validate(type.ViewArgsSchema, args);
 
@@ -61,9 +58,7 @@ export default class UserEndpoint extends BaseEndpoint<type.UserRequestArgs, Cal
 
     return requestedUser||{};
   }
-  // >>> View >>>
 
-  // <<< Edit Password <<<
   async editPassword(args: type.EditPasswordArgs, user: TUser): Promise<{ success: true }> {
     args = await this.validate(type.EditPasswordArgsSchema, args);
 
@@ -77,9 +72,7 @@ export default class UserEndpoint extends BaseEndpoint<type.UserRequestArgs, Cal
 
     return { success: true };
   }
-  // >>> Edit Password >>>
 
-  // <<< Freeze <<<
   async freeze(args: type.FreezeArgs, user: TUser): Promise<{ success: true }> {
     args = await this.validate(type.FreezeArgsSchema, args);
 
@@ -89,5 +82,4 @@ export default class UserEndpoint extends BaseEndpoint<type.UserRequestArgs, Cal
 
     return { success: true };
   }
-  // >>> Freeze >>>
 }

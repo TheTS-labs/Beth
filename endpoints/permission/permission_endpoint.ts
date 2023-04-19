@@ -33,7 +33,7 @@ export default class PermissionEndpoint extends BaseEndpoint<type.PermissionRequ
     this.permissionModel = new PermissionModelType(this.db, this.logger, this.redisClient, this.config);
   }
 
-  // <<< View <<<
+  
   async view(args: type.ViewArgs, _user: TUser): Promise<TPermissions> {
     args = await this.validate(type.ViewArgsSchema, args);
 
@@ -44,9 +44,7 @@ export default class PermissionEndpoint extends BaseEndpoint<type.PermissionRequ
 
     return permissions;
   }
-  // >>> View >>>
-
-  // <<< Grant <<<
+  
   async grant(args: type.GrantArgs, _user: TUser): Promise<{success: true}|never> {
     args = await this.validate(type.GrantArgsSchema, args);
 
@@ -56,9 +54,7 @@ export default class PermissionEndpoint extends BaseEndpoint<type.PermissionRequ
 
     return { success: true };
   }
-  // >>> Grant >>>
-
-  // <<< Rescind <<<
+  
   async rescind(args: type.RescindArgs, _user: TUser): Promise<{success: true}|never> {
     args = await this.validate(type.RescindArgsSchema, args);
 
@@ -68,5 +64,4 @@ export default class PermissionEndpoint extends BaseEndpoint<type.PermissionRequ
 
     return { success: true };
   }
-  // >>> Rescind >>>
 }

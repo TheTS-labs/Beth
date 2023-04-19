@@ -33,6 +33,7 @@ export interface TPermissions {
   VotingUnvote: PermissionStatus
   VotingVoteCount: PermissionStatus
   VotingGetVotes: PermissionStatus
+  ActionSimpleSearch: PermissionStatus
 }
 
 export default class PermissionsModel {

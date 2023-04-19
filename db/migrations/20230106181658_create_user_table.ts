@@ -6,6 +6,7 @@ export async function up(knex: Knex): Promise<void> {
     table.string("email").unique().notNullable();
     table.string("password").notNullable();
     table.boolean("isFreezen").defaultTo(0);
+    table.text("tags").defaultTo("");
   });
 }
 

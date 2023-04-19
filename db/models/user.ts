@@ -10,6 +10,7 @@ export interface TUser {
   email: string
   password: string
   isFreezen: 0 | 1
+  tags: string
 }
 
 export default class UserModel {
@@ -47,7 +48,7 @@ export default class UserModel {
   public async changePassword(email: string, newHash: string): Promise<void> {
     this.logger.debug({ message: "Changing user's password", path: module.filename, context: { email } });
 
-    await this.db<TUser>("user").where({ email: email }).update({ password: newHash });
+    await this.db<TUser>("user").where({ email }).update({ password: newHash });
   }
 
   public async isFreezen(email: string): Promise<0 | 1> {
@@ -63,12 +64,12 @@ export default class UserModel {
   public async unfreezeUser(email: string): Promise<void> {
     this.logger.debug({ message: `Unfreezing ${email}`, path: module.filename });
 
-    await this.db<TUser>("user").where({ email: email }).update({ isFreezen: 0 });
+    await this.db<TUser>("user").where({ email }).update({ isFreezen: 0 });
   }
 
   public async freezeUser(email: string): Promise<void> {
     this.logger.debug({ message: `Freezing ${email}`, path: module.filename });
 
-    await this.db<TUser>("user").where({ email: email }).update({ isFreezen: 1 });
+    await this.db<TUser>("user").where({ email }).update({ isFreezen: 1 });
   }
 }

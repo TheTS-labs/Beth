@@ -31,7 +31,7 @@ export default class VoteEndpoint extends BaseEndpoint<type.VoteRequestArgs, Cal
     public logger: winston.Logger,
     public config: ENV
   ) {
-    super(db, redisClient, logger, config, "vote");
+    super(db, redisClient, logger, config, "voting");
     const REDIS_REQUIRED = this.config.get("REDIS_REQUIRED").required().asBool();
     const UserModelType = REDIS_REQUIRED ? CachingUserModel : UserModel;
     const PermissionModelType = REDIS_REQUIRED ? CachingPermissionModel : PermissionModel;

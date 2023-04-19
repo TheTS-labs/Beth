@@ -70,7 +70,10 @@ export default class UserEndpoint extends BaseEndpoint<type.UserRequestArgs, Cal
     const newHash = await bcrypt.hash(args.newPassword, 3);
 
     await this.userModel.changePassword(user.email, newHash);
-    await this.redisClient.del(user.email);
+    const REDIS_REQUIRED = this.config.get("REDIS_REQUIRED").required().asBool();
+    if (REDIS_REQUIRED) {
+      await this.redisClient.del(user.email);
+    }
 
     return { success: true };
   }

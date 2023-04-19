@@ -29,6 +29,7 @@ export async function up(knex: Knex): Promise<void> {
     table.boolean("VotingUnvote").defaultTo(PermissionStatus.Has);
     table.boolean("VotingVoteCount").defaultTo(PermissionStatus.Has);
     table.boolean("VotingGetVotes").defaultTo(PermissionStatus.Has);
+    table.boolean("ActionSimpleSearch").defaultTo(PermissionStatus.Hasnt);
   });
 }
 

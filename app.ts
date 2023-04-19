@@ -9,7 +9,6 @@ import winston from "winston";
 
 import { IBaseEndpoint } from "./common/base_endpoint";
 import { RequestWithUser } from "./common/types";
-// import ENV, { Config } from "./config";
 import knexfile from "./knexfile";
 import Logger from "./logger";
 import AuthenticationMiddleware from "./middlewares/authentication_middleware";

@@ -9,11 +9,11 @@ import { TAction } from "../../db/models/action";
 import { TUser } from "../../db/models/user";
 import * as type from "./types";
 
-type CallEndpointReturnType = { success: true };
+type CallEndpointReturnType = TAction[];
 
 export default class ActionEndpoint extends BaseEndpoint<type.ActionRequestArgs, CallEndpointReturnType> {
   public allowNames: string[] = [
-    "simpleSearch"
+    "simpleSearch", "chainWhereSearch"
   ];
 
   constructor(
@@ -34,6 +34,16 @@ export default class ActionEndpoint extends BaseEndpoint<type.ActionRequestArgs,
       args.value,
       args.select
     ).catch((err: Error) => {
+      throw new RequestError("DatabaseError", err.message, 500);
+    });
+
+    return result;
+  }
+
+  public async chainWhereSearch(args: type.ChainWhereSearchArgs, _user: TUser): Promise<TAction[]> {
+    args = await this.validate(type.ChainWhereSearchArgsSchema, args);
+
+    const result = this.actionModel.chainWhereSearch(args).catch((err: Error) => {
       throw new RequestError("DatabaseError", err.message, 500);
     });
 

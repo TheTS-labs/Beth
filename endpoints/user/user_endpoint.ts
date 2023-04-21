@@ -9,7 +9,7 @@ import RequestError from "../../common/request_error";
 import { SafeUserObject } from "../../common/types";
 import CachingPermissionModel from "../../db/models/caching/caching_permission";
 import CachingUserModel from "../../db/models/caching/caching_user";
-import PermissionModel from "../../db/models/permission";
+import PermissionModel, { PermissionStatus, TPermissions } from "../../db/models/permission";
 import UserModel, { TUser } from "../../db/models/user";
 import * as type from "./types";
 
@@ -76,7 +76,13 @@ export default class UserEndpoint extends BaseEndpoint<type.UserRequestArgs, Cal
   async freeze(args: type.FreezeArgs, user: TUser): Promise<{ success: true }> {
     args = await this.validate(type.FreezeArgsSchema, args);
 
-    await this.userModel.freezeUser(user.email).catch((err: { message: string }) => {
+    const permissions = await this.permissionModel.getPermissions(user.email) as TPermissions;
+
+    if (args.email != user.email && permissions["UserSuperFreeze"] == PermissionStatus.Hasnt) {
+      throw new RequestError("PermissionError", "You can freeze only yourself", 403);
+    }
+
+    await this.userModel.freezeUser(args.email).catch((err: { message: string }) => {
       throw new RequestError("DatabaseError", err.message, 500);
     });
 

@@ -11,6 +11,7 @@ export async function up(knex: Knex): Promise<void> {
     table.boolean("UserView").defaultTo(PermissionStatus.Has);
     table.boolean("UserEditPassword").defaultTo(PermissionStatus.Has);
     table.boolean("UserFreeze").defaultTo(PermissionStatus.Has);
+    table.boolean("UserSuperFreeze").defaultTo(PermissionStatus.Hasnt);
     table.boolean("PermissionView").defaultTo(PermissionStatus.Has);
     table.boolean("PermissionGrand").defaultTo(PermissionStatus.Hasnt);
     table.boolean("PermissionRescind").defaultTo(PermissionStatus.Hasnt);

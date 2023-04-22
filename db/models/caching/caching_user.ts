@@ -101,4 +101,10 @@ export default class CachingUserModel implements UserModel {
     await this.db<TUser>("user").where({ email }).update({ tags: newTags });
     await this.redisClient.del(email);
   }
+
+  public async verificateUser(email: string, verificate: 1 | 0): Promise<void> {
+    this.logger.debug({ message: `Verificating ${email}`, path: module.filename, context: { verificate } });
+
+    await this.db<TUser>("user").where({ email }).update({ verificated: verificate });
+  }
 }

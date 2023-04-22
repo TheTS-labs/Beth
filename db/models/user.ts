@@ -11,6 +11,7 @@ export interface TUser {
   password: string
   isFreezen: 0 | 1
   tags: string
+  verificated: 0 | 1
 }
 
 export default class UserModel {
@@ -76,5 +77,11 @@ export default class UserModel {
   public async editTags(email: string, newTags: string): Promise<void> {
     this.logger.debug({ message: "Editing tags", path: module.filename, context: { email, newTags } });
     await this.db<TUser>("user").where({ email }).update({ tags: newTags });
+  }
+
+  public async verificateUser(email: string, verificate: 1 | 0): Promise<void> {
+    this.logger.debug({ message: `Verificating ${email}`, path: module.filename, context: { verificate } });
+
+    await this.db<TUser>("user").where({ email }).update({ verificated: verificate });
   }
 }

@@ -57,4 +57,17 @@ export const EditTagsArgsSchema = Joi.object({
   newTags: Joi.string().pattern(/^[a-zA-Z0-9]+(?:,[a-zA-Z0-9]+)*$/).required()
 });
 // <<< Edit Tags <<<
-export type UserRequestArgs = CreateArgs | ViewArgs | EditPasswordArgs | FreezeArgs;
+
+// >>> Verificate >>>
+export interface VerificateArgs {
+  email: string
+  verificate: 1 | 0
+}
+
+export const VerificateArgsSchema = Joi.object({
+  email: Joi.string().email().required(),
+  verificate: Joi.number().min(0).max(1).default(1)
+});
+// <<< Verificate <<<
+
+export type UserRequestArgs = CreateArgs | ViewArgs | EditPasswordArgs | FreezeArgs | EditTagsArgs | VerificateArgs;

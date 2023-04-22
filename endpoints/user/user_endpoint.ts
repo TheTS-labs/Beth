@@ -16,7 +16,10 @@ import * as type from "./types";
 type CallEndpointReturnType = { success: true } | {} | SafeUserObject;
 
 export default class UserEndpoint extends BaseEndpoint<type.UserRequestArgs, CallEndpointReturnType> {
-  allowNames: Array<string> = ["create", "view", "editPassword", "freeze"];
+  allowNames: Array<string> = [
+    "create", "view", "editPassword",
+    "freeze", "editTags"
+  ];
   userModel: UserModel | CachingUserModel;
   permissionModel: PermissionModel | CachingPermissionModel;
 
@@ -82,7 +85,23 @@ export default class UserEndpoint extends BaseEndpoint<type.UserRequestArgs, Cal
       throw new RequestError("PermissionError", "You can freeze only yourself", 403);
     }
 
-    await this.userModel.freezeUser(args.email).catch((err: { message: string }) => {
+    await this.userModel.freezeUser(args.email, args.freeze).catch((err: { message: string }) => {
+      throw new RequestError("DatabaseError", err.message, 500);
+    });
+
+    return { success: true };
+  }
+
+  async editTags(args: type.EditTagsArgs, _user: TUser): Promise<CallEndpointReturnType> {
+    args = await this.validate(type.EditTagsArgsSchema, args);
+
+    const requestedUser = await this.userModel.getUnsafeUser(args.email);
+
+    if (!requestedUser) {
+      throw new RequestError("DatabaseError", "User doesn't exist", 404);
+    }
+
+    await this.userModel.editTags(args.email, args.newTags).catch((err: { message: string }) => {
       throw new RequestError("DatabaseError", err.message, 500);
     });
 

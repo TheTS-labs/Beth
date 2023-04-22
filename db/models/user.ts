@@ -67,9 +67,14 @@ export default class UserModel {
     await this.db<TUser>("user").where({ email }).update({ isFreezen: 0 });
   }
 
-  public async freezeUser(email: string): Promise<void> {
-    this.logger.debug({ message: `Freezing ${email}`, path: module.filename });
+  public async freezeUser(email: string, freeze: 1 | 0): Promise<void> {
+    this.logger.debug({ message: `Freezing ${email}`, path: module.filename, context: { freeze } });
 
-    await this.db<TUser>("user").where({ email }).update({ isFreezen: 1 });
+    await this.db<TUser>("user").where({ email }).update({ isFreezen: freeze });
+  }
+
+  public async editTags(email: string, newTags: string): Promise<void> {
+    this.logger.debug({ message: "Editing tags", path: module.filename, context: { email, newTags } });
+    await this.db<TUser>("user").where({ email }).update({ tags: newTags });
   }
 }

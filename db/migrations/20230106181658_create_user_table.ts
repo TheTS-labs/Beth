@@ -7,7 +7,7 @@ export async function up(knex: Knex): Promise<void> {
     table.string("password").notNullable();
     table.boolean("isFreezen").defaultTo(0);
     table.text("tags").defaultTo("");
-    table.boolean("verificated").defaultTo(0);
+    table.boolean("verified").defaultTo(0);
   });
 }
 

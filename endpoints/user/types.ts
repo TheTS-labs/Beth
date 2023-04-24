@@ -58,16 +58,16 @@ export const EditTagsArgsSchema = Joi.object({
 });
 // <<< Edit Tags <<<
 
-// >>> Verificate >>>
-export interface VerificateArgs {
+// >>> Verify >>>
+export interface VerifyArgs {
   email: string
-  verificate: 1 | 0
+  verify: 1 | 0
 }
 
-export const VerificateArgsSchema = Joi.object({
+export const VerifyArgsSchema = Joi.object({
   email: Joi.string().email().required(),
-  verificate: Joi.number().min(0).max(1).default(1)
+  verify: Joi.number().min(0).max(1).default(1)
 });
-// <<< Verificate <<<
+// <<< Verify <<<
 
-export type UserRequestArgs = CreateArgs | ViewArgs | EditPasswordArgs | FreezeArgs | EditTagsArgs | VerificateArgs;
+export type UserRequestArgs = CreateArgs | ViewArgs | EditPasswordArgs | FreezeArgs | EditTagsArgs | VerifyArgs;

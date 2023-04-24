@@ -18,7 +18,7 @@ type CallEndpointReturnType = { success: true } | {} | SafeUserObject;
 export default class UserEndpoint extends BaseEndpoint<type.UserRequestArgs, CallEndpointReturnType> {
   allowNames: Array<string> = [
     "create", "view", "editPassword",
-    "freeze", "editTags"
+    "freeze", "editTags", "verify"
   ];
   userModel: UserModel | CachingUserModel;
   permissionModel: PermissionModel | CachingPermissionModel;
@@ -95,13 +95,27 @@ export default class UserEndpoint extends BaseEndpoint<type.UserRequestArgs, Cal
   async editTags(args: type.EditTagsArgs, _user: TUser): Promise<CallEndpointReturnType> {
     args = await this.validate(type.EditTagsArgsSchema, args);
 
-    const requestedUser = await this.userModel.getUnsafeUser(args.email);
-
+    const requestedUser = await this.userModel.getSafeUser(args.email);
     if (!requestedUser) {
       throw new RequestError("DatabaseError", "User doesn't exist", 404);
     }
 
     await this.userModel.editTags(args.email, args.newTags).catch((err: { message: string }) => {
+      throw new RequestError("DatabaseError", err.message, 500);
+    });
+
+    return { success: true };
+  }
+
+  async verify(args: type.VerifyArgs, _user: TUser): Promise<CallEndpointReturnType> {
+    args = await this.validate(type.VerifyArgsSchema, args);
+
+    const requestedUser = await this.userModel.getSafeUser(args.email);
+    if (!requestedUser) {
+      throw new RequestError("DatabaseError", "User doesn't exist", 404);
+    }
+
+    await this.userModel.verifyUser(args.email, args.verify).catch((err: { message: string }) => {
       throw new RequestError("DatabaseError", err.message, 500);
     });
 

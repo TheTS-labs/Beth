@@ -14,3 +14,8 @@ export type RequestWithUser = Request & {
 export type EndpointThisType<CType, AType, RType> = CType & {
   [name: string]: (args: AType, user: TUser | undefined) => RType
 };
+
+export enum DBBool {
+  No,
+  Yes
+}

@@ -1,5 +1,7 @@
 import Joi from "joi";
 
+import { DBBool } from "../../common/types";
+
 // >>> Create >>>
 export interface CreateArgs {
   email: string
@@ -37,7 +39,7 @@ export const EditPasswordArgsSchema = Joi.object({
 // >>> Freeze >>>
 export interface FreezeArgs {
   email: string
-  freeze: 1 | 0
+  freeze: DBBool
 }
 
 export const FreezeArgsSchema = Joi.object({
@@ -61,7 +63,7 @@ export const EditTagsArgsSchema = Joi.object({
 // >>> Verify >>>
 export interface VerifyArgs {
   email: string
-  verify: 1 | 0
+  verify: DBBool
 }
 
 export const VerifyArgsSchema = Joi.object({

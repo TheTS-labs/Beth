@@ -7,8 +7,7 @@ export async function up(knex: Knex): Promise<void> {
     table.integer("userId").notNullable();
     table.integer("postId").notNullable();
     table.timestamp("createdAt").defaultTo(knex.fn.now());
-    table.boolean("voteType").notNullable(); // 0 - Downvote
-                                             // 1 - Upvote
+    table.boolean("voteType").notNullable();
   });
 }
 

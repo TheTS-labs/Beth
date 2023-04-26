@@ -3,7 +3,7 @@ import { RedisClientType } from "redis";
 import winston from "winston";
 
 import { ENV } from "../../../app";
-import { SafeUserObject } from "../../../common/types";
+import { DBBool, SafeUserObject } from "../../../common/types";
 import UserModel, { TUser } from "../user";
 
 export default class CachingUserModel implements UserModel {
@@ -56,7 +56,7 @@ export default class CachingUserModel implements UserModel {
     await this.db<TUser>("user").where({ email: email }).update({ password: newHash });
   }
 
-  public async isFreezen(email: string): Promise<0 | 1> {
+  public async isFreezen(email: string): Promise<DBBool> {
     this.logger.debug({ message: "Is the user freezen", path: module.filename, context: { email } });
     this.logger.debug({ message: "Getting safe user from cache", path: module.filename, context: { email } });
     const cachedUserString = await this.redisClient.get(email);
@@ -69,17 +69,17 @@ export default class CachingUserModel implements UserModel {
 
     this.logger.debug({ message: "Using user from DB", path: module.filename, context: { email } });
     const record = await this.db<TUser>("user").where({ email }).select("isFreezen").first();
-    const result = record || { isFreezen: 0 };
+    const result = record || { isFreezen: DBBool.No };
     return result.isFreezen;
   }
 
   public async unfreezeUser(email: string): Promise<void> {
     this.logger.debug({ message: `Unfreezing ${email}`, path: module.filename });
 
-    await this.db<TUser>("user").where({ email: email }).update({ isFreezen: 0 });
+    await this.db<TUser>("user").where({ email: email }).update({ isFreezen: DBBool.No });
   }
 
-  public async freezeUser(email: string, freeze: 1 | 0): Promise<void> {
+  public async freezeUser(email: string, freeze: DBBool): Promise<void> {
     this.logger.debug({ message: `Freezing ${email}`, path: module.filename, context: { freeze } });
 
     await this.db<TUser>("user").where({ email }).update({ isFreezen: freeze });
@@ -102,7 +102,7 @@ export default class CachingUserModel implements UserModel {
     await this.redisClient.del(email);
   }
 
-  public async verifyUser(email: string, verify: 1 | 0): Promise<void> {
+  public async verifyUser(email: string, verify: DBBool): Promise<void> {
     this.logger.debug({ message: `Verificating ${email}`, path: module.filename, context: { verify } });
 
     await this.db<TUser>("user").where({ email }).update({ verified: verify });

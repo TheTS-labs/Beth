@@ -3,15 +3,15 @@ import { RedisClientType } from "redis";
 import winston from "winston";
 
 import { ENV } from "../../app";
-import { SafeUserObject } from "../../common/types";
+import { DBBool, SafeUserObject } from "../../common/types";
 
 export interface TUser {
   id: number
   email: string
   password: string
-  isFreezen: 0 | 1
+  isFreezen: DBBool
   tags: string
-  verified: 0 | 1
+  verified: DBBool
 }
 
 export default class UserModel {
@@ -52,12 +52,12 @@ export default class UserModel {
     await this.db<TUser>("user").where({ email }).update({ password: newHash });
   }
 
-  public async isFreezen(email: string): Promise<0 | 1> {
+  public async isFreezen(email: string): Promise<DBBool> {
     this.logger.debug({ message: "Is the user freezen", path: module.filename, context: { email } });
 
     const record = await this.db<TUser>("user").where({ email }).select("isFreezen").first();
 
-    const result = record || { isFreezen: 0 };
+    const result = record || { isFreezen: DBBool.No };
 
     return result.isFreezen;
   }
@@ -68,7 +68,7 @@ export default class UserModel {
     await this.db<TUser>("user").where({ email }).update({ isFreezen: 0 });
   }
 
-  public async freezeUser(email: string, freeze: 1 | 0): Promise<void> {
+  public async freezeUser(email: string, freeze: DBBool): Promise<void> {
     this.logger.debug({ message: `Freezing ${email}`, path: module.filename, context: { freeze } });
 
     await this.db<TUser>("user").where({ email }).update({ isFreezen: freeze });
@@ -79,7 +79,7 @@ export default class UserModel {
     await this.db<TUser>("user").where({ email }).update({ tags: newTags });
   }
 
-  public async verifyUser(email: string, verify: 1 | 0): Promise<void> {
+  public async verifyUser(email: string, verify: DBBool): Promise<void> {
     this.logger.debug({ message: `Verificating ${email}`, path: module.filename, context: { verify } });
 
     await this.db<TUser>("user").where({ email }).update({ verified: verify });

@@ -9,7 +9,6 @@ import winston from "winston";
 
 import { IBaseEndpoint } from "./common/base_endpoint";
 import { RequestWithUser } from "./common/types";
-// import ENV, { Config } from "./config";
 import knexfile from "./knexfile";
 import Logger from "./logger";
 import AuthenticationMiddleware from "./middlewares/authentication_middleware";
@@ -38,12 +37,10 @@ export default class App {
   logger: winston.Logger = new Logger().get();
   config: ENV;
 
-  // >>> Middlewares >>>
   authenticationMiddleware: AuthenticationMiddleware;
   permissionMiddleware: PermissionMiddleware;
   freezenMiddleware: FreezenMiddleware;
   errorMiddleware: ErrorMiddleware;
-  // <<< Middlewares <<<
 
   //! Disabling auth you also disabling permission check
   constructor(endpoints: TEndpointTypes, disableAuthFor:string[]=[]) {
@@ -51,13 +48,11 @@ export default class App {
     this.db = knex(knexfile[this.config.get("NODE_ENV").required().asEnum(["development", "production"])]);
     this.redisClient = new Redis(this.logger, this.config).get();
 
-    // >>> Middlewares >>>
-    this.authenticationMiddleware = new AuthenticationMiddleware(this.logger, this.db, this.redisClient, this.config);
+      this.authenticationMiddleware = new AuthenticationMiddleware(this.logger, this.db, this.redisClient, this.config);
     this.permissionMiddleware = new PermissionMiddleware(this.logger, this.db, this.redisClient, this.config);
     this.freezenMiddleware = new FreezenMiddleware(this.logger, this.db, this.redisClient, this.config);
     this.errorMiddleware = new ErrorMiddleware(this.logger);
-    // <<< Middlewares <<<
-
+  
     initScheduledJobs(this.db, this.logger);
     this.setupApp(endpoints, disableAuthFor);
   }

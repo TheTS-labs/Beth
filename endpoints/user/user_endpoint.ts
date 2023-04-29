@@ -1,23 +1,25 @@
 import bcrypt from "bcrypt";
-import Joi from "joi";
 import { Knex } from "knex";
 import { RedisClientType } from "redis";
 import winston from "winston";
 
 import { ENV } from "../../app";
-import { IBaseEndpoint } from "../../common/base_endpoint";
+import BaseEndpoint from "../../common/base_endpoint_class";
 import RequestError from "../../common/request_error";
 import { EndpointThisType, SafeUserObject } from "../../common/types";
 import CachingPermissionModel from "../../db/models/caching/caching_permission";
 import CachingUserModel from "../../db/models/caching/caching_user";
-import PermissionModel from "../../db/models/permission";
+import PermissionModel, { PermissionStatus, TPermissions } from "../../db/models/permission";
 import UserModel, { TUser } from "../../db/models/user";
 import * as type from "./types";
 
 type CallEndpointReturnType = { success: true } | {} | SafeUserObject;
 
-export default class UserEndpoint implements IBaseEndpoint {
-  allowNames: Array<string> = ["create", "view", "editPassword", "freeze"];
+export default class UserEndpoint extends BaseEndpoint<type.UserRequestArgs, CallEndpointReturnType> {
+  allowNames: Array<string> = [
+    "create", "view", "editPassword",
+    "freeze", "editTags", "verify"
+  ];
   userModel: UserModel | CachingUserModel;
   permissionModel: PermissionModel | CachingPermissionModel;
 
@@ -27,6 +29,7 @@ export default class UserEndpoint implements IBaseEndpoint {
     public logger: winston.Logger,
     public config: ENV
   ) {
+    super(db, redisClient, logger, config, "user");
     const REDIS_REQUIRED = this.config.get("REDIS_REQUIRED").required().asBool();
     const UserModelType = REDIS_REQUIRED ? CachingUserModel : UserModel;
     const PermissionModelType = REDIS_REQUIRED ? CachingPermissionModel : PermissionModel;
@@ -35,7 +38,6 @@ export default class UserEndpoint implements IBaseEndpoint {
     this.permissionModel = new PermissionModelType(this.db, this.logger, this.redisClient, this.config);
   }
 
-  // >>> Create >>>
   async create(args: type.CreateArgs, _user: TUser | undefined): Promise<{ success: true }> {
     args = await this.validate(type.CreateArgsSchema, args);
 
@@ -51,9 +53,7 @@ export default class UserEndpoint implements IBaseEndpoint {
 
     return { success: true };
   }
-  // <<< Create <<<
 
-  // <<< View <<<
   async view(args: type.ViewArgs, _user: TUser): Promise<SafeUserObject | {}> {
     args = await this.validate(type.ViewArgsSchema, args);
 
@@ -61,53 +61,64 @@ export default class UserEndpoint implements IBaseEndpoint {
 
     return requestedUser||{};
   }
-  // >>> View >>>
 
-  // <<< Edit Password <<<
   async editPassword(args: type.EditPasswordArgs, user: TUser): Promise<{ success: true }> {
     args = await this.validate(type.EditPasswordArgsSchema, args);
 
     const newHash = await bcrypt.hash(args.newPassword, 3);
 
     await this.userModel.changePassword(user.email, newHash);
-    await this.redisClient.del(user.email);
+    const REDIS_REQUIRED = this.config.get("REDIS_REQUIRED").required().asBool();
+    if (REDIS_REQUIRED) {
+      await this.redisClient.del(user.email);
+    }
 
     return { success: true };
   }
-  // >>> Edit Password >>>
 
-  // <<< Freeze <<<
   async freeze(args: type.FreezeArgs, user: TUser): Promise<{ success: true }> {
     args = await this.validate(type.FreezeArgsSchema, args);
 
-    await this.userModel.freezeUser(user.email).catch((err: { message: string }) => {
+    const permissions = await this.permissionModel.getPermissions(user.email) as TPermissions;
+
+    if (args.email != user.email && permissions["UserSuperFreeze"] == PermissionStatus.Hasnt) {
+      throw new RequestError("PermissionError", "You can freeze only yourself", 403);
+    }
+
+    await this.userModel.freezeUser(args.email, args.freeze).catch((err: { message: string }) => {
       throw new RequestError("DatabaseError", err.message, 500);
     });
 
     return { success: true };
   }
-  // >>> Freeze >>>
 
-  async callEndpoint(
-    this: EndpointThisType<UserEndpoint, type.UserRequestArgs, Promise<CallEndpointReturnType>>,
-    name: string, args: type.UserRequestArgs, user: TUser | undefined
-  ): Promise<CallEndpointReturnType> {
-    const userIncludes = this.allowNames.includes(name);
-    if (!userIncludes) {
-      throw new RequestError("EndpointNotFound", `Endpoint user/${name} does not exist`, 404);
+  async editTags(args: type.EditTagsArgs, _user: TUser): Promise<CallEndpointReturnType> {
+    args = await this.validate(type.EditTagsArgsSchema, args);
+
+    const requestedUser = await this.userModel.getSafeUser(args.email);
+    if (!requestedUser) {
+      throw new RequestError("DatabaseError", "User doesn't exist", 404);
     }
 
-    const result: CallEndpointReturnType = await this[name](args, user);
+    await this.userModel.editTags(args.email, args.newTags).catch((err: { message: string }) => {
+      throw new RequestError("DatabaseError", err.message, 500);
+    });
 
-    return result;
+    return { success: true };
   }
 
-  async validate<EType>(schema: Joi.ObjectSchema, args: EType): Promise<EType> {
-    const { error, value } = schema.validate(args);
-    if (error) {
-      throw new RequestError("ValidationError", error.message, 400);
+  async verify(args: type.VerifyArgs, _user: TUser): Promise<CallEndpointReturnType> {
+    args = await this.validate(type.VerifyArgsSchema, args);
+
+    const requestedUser = await this.userModel.getSafeUser(args.email);
+    if (!requestedUser) {
+      throw new RequestError("DatabaseError", "User doesn't exist", 404);
     }
 
-    return value as EType;
+    await this.userModel.verifyUser(args.email, args.verify).catch((err: { message: string }) => {
+      throw new RequestError("DatabaseError", err.message, 500);
+    });
+
+    return { success: true };
   }
 }

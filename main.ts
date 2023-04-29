@@ -1,6 +1,7 @@
 import dotenv from "dotenv";
 
 import App, { TEndpointTypes } from "./app";
+import ActionEndpoint from "./endpoints/action/action_endpoint";
 import PermissionEndpoint from "./endpoints/permission/permission_endpoint";
 import PostEndpoint from "./endpoints/post/post_endpoint";
 import UserEndpoint from "./endpoints/user/user_endpoint";
@@ -13,6 +14,7 @@ const endpoints: TEndpointTypes = {
   "/permission": PermissionEndpoint,
   "/post": PostEndpoint,
   "/voting": VoteEndpoint,
+  "/action": ActionEndpoint
 };
 
 const disableAuthFor = ["/user/create"];

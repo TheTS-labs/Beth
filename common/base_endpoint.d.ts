@@ -1,8 +1,10 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Knex } from "knex";
 import { RedisClientType } from "redis";
 import winston from "winston";
 
 import { ENV } from "../app";
+import { EndpointThisType } from "./types";
 
 declare class IBaseEndpoint {
   public allowNames: Array<string>;
@@ -14,6 +16,9 @@ declare class IBaseEndpoint {
     public config: ENV
   );
 
-  async callEndpoint(name: string, args: object, user: TUser | undefined): Promise<object>;
+  async callEndpoint(
+    this: EndpointThisType<any, object, Promise<object>>,
+    name: string, args: object, user: TUser | undefined
+  ): Promise<object>;
   async validate<EType>(schema: unknown, args: EType): Promise<EType>;
 }

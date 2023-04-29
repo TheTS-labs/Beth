@@ -15,6 +15,9 @@ export interface TPermissions {
   UserView: PermissionStatus
   UserEditPassword: PermissionStatus
   UserFreeze: PermissionStatus
+  UserSuperFreeze: PermissionStatus
+  UserEditTags: PermissionStatus
+  UserVerify: PermissionStatus
   PermissionsView: PermissionStatus
   PermissionsGrand: PermissionStatus
   PermissionsRescind: PermissionStatus
@@ -33,6 +36,8 @@ export interface TPermissions {
   VotingUnvote: PermissionStatus
   VotingVoteCount: PermissionStatus
   VotingGetVotes: PermissionStatus
+  ActionSimpleSearch: PermissionStatus
+  ActionChainWhereSearch: PermissionStatus
 }
 
 export default class PermissionsModel {

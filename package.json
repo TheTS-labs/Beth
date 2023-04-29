@@ -5,7 +5,8 @@
   "scripts": {
     "start": "nodemon main.ts",
     "migrate": "knex migrate:latest --knexfile knexfile.js --migrations-directory db/migrations",
-    "seed": "knex seed:run"
+    "seed": "knex seed:run",
+    "migrateAndSeed": "knex migrate:latest --knexfile knexfile.js --migrations-directory db/migrations && knex seed:run"
   },
   "dependencies": {
     "bcrypt": "^5.1.0",

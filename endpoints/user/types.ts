@@ -1,5 +1,7 @@
 import Joi from "joi";
 
+import { DBBool } from "../../common/types";
+
 // >>> Create >>>
 export interface CreateArgs {
   email: string
@@ -26,14 +28,10 @@ export const ViewArgsSchema = Joi.object({
 
 // >>> Edit Password >>>
 export interface EditPasswordArgs {
-  email: string
-  password: string
   newPassword: string
 }
 
 export const EditPasswordArgsSchema = Joi.object({
-  email: Joi.string().email().required(),
-  password: Joi.string().pattern(new RegExp("^[a-zA-Z0-9]{8,64}$")).required(),
   newPassword: Joi.string().pattern(new RegExp("^[a-zA-Z0-9]{8,64}$")).required(),
 });
 // <<< Edit Password <<<
@@ -41,13 +39,37 @@ export const EditPasswordArgsSchema = Joi.object({
 // >>> Freeze >>>
 export interface FreezeArgs {
   email: string
-  password: string
+  freeze: DBBool
 }
 
 export const FreezeArgsSchema = Joi.object({
   email: Joi.string().email().required(),
-  password: Joi.string().pattern(new RegExp("^[a-zA-Z0-9]{8,64}$")).required(),
+  freeze: Joi.number().min(0).max(1).default(1)
 });
 // <<< Freeze <<<
 
-export type UserRequestArgs = CreateArgs | ViewArgs | EditPasswordArgs | FreezeArgs;
+// >>> Edit Tags >>>
+export interface EditTagsArgs {
+  email: string
+  newTags: string
+}
+
+export const EditTagsArgsSchema = Joi.object({
+  email: Joi.string().email().required(),
+  newTags: Joi.string().pattern(/^[a-zA-Z0-9]+(?:,[a-zA-Z0-9]+)*$/).required()
+});
+// <<< Edit Tags <<<
+
+// >>> Verify >>>
+export interface VerifyArgs {
+  email: string
+  verify: DBBool
+}
+
+export const VerifyArgsSchema = Joi.object({
+  email: Joi.string().email().required(),
+  verify: Joi.number().min(0).max(1).default(1)
+});
+// <<< Verify <<<
+
+export type UserRequestArgs = CreateArgs | ViewArgs | EditPasswordArgs | FreezeArgs | EditTagsArgs | VerifyArgs;

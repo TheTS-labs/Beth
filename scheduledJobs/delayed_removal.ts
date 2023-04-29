@@ -12,7 +12,7 @@ export default function getJob(
     const sevenDaysAgo: number = Date.now() - 7 * 24 * 60 * 60 * 1000;
 
     logger.info({
-      message: "Deleting posts(freezenAt <= ${sevenDaysAgo})",
+      message: "Deleting posts",
       path: module.filename,
       context: {"freezenAt": ["<=", sevenDaysAgo]}
     });

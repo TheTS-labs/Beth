@@ -46,8 +46,8 @@ export default class VoteModel {
   public async getVoteCount(postId: number, voteType: Vote): Promise<number> {
     this.logger.debug({ message: "Getting a vote count", path: module.filename, context: { voteType, postId } });
     const count = await this.db<TVote>("vote").count("*")
-                                              .where({ postId, voteType }) as unknown as [{ "count(*)": number }];
+                                              .where({ postId, voteType }) as unknown as [{ "count": number }];
 
-    return count[0]["count(*)"];
+    return Number(count[0]["count"]);
   }
 }

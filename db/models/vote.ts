@@ -50,4 +50,10 @@ export default class VoteModel {
 
     return Number(count[0]["count"]);
   }
+
+  public async getVotes(userId: number): Promise<TVote[]> {
+    this.logger.debug({ message: "Getting all votes", path: module.filename, context: { userId } });
+    const votes = await this.db<TVote>("vote").where({ userId });
+    return votes;
+  }
 }

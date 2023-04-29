@@ -6,7 +6,7 @@ import winston from "winston";
 import { ENV } from "../../app";
 import BaseEndpoint from "../../common/base_endpoint_class";
 import RequestError from "../../common/request_error";
-import { SafeUserObject } from "../../common/types";
+import { EndpointThisType, SafeUserObject } from "../../common/types";
 import CachingPermissionModel from "../../db/models/caching/caching_permission";
 import CachingUserModel from "../../db/models/caching/caching_user";
 import PermissionModel, { PermissionStatus, TPermissions } from "../../db/models/permission";

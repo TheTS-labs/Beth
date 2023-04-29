@@ -42,7 +42,7 @@ export default class VoteEndpoint extends BaseEndpoint<type.VoteRequestArgs, Cal
     this.postModel = new PostModelType(this.db, this.logger, this.redisClient, this.config);
     this.voteModel = new VoteModel(this.db, this.logger, this.redisClient, this.config);
   }
-
+ 
   async vote(args: type.VoteArgs, user: TUser): Promise<CallEndpointReturnType>{
     args = await this.validate(type.VoteArgsSchema, args);
 
@@ -62,7 +62,7 @@ export default class VoteEndpoint extends BaseEndpoint<type.VoteRequestArgs, Cal
 
     return { success: true };
   }
-
+  
   async voteCount(args: type.VoteCountArgs, _user: TUser): Promise<CallEndpointReturnType>{
     args = await this.validate(type.VoteCountArgsSchema, args);
 

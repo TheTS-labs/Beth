@@ -5,6 +5,7 @@ import winston from "winston";
 import { ENV } from "../../app";
 import BaseEndpoint from "../../common/base_endpoint_class";
 import RequestError from "../../common/request_error";
+import { EndpointThisType } from "../../common/types";
 import CachingPermissionModel from "../../db/models/caching/caching_permission";
 import CachingUserModel from "../../db/models/caching/caching_user";
 import PermissionModel, { TPermissions } from "../../db/models/permission";
@@ -33,7 +34,6 @@ export default class PermissionEndpoint extends BaseEndpoint<type.PermissionRequ
     this.permissionModel = new PermissionModelType(this.db, this.logger, this.redisClient, this.config);
   }
 
-  
   async view(args: type.ViewArgs, _user: TUser): Promise<TPermissions> {
     args = await this.validate(type.ViewArgsSchema, args);
 
@@ -54,7 +54,7 @@ export default class PermissionEndpoint extends BaseEndpoint<type.PermissionRequ
 
     return { success: true };
   }
-  
+
   async rescind(args: type.RescindArgs, _user: TUser): Promise<{success: true}|never> {
     args = await this.validate(type.RescindArgsSchema, args);
 

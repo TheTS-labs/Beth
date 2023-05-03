@@ -19,3 +19,9 @@ export enum DBBool {
   No,
   Yes
 }
+
+export enum UserScore {
+  Liked = 1,
+  Nothing = 0,
+  Disliked = -1
+}

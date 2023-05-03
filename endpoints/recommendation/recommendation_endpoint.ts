@@ -4,6 +4,7 @@ import winston from "winston";
 
 import { ENV } from "../../app";
 import BaseEndpoint from "../../common/base_endpoint_class";
+import { UserScore } from "../../common/types";
 import CachingPermissionModel from "../../db/models/caching/caching_permission";
 import CachingPostModel from "../../db/models/caching/caching_post";
 import CachingUserModel from "../../db/models/caching/caching_user";
@@ -14,6 +15,8 @@ import VoteModel, { Vote } from "../../db/models/vote";
 import * as type from "./types";
 
 type CallEndpointReturnType = object;
+type TPostWithVote = TPost & { voteType: Vote };
+type TPostWithScore = TPost & { score: number };
 
 export default class RecommendationEndpoint extends BaseEndpoint<type.RecommendationRequestArgs,
                                                                  CallEndpointReturnType> {
@@ -43,77 +46,53 @@ export default class RecommendationEndpoint extends BaseEndpoint<type.Recommenda
     this.voteModel = new VoteModel(this.db, this.logger, this.redisClient, this.config);
   }
 
-  async recommend(_args: object, user: TUser): Promise<CallEndpointReturnType>{
-    const votes = await this.voteModel.getVotes(user.id);
-    const postsWithVoteType: (TPost & { voteType: Vote })[] = [];
+  async recommend(args: type.RecommendArgs, user: TUser): Promise<CallEndpointReturnType>{
+    args = await this.validate(type.RecommendArgsSchema, args);
 
-    // The reason why a for loop is used instead of forEach 
-    // in this code is that forEach does not wait for
-    // asynchronous operations to complete before moving to
-    // the next iteration. As a result, when return is
-    // executed, the asynchronous operations may not have completed
-    // yet, and the posts array may be empty. In contrast, a for loop
-    // waits for each asynchronous operation to complete before moving
-    // to the next iteration, ensuring that the posts array is fully
-    // populated before return is executed.
-    for (const vote of votes) {
+    const votes = await this.voteModel.getVotes(user.id);
+    
+    const postsWithVoteType = await Promise.all(votes.map(async (vote) => {
       const post = await this.postModel.getPost(vote.postId);
       if (post) {
-        const postWithVoteType: TPost & { voteType: Vote } = {
+        return {
           ...post,
           voteType: vote.voteType
         };
-        postsWithVoteType.push(postWithVoteType);
       }
-    }
+    })) as TPostWithVote[];
 
-    const {likedTags, dislikedTags } = this.getPreferedTags(postsWithVoteType);
-    const { likedUsers, dislikedUsers } = this.getPreferedUsers(postsWithVoteType);
+    const likedTags = this.getPreferredTags(postsWithVoteType, Vote.Up),
+          dislikedTags = this.getPreferredTags(postsWithVoteType, Vote.Down),
+          likedUsers = this.getPreferredUsers(postsWithVoteType, Vote.Up),
+          dislikedUsers = this.getPreferredUsers(postsWithVoteType, Vote.Down),
+          posts = await this.postModel.getList(args.afterCursor, args.numberRecords);
 
-    const posts = await this.postModel.getList("", 10);
-    const recommendations: (TPost & { score: number })[] = [];
+    const recommendations = posts.results.map(recommendPost => {
+      const tags = recommendPost.tags.split(",");
+      const likedTagsCount = tags.filter(tag => likedTags.includes(tag)).length;
+      const dislikedTagsCount = tags.filter(tag => dislikedTags.includes(tag)).length;
+      const tagScore = likedTagsCount - dislikedTagsCount;
 
-    for (const recommendPost of posts.results) {
-      const tagScore = recommendPost.tags.split(",").filter(
-        tag => likedTags.includes(tag)
-      ).length - recommendPost.tags.split(",").filter(
-        tag => dislikedTags.includes(tag)
-      ).length;
+      const isLiked = likedUsers.includes(recommendPost.author) ? UserScore.Liked : UserScore.Nothing;
+      const isDisliked = dislikedUsers.includes(recommendPost.author) ? UserScore.Disliked : UserScore.Nothing;
+      const userScore = isLiked - isDisliked;
 
-      const userScore = (
-        likedUsers.includes(recommendPost.author) ? 1 : 0
-      ) - (
-        dislikedUsers.includes(recommendPost.author) ? 1 : 0
-      );
-
-      const postWithScore = {
+      return {
         ...recommendPost,
         score: tagScore + userScore
       };
-
-      recommendations.push(postWithScore);
-    }
+    }) as TPostWithScore[];
 
     recommendations.sort((a, b) => b.score - a.score);
 
     return recommendations;
   }
 
-  private getPreferedTags(posts: (TPost & { voteType: Vote })[]): { likedTags: string[], dislikedTags: string[] } {
-    let likedTags = posts.filter(item => item.voteType == Vote.Up).map(item => item.tags.split(",")).flat();
-    let dislikedTags = posts.filter(item => item.voteType == Vote.Down).map(item => item.tags.split(",")).flat();
-    likedTags = likedTags.filter(item => !dislikedTags.includes(item));
-    dislikedTags = dislikedTags.filter(item => !likedTags.includes(item));
-
-    return { likedTags, dislikedTags };
+  private getPreferredTags(posts: TPostWithVote[], voteType: Vote): string[] {
+    return posts.filter(item => item.voteType == voteType).flatMap(item => item.tags.split(","));
   }
 
-  private getPreferedUsers(posts: (TPost & { voteType: Vote })[]): { likedUsers: string[], dislikedUsers: string[] } {
-    let likedUsers = posts.filter(item => item.voteType == Vote.Up).map(item => item.author).flat();
-    let dislikedUsers = posts.filter(item => item.voteType == Vote.Down).map(item => item.author).flat();
-    likedUsers = likedUsers.filter(item => !dislikedUsers.includes(item));
-    dislikedUsers = dislikedUsers.filter(item => !likedUsers.includes(item));
-
-    return { likedUsers, dislikedUsers };
+  private getPreferredUsers(posts: TPostWithVote[], voteType: Vote): string[] {
+    return posts.filter(item => item.voteType == voteType).flatMap(item => item.author);
   }
 }

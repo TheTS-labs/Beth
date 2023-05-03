@@ -9,7 +9,7 @@ import CachingPermissionModel from "../../db/models/caching/caching_permission";
 import CachingPostModel from "../../db/models/caching/caching_post";
 import CachingUserModel from "../../db/models/caching/caching_user";
 import PermissionModel from "../../db/models/permission";
-import PostModel, { TPost } from "../../db/models/post";
+import PostModel, { GetListReturnType, TPost } from "../../db/models/post";
 import UserModel, { TUser } from "../../db/models/user";
 import VoteModel, { Vote } from "../../db/models/vote";
 import * as type from "./types";
@@ -17,6 +17,13 @@ import * as type from "./types";
 type CallEndpointReturnType = object;
 type TPostWithVote = TPost & { voteType: Vote };
 type TPostWithScore = TPost & { score: number };
+interface RecommendationRequirements {
+  likedTags: string[]
+  dislikedTags: string[]
+  likedUsers: string[]
+  dislikedUsers: string[]
+  posts: GetListReturnType
+}
 
 export default class RecommendationEndpoint extends BaseEndpoint<type.RecommendationRequestArgs,
                                                                  CallEndpointReturnType> {
@@ -61,20 +68,17 @@ export default class RecommendationEndpoint extends BaseEndpoint<type.Recommenda
       }
     })) as TPostWithVote[];
 
-    const likedTags = this.getPreferredTags(postsWithVoteType, Vote.Up),
-          dislikedTags = this.getPreferredTags(postsWithVoteType, Vote.Down),
-          likedUsers = this.getPreferredUsers(postsWithVoteType, Vote.Up),
-          dislikedUsers = this.getPreferredUsers(postsWithVoteType, Vote.Down),
-          posts = await this.postModel.getList(args.afterCursor, args.numberRecords);
+    const requirements = await this.getRecommendationRequirements(args, postsWithVoteType);
 
-    const recommendations = posts.results.map(recommendPost => {
+    const recommendations = requirements.posts.results.map(recommendPost => {
       const tags = recommendPost.tags.split(",");
-      const likedTagsCount = tags.filter(tag => likedTags.includes(tag)).length;
-      const dislikedTagsCount = tags.filter(tag => dislikedTags.includes(tag)).length;
+      const likedTagsCount = tags.filter(tag => requirements.likedTags.includes(tag)).length;
+      const dislikedTagsCount = tags.filter(tag => requirements.dislikedTags.includes(tag)).length;
       const tagScore = likedTagsCount - dislikedTagsCount;
 
-      const isLiked = likedUsers.includes(recommendPost.author) ? UserScore.Liked : UserScore.Nothing;
-      const isDisliked = dislikedUsers.includes(recommendPost.author) ? UserScore.Disliked : UserScore.Nothing;
+      const isLiked = requirements.likedUsers.includes(recommendPost.author) ? UserScore.Liked : UserScore.Nothing;
+      const isDisliked = requirements.dislikedUsers.includes(recommendPost.author) ? UserScore.Disliked 
+                                                                                   : UserScore.Nothing;
       const userScore = isLiked - isDisliked;
 
       return {
@@ -94,5 +98,17 @@ export default class RecommendationEndpoint extends BaseEndpoint<type.Recommenda
 
   private getPreferredUsers(posts: TPostWithVote[], voteType: Vote): string[] {
     return posts.filter(item => item.voteType == voteType).flatMap(item => item.author);
+  }
+
+  private async getRecommendationRequirements(
+    args: type.RecommendArgs, postsWithVoteType: TPostWithVote[]
+  ): Promise<RecommendationRequirements> {
+    return {
+      likedTags: this.getPreferredTags(postsWithVoteType, Vote.Up),
+      dislikedTags: this.getPreferredTags(postsWithVoteType, Vote.Down),
+      likedUsers: this.getPreferredUsers(postsWithVoteType, Vote.Up),
+      dislikedUsers: this.getPreferredUsers(postsWithVoteType, Vote.Down),
+      posts: await this.postModel.getList(args.afterCursor, args.numberRecords)
+    };
   }
 }

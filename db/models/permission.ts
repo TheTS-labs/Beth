@@ -38,6 +38,7 @@ export interface TPermissions {
   VotingGetVotes: PermissionStatus
   ActionSimpleSearch: PermissionStatus
   ActionChainWhereSearch: PermissionStatus
+  RecommendationRecommend: PermissionStatus
 }
 
 export default class PermissionsModel {

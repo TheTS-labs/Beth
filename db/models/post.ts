@@ -83,8 +83,7 @@ export default class PostModel {
     let query = this.db.queryBuilder()
                        .select("post.*")
                        .from("post")
-                       .where({ "freezenAt": null })
-                       .orderBy("createdAt", "DESC");
+                       .where({ "freezenAt": null });
 
     query = knexCursorPagination(query, { after: afterCursor, first: numberRecords });
 

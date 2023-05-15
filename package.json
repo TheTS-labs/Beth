@@ -1,26 +1,48 @@
 {
   "name": "beth",
-  "version": "0.0.0",
-  "private": true,
+  "version": "InDev",
+  "license": "GPL-3.0-only",
   "scripts": {
-    "build": "npx tsc",
-    "start": "node dist/app.js",
-    "dev": "concurrently \"npx tsc --watch\" \"nodemon -q dist/app.js\""
+    "start": "nodemon main.ts",
+    "migrate": "knex migrate:latest --knexfile knexfile.js --migrations-directory db/migrations",
+    "seed": "knex seed:run",
+    "migrateAndSeed": "knex migrate:latest --knexfile knexfile.js --migrations-directory db/migrations && knex seed:run"
   },
   "dependencies": {
+    "bcrypt": "^5.1.0",
     "cookie-parser": "~1.4.4",
     "debug": "~2.6.9",
     "dotenv": "^16.0.3",
     "ejs": "~2.6.1",
+    "env-var": "^7.3.0",
     "express": "~4.16.1",
+    "express-async-handler": "^1.2.0",
     "http-errors": "~1.6.3",
-    "morgan": "~1.9.1"
+    "joi": "^17.7.0",
+    "knex": "^2.3.0",
+    "knex-cursor-pagination": "^0.3.0",
+    "middleware-async": "^1.3.5",
+    "morgan": "~1.9.1",
+    "node-cron": "^3.0.2",
+    "pg": "^8.8.0",
+    "redis": "^4.5.1",
+    "winston": "^3.8.2"
   },
   "devDependencies": {
+    "@types/bcrypt": "^5.0.0",
     "@types/express": "^4.17.15",
     "@types/node": "^18.11.18",
-    "concurrently": "^7.6.0",
+    "@types/node-cron": "^3.0.7",
+    "@typescript-eslint/eslint-plugin": "^5.48.0",
+    "@typescript-eslint/parser": "^5.48.0",
+    "@wemake-services/eslint-config-typescript": "^3.0.0",
+    "eslint": "^8.31.0",
+    "eslint-import-resolver-typescript": "^3.5.2",
+    "eslint-plugin-import": "^2.26.0",
+    "eslint-plugin-simple-import-sort": "^8.0.0",
     "nodemon": "^2.0.20",
+    "sqlite3": "^5.1.4",
+    "ts-node": "^10.9.1",
     "typescript": "^4.9.4"
   }
 }

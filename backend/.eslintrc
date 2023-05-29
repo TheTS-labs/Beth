@@ -5,7 +5,7 @@
     {
       "files": ["*.ts", "*.tsx"],
       "extends": ["@wemake-services/typescript/strict"],
-      "parserOptions": { "project": ["./tsconfig.json"] },
+      "parserOptions": { "project": ["./backend/tsconfig.json"] },
       "rules": {
         "@typescript-eslint/semi": [2, "always"],
         "quotes": [2, "double", { "avoidEscape": true }],

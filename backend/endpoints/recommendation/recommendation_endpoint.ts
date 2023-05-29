@@ -9,12 +9,12 @@ import CachingPermissionModel from "../../db/models/caching/caching_permission";
 import CachingPostModel from "../../db/models/caching/caching_post";
 import CachingUserModel from "../../db/models/caching/caching_user";
 import PermissionModel from "../../db/models/permission";
-import PostModel, { GetListReturnType, TPost } from "../../db/models/post";
+import PostModel, { GetListReturnType, HotTags, TPost } from "../../db/models/post";
 import UserModel, { TUser } from "../../db/models/user";
 import VoteModel, { Vote } from "../../db/models/vote";
 import * as type from "./types";
 
-type CallEndpointReturnType = object;
+type CallEndpointReturnType = TPostWithScore[] | { result: HotTags[] };
 type TPostWithVote = TPost & { voteType: Vote };
 type TPostWithScore = TPost & { score: number };
 interface RecommendationRequirements {
@@ -28,7 +28,7 @@ interface RecommendationRequirements {
 export default class RecommendationEndpoint extends BaseEndpoint<type.RecommendationRequestArgs,
                                                                  CallEndpointReturnType> {
   public allowNames: string[] = [
-    "recommend"
+    "recommend", "getHotTags"
   ];
   userModel: UserModel | CachingUserModel;
   permissionModel: PermissionModel | CachingPermissionModel;
@@ -53,7 +53,12 @@ export default class RecommendationEndpoint extends BaseEndpoint<type.Recommenda
     this.voteModel = new VoteModel(this.db, this.logger, this.redisClient, this.config);
   }
 
-  async recommend(args: type.RecommendArgs, user: TUser): Promise<CallEndpointReturnType>{
+  async getHotTags(_args: type.GetHotTagsArgs, _user: TUser): Promise<{ result: HotTags }> {
+    const hotTags = await this.postModel.getHotTags();
+    return { result: hotTags };
+  }
+
+  async recommend(args: type.RecommendArgs, user: TUser): Promise<CallEndpointReturnType> {
     args = await this.validate(type.RecommendArgsSchema, args);
 
     const votes = await this.voteModel.getVotes(user.id);

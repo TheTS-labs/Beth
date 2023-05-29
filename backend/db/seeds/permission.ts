@@ -6,8 +6,8 @@ export async function seed(knex: Knex): Promise<void> {
 
   // Inserts seed entries
   await knex("permission").insert([
-    { id: 1, email: "hikoza@optonline.net" },
-    { id: 2, email: "muzzy@optonline.net" },
-    { id: 3, email: "gordonjcp@optonline.net" }
+    { email: "hikoza@optonline.net" },
+    { email: "muzzy@optonline.net" },
+    { email: "gordonjcp@optonline.net" }
   ]);
 }

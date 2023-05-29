@@ -12,4 +12,10 @@ export const RecommendArgsSchema = Joi.object({
 });
 // <<< Recommend <<<
 
-export type RecommendationRequestArgs = RecommendArgs;
+// >>> Get Hot Tags >>>
+export type GetHotTagsArgs = {};
+
+export const GetHotTagsArgsSchema = Joi.object({});
+// <<< Get Hot Tags <<<
+
+export type RecommendationRequestArgs = RecommendArgs | GetHotTagsArgs;

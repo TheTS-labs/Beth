@@ -3,27 +3,10 @@ import { getCursor, knexCursorPagination } from "knex-cursor-pagination";
 import { RedisClientType } from "redis";
 import winston from "winston";
 
-import { ENV } from "../../app";
+import { ENV } from "../../../app";
+import PostModel, { GetListReturnType, HotTags, TPost } from "../post";
 
-export type NestedTPost = (TPost & { comments: NestedTPost[] });
-
-export type GetListReturnType = {
-  results: TPost[]
-  endCursor: string
-};
-
-export interface TPost {
-  id: number
-  author: string
-  createdAt: Date
-  freezenAt: Date
-  text: string
-  repliesTo: number | null
-  parent: number | null
-  tags: string
-}
-
-export default class PostModel {
+export default class CachingPostModel implements PostModel {
   constructor(
     public db: Knex,
     public logger: winston.Logger,
@@ -37,7 +20,11 @@ export default class PostModel {
     repliesTo: number | undefined=undefined,
     parent: number | undefined=undefined
   ): Promise<Pick<TPost, "id"> | undefined | void> {
-    this.logger.debug({ message: "Trying to insert post", path: module.filename });
+    this.logger.debug({
+      message: "Trying to insert post",
+      path: module.filename,
+      context: { author, text: "[SKIP]", repliesTo, parent }
+    });
     const id = await this.db<TPost>("post").insert({
       author: author,
       text: text,
@@ -50,9 +37,24 @@ export default class PostModel {
 
   public async getPost(id: number): Promise<TPost | undefined> {
     this.logger.debug({ message: "Trying to get post", path: module.filename, context: { id } });
+
+    const cachedPostString = await this.redisClient.get(`post_${id}`);
+    const cachedPost: TPost = JSON.parse(cachedPostString||"null");
+
+    if (cachedPost) {
+      return cachedPost;
+    }
+
     const post = await this.db<TPost>("post")
                            .where({ id })
                            .first();
+
+    if (post) {
+      await this.redisClient.set(`post_${id}`, JSON.stringify(post), {
+        EX: this.config.get("POST_EX").required().asIntPositive(),
+        NX: true
+      });
+    }
 
     return post;
   }
@@ -74,7 +76,7 @@ export default class PostModel {
     });
   }
 
-  public async getList(afterCursor: string, numberRecords: number): Promise<GetListReturnType> {
+  public async getList(afterCursor: string | null, numberRecords: number): Promise<GetListReturnType> {
     this.logger.debug({
       message: "Trying to get list",
       path: module.filename,
@@ -139,5 +141,33 @@ export default class PostModel {
   public async editTags(id: number, newTags: string): Promise<void> {
     this.logger.debug({ message: "Editing tags", path: module.filename, context: { id, newTags } });
     await this.db<TPost>("post").where({ id }).update({ tags: newTags });
+    await this.redisClient.del(`post_${id}`);
+  }
+  
+  public async getHotTags(): Promise<HotTags> {
+    const cachedHotTagsString = await this.redisClient.get("hot_tags");
+    const cachedHotTags: HotTags = JSON.parse(cachedHotTagsString||"null");
+
+    if (cachedHotTags) {
+      return cachedHotTags;
+    }
+
+    const hotTags = await this.db.raw(`
+      SELECT tag, COUNT(*) as post_count
+      FROM (
+        SELECT unnest(string_to_array(tags, ',')) AS tag
+        FROM post
+      ) AS subquery
+      GROUP BY tag
+      ORDER BY post_count DESC
+      LIMIT 8
+    `);
+
+    await this.redisClient.set("hot_tags", JSON.stringify(hotTags.rows), {
+      EX: this.config.get("HOT_TAGS_EX").required().asIntPositive(),
+      NX: true
+    });
+    
+    return hotTags.rows;
   }
 }

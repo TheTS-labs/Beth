@@ -1,24 +1,20 @@
 import styles from "../public/styles/page_content.module.sass"
 import PageContentPosts from "./page_content_posts"
 import useSWR from 'swr';
-import { useEffect, useState } from "react";
+import fetcher from "../common/fetcher";
+import { GetPostsReturnType } from "../../backend/db/models/post";
+import BrokenPosts from "./page_content_posts_components/broken_posts";
+import LoadingPosts from "./page_content_posts_components/loading_posts";
 
-interface Props {
-  posts: {
-    username: string;
-    checkmark: boolean;
-    email: string;
-    text: string;
-    score: number;
-  }[]
-}
+export default function PageContent(): JSX.Element {
+  const hotTags = useSWR("https://localhost:8081/recommendation/getHotTags", fetcher({ method: "POST" }))
+  const initialPosts = useSWR<GetPostsReturnType>("https://localhost:8081/recommendation/getPosts", fetcher({
+    method: 'POST',
+    headers: new Headers({ "Content-Type": "application/x-www-form-urlencoded" }),
+    redirect: 'follow'
+  }))
 
-const fetcher = (params: RequestInit) => (url: RequestInfo | URL) => fetch(url, params).then((res) => res.json());
-
-export default function PageContent(props: Props): JSX.Element {
-  const { data, error, isLoading } = useSWR("https://localhost:8081/recommendation/getHotTags", fetcher({ method: "POST" }))
-
-  if (error) {
+  if (hotTags.error) {
     const failedHotTags = [
       [1, "#Hot", 767027        ],
       [2, "#Tags", 612642       ],
@@ -48,11 +44,15 @@ export default function PageContent(props: Props): JSX.Element {
         </div>
       </div>
   
-      <PageContentPosts posts={props.posts} />
+      {(() => {
+        if (initialPosts.error) return <BrokenPosts />
+        if (initialPosts.isLoading) return <LoadingPosts numberRecords={10} />
+        return <PageContentPosts initialData={initialPosts.data} />
+      })()}
     </div>)
   }
 
-  if (isLoading) {
+  if (hotTags.isLoading) {
     return (<div className={styles.container}>
       <div className={styles.hot_tags_container}>
         <p className={styles.text}>Hot Tags</p>
@@ -62,15 +62,20 @@ export default function PageContent(props: Props): JSX.Element {
                 <div className={styles.hot_tag_name_and_posts_container}>
                   <span className={styles.loading}></span><br />
                   <div className={styles.loading_hot_tag_posts}>
-                  <span className={styles.hot_tag_posts}>posts: </span> <span className={styles.loading}></span>
-                </div>
+                    <span className={styles.hot_tag_posts}>posts: </span> <span className={styles.loading}></span>
+                  </div>
               </div>
             </div>)
           })}
         </div>
       </div>
   
-      <PageContentPosts posts={props.posts} />
+      {(() => {
+        if (initialPosts.error) return <BrokenPosts />
+        if (initialPosts.isLoading) return <LoadingPosts numberRecords={10} />
+        
+        return <PageContentPosts initialData={initialPosts.data} />
+      })()}
     </div>)
   }
 
@@ -78,10 +83,10 @@ export default function PageContent(props: Props): JSX.Element {
     <div className={styles.hot_tags_container}>
       <p className={styles.text}>Hot Tags</p>
       <div className={styles.hot_tags}>
-        {data.result.map((value: { tag: string, post_count: string }, i) => {
+        {hotTags.data.result.map((value: { tag: string, post_count: string }, i) => {
           return (<div className={styles.hot_tag} key={i}>
             <div className={styles.hot_tag_name_and_posts_container}>
-              <span className={styles.hot_tag_name}>{value.tag}</span><br />
+              <span className={styles.hot_tag_name}>#{value.tag}</span><br />
               <span className={styles.hot_tag_posts}>posts: {value.post_count}</span>
             </div>
           </div>)
@@ -89,6 +94,11 @@ export default function PageContent(props: Props): JSX.Element {
       </div>
     </div>
 
-    <PageContentPosts posts={props.posts} />
+    {(() => {
+      if (initialPosts.error) return <BrokenPosts />
+      if (initialPosts.isLoading) return <LoadingPosts numberRecords={10} />
+      
+      return <PageContentPosts initialData={initialPosts.data} />
+    })()}
   </div>)
 }

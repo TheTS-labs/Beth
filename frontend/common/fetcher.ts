@@ -1,0 +1,1 @@
+export default (params: RequestInit) => (url: RequestInfo | URL) => fetch(url, params).then((res) => res.json());

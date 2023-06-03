@@ -2,6 +2,31 @@
   
 .posts
   flex-grow: 1
+  position: relative
+
+  .broken_container
+    position: absolute
+    top: 10%
+    left: 50%
+    transform: translate(-50%, 0%)
+
+    border: dashed 2px hsl(0deg 100% 71%)
+    z-index: 999
+    background-color: rgba(0, 0, 0, 0.6)
+    padding: 20px
+
+    .broken_text
+      text-align: center
+      margin-block-start: 0
+      margin-block-end: 0
+      font-size: 2rem
+    
+    .broken_explain
+      text-align: center
+      margin-block-start: 0
+      margin-block-end: 0
+      font-size: 1.5rem
+      color: text-color(0.6)
 
   .text
     color: text-color()
@@ -11,6 +36,7 @@
     margin-block-start: 5px
 
   .post
+    filter: blur(5px)
     border: solid 2px #325f67
     margin: 10px
     margin-left: 0
@@ -57,16 +83,9 @@
       align-items: center
       align-self: flex-end
 
-      .voting_button[data-type="like"]:hover svg path
-        stroke: #00b900
-      
-      .voting_button[data-type="dislike"]:hover svg path
-        stroke: #ff4f4f
-
       .voting_button
         background-color: rgba(0, 0, 0, 0)
         border: none
-        cursor: pointer
 
         svg
           width: 25px
@@ -74,8 +93,3 @@
 
           path
             stroke: text-color()
-
-  .loader
-    display: flex
-    justify-content: center
-    margin-top: 10px

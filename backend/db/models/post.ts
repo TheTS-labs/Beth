@@ -8,10 +8,22 @@ import { ENV } from "../../app";
 export type NestedTPost = (TPost & { comments: NestedTPost[] });
 export type HotTags = { tag: string, post_count: string }[];
 
-export type GetListReturnType = {
+export interface GetListReturnType {
   results: TPost[]
   endCursor: string
-};
+}
+
+export interface GetPostsReturnType {
+  results: {
+      text: string
+      displayName: string
+      username: string
+      score: string
+      verified: boolean
+      _cursor_0: number
+  }[]
+  endCursor: string
+}
 
 export interface TPost {
   id: number
@@ -155,5 +167,32 @@ export default class PostModel {
     `);
     
     return hotTags.rows;
+  }
+
+  public async getPosts(afterCursor: string, numberRecords: number): Promise<GetPostsReturnType> {
+    let query = this.db.queryBuilder()
+      .select("p.text", "u.displayName", "u.username", "p.score", "u.verified")
+      .fromRaw(`(
+        SELECT post.id, post.author, post.text, post."repliesTo", post."freezenAt", 
+               SUM(CASE WHEN "vote"."voteType" = true THEN 1 ELSE -1 END) AS score
+        FROM "post"
+        JOIN "vote" ON post.id = "vote"."postId"
+        GROUP BY post.id 
+      ) AS p`)
+      .join("user as u", "p.author", "=", "u.email")
+      .whereNull("p.repliesTo")
+      .whereNull("p.freezenAt")
+      .where("u.isFreezen", false)
+      .orderBy("p.id", "desc");
+
+    query = knexCursorPagination(query, { after: afterCursor, first: numberRecords });
+
+    const results = await query;
+    const endCursor = getCursor(results[results.length - 1]);
+
+    return {
+      results: results,
+      endCursor: endCursor
+    };
   }
 }

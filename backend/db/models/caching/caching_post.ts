@@ -4,7 +4,7 @@ import { RedisClientType } from "redis";
 import winston from "winston";
 
 import { ENV } from "../../../app";
-import PostModel, { GetListReturnType, HotTags, TPost } from "../post";
+import PostModel, { GetListReturnType, GetPostsReturnType, HotTags, TPost } from "../post";
 
 export default class CachingPostModel implements PostModel {
   constructor(
@@ -169,5 +169,32 @@ export default class CachingPostModel implements PostModel {
     });
     
     return hotTags.rows;
+  }
+
+  public async getPosts(afterCursor: string, numberRecords: number): Promise<GetPostsReturnType> {
+    let query = this.db.queryBuilder()
+      .select("p.text", "u.displayName", "u.username", "p.score", "u.verified")
+      .fromRaw(`(
+        SELECT post.id, post.author, post.text, post."repliesTo", post."freezenAt", 
+               SUM(CASE WHEN "vote"."voteType" = true THEN 1 ELSE -1 END) AS score
+        FROM "post"
+        JOIN "vote" ON post.id = "vote"."postId"
+        GROUP BY post.id 
+      ) AS p`)
+      .join("user as u", "p.author", "=", "u.email")
+      .whereNull("p.repliesTo")
+      .whereNull("p.freezenAt")
+      .where("u.isFreezen", false)
+      .orderBy("p.id", "desc");
+
+    query = knexCursorPagination(query, { after: afterCursor, first: numberRecords });
+
+    const results = await query;
+    const endCursor = getCursor(results[results.length - 1]);
+
+    return {
+      results: results,
+      endCursor: endCursor
+    };
   }
 }

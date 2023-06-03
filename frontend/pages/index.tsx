@@ -1,17 +1,18 @@
-import { useState, useEffect } from 'react';
-import Header from '../components/header';
-import PageContent from '../components/page_content';
+import { useEffect,useState } from "react";
 
-export default function App(props) {
+import Header from "../components/home/header";
+import PageContent from "../components/home/page_content";
+
+export default function App(): JSX.Element {
   // const size = useWindowSize();
   // useEffect(() => {
   //   console.log(`${size.width}px / ${size.height}px`)
   // })
 
-  return (<>
+  return <>
     <Header searchActionURL="/somewhere" />
     <PageContent />
-  </>);
+  </>;
 }
 
 export function useWindowSize(): { width: number, height: number } {
@@ -25,7 +26,7 @@ export function useWindowSize(): { width: number, height: number } {
   useEffect(() => {
     // only execute all the code below in client side
     // Handler to call on window resize
-    function handleResize() {
+    function handleResize(): void {
       // Set window width/height to state
       setWindowSize({
         width: window.innerWidth,

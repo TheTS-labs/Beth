@@ -1,4 +1,6 @@
-import styles from "../../public/styles/broken_posts.module.sass"
+// Ignore SVG lines and fake text lines
+/* eslint-disable max-len */
+import styles from "../../../public/styles/home/posts/broken_posts.module.sass";
 
 export default function BrokenPosts(): JSX.Element {
   const posts = [
@@ -16,26 +18,26 @@ export default function BrokenPosts(): JSX.Element {
       score: "428", displayName: "🌺𝑆𝓊𝓃𝓈𝒽𝒾𝓃𝑒 𝐵𝑒𝒶𝒸𝒽🌺", username: "SunshineBeach99", verified: false },
     { text: "Are... down now, ahh....", 
       score: "-996", displayName: "💫𝒮𝓉𝓎𝓁𝒾𝓈𝒽 𝒜𝓃𝑔𝑒𝓁💫", username: "StylishAngel67", verified: true },
-  ]
+  ];
 
-  return (<div className={styles.posts}>
+  return <div className={styles.posts}>
     <p className={styles.text}>Feed</p>
     <div className={styles.broken_container} key={0}>
       <p className={styles.broken_text}>Feed unavailable</p>
       <p className={styles.broken_explain}>The feed is not available right now, maybe the server is overloaded and therefore cannot respond to the request, try again sometime later</p>
     </div>
     {posts.map((post, i) => {
-      return (<div className={styles.post} key={i}>
+      return <div className={styles.post} key={i}>
         <div className={styles.user}>
           <div className={styles.username_and_checkmark}>
             <span className={styles.username}>{post.displayName}</span>
-            {(() => { if (post.verified) return (<span className={styles.checkmark}>✓</span>) })()}
+            {((): JSX.Element => { if (post.verified) return <span className={styles.checkmark}>✓</span>; })()}
           </div>
           <span className={styles.email}>@{post.username}</span>
         </div>
 
         <div className={styles.post_container}>
-          <p className={styles.post_text}>{post.text.split("\n").map(line => { return (<><br />{line}</>) })}</p>
+          <p className={styles.post_text}>{post.text.split("\n").map(line => { return <><br />{line}</>; })}</p>
           <div className={styles.voting}>
             <button className={styles.voting_button}>
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 14 14" >
@@ -58,7 +60,7 @@ export default function BrokenPosts(): JSX.Element {
             </button>
           </div>
         </div>
-      </div>)
+      </div>;
     })}
-  </div>)
+  </div>;
 }

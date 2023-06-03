@@ -1,10 +1,12 @@
-import styles from "../../public/styles/loading_posts.module.sass"
+// Ignore SVG lines
+/* eslint-disable max-len */
+import styles from "../../../public/styles/home/posts/loading_posts.module.sass";
 
 export default function LoadingPosts(props: { numberRecords: number }): JSX.Element {
-  return (<div className={styles.posts}>
+  return <div className={styles.posts}>
     <p className={styles.text}>Feed</p>
     {[...Array(props.numberRecords)].map((_, i) => {
-      return (<div className={styles.post} key={i}>
+      return <div className={styles.post} key={i}>
         <div className={styles.user}>
           <div className={styles.username_and_checkmark}>
             <span className={styles.loading}></span>
@@ -40,7 +42,7 @@ export default function LoadingPosts(props: { numberRecords: number }): JSX.Elem
             </button>
           </div>
         </div>
-      </div>)
+      </div>;
     })}
-  </div>)
+  </div>;
 }

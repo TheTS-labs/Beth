@@ -1,29 +1,30 @@
-import { Dispatch, SetStateAction, useEffect, useRef } from "react"
-import styles from "../public/styles/errors.module.sass"
-import errorStyles from "../public/styles/errors.module.sass"
+// Ignore SVG lines
+/* eslint-disable max-len */
+import { useEffect, useRef } from "react";
+
+import styles from "../../public/styles/common/errors.module.sass";
 
 interface Props {
   errors: string[]
 }
 
-export default function Errors(props: Props) {
+export default function Errors(props: Props): JSX.Element {
   const errorsRef = useRef(null);
 
   useEffect(() => {
     if (errorsRef.current) {
-      const elements = [...errorsRef.current.children]
-      let waitFor = 5000;
+      const elements = errorsRef.current.querySelectorAll('[data-done="false"]');
       elements.forEach((element, i) => {
-        element.style.animation = `${errorStyles.error} 5s forwards`;
+        element.style.animation = `${styles.error} 5s forwards`;
         element.style["animation-delay"] = `${i*150}ms`;
-        waitFor = waitFor + i*150
-      })
+        setTimeout(() => { element.dataset.done = true; }, 5000+i*150);
+      });
     }
-  })
+  }, [props.errors]);
 
-  return (<div className={styles.errors} ref={errorsRef}>
+  return <div className={styles.errors} ref={errorsRef}>
     {props.errors.map((error, i) => {
-      return (<div className={styles.error_message} key={i}>
+      return <div className={styles.error_message} key={i} data-done="false">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 14 14" >
           <g>
             <line x1={7} y1={3.5} x2={7} y2={6.5} fill="none" stroke="#000000" strokeLinecap="round" strokeLinejoin="round" />
@@ -32,7 +33,7 @@ export default function Errors(props: Props) {
           </g>
         </svg>
         <p>{error}</p>
-      </div>)
+      </div>;
     })}
-  </div>)
+  </div>;
 }

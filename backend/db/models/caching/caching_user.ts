@@ -14,9 +14,13 @@ export default class CachingUserModel implements UserModel {
     public config: ENV
   ) {}
   
-  public async insertUser(email: string, hash: string): Promise<void> {
-    this.logger.debug({ message: "Trying to insert user", path: module.filename, context: { email } });
-    await this.db<TUser>("user").insert({ email: email, password: hash });
+  public async insertUser(username: string, displayName: string, email: string, hash: string): Promise<void> {
+    this.logger.debug({
+      message: "Trying to insert user",
+      path: module.filename,
+      context: { email, username, displayName }
+    });
+    await this.db<TUser>("user").insert({ username, displayName, email, password: hash });
   }
 
   public async getSafeUser(email: string): Promise<SafeUserObject | undefined> {
@@ -90,7 +94,7 @@ export default class CachingUserModel implements UserModel {
 
     const user = (await this.db<TUser>("user")
                             .where({ email })
-                            .select("id", "email", "isFreezen")
+                            .select("id", "email", "isFreezen", "username", "displayName")
                             .first()) as SafeUserObject | undefined;
 
     return user;
@@ -103,7 +107,7 @@ export default class CachingUserModel implements UserModel {
   }
 
   public async verifyUser(email: string, verify: DBBool): Promise<void> {
-    this.logger.debug({ message: `Verificating ${email}`, path: module.filename, context: { verify } });
+    this.logger.debug({ message: `Verification ${email}`, path: module.filename, context: { verify } });
 
     await this.db<TUser>("user").where({ email }).update({ verified: verify });
   }

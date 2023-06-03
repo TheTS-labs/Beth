@@ -5,6 +5,8 @@ import { DBBool } from "../../common/types";
 export async function up(knex: Knex): Promise<void> {
   return knex.schema.createTable("user", function (table: Knex.CreateTableBuilder) {
     table.increments("id");
+    table.string("displayName").notNullable();
+    table.string("username").unique().notNullable();
     table.string("email").unique().notNullable();
     table.string("password").notNullable();
     table.boolean("isFreezen").defaultTo(DBBool.No);

@@ -19,6 +19,6 @@ const endpoints: TEndpointTypes = {
   "/recommendation": RecommendationEndpoint
 };
 
-const disableAuthFor = ["/user/create", "/recommendation/getHotTags"];
+const disableAuthFor = ["/user/create", "/recommendation/getHotTags", "/recommendation/getPosts"];
 
 new App(endpoints, disableAuthFor).registerRouters().listen();

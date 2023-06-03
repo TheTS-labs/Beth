@@ -6,7 +6,7 @@ import winston from "winston";
 import { ENV } from "../../app";
 import BaseEndpoint from "../../common/base_endpoint_class";
 import RequestError from "../../common/request_error";
-import { EndpointThisType, SafeUserObject } from "../../common/types";
+import { SafeUserObject } from "../../common/types";
 import CachingPermissionModel from "../../db/models/caching/caching_permission";
 import CachingUserModel from "../../db/models/caching/caching_user";
 import PermissionModel, { PermissionStatus, TPermissions } from "../../db/models/permission";
@@ -43,7 +43,7 @@ export default class UserEndpoint extends BaseEndpoint<type.UserRequestArgs, Cal
 
     const hash = await bcrypt.hash(args.password, 3);
 
-    await this.userModel.insertUser(args.email, hash).catch((err: Error) => {
+    await this.userModel.insertUser(args.username, args.displayName, args.email, hash).catch((err: Error) => {
       throw new RequestError("DatabaseError", err.message, 500);
     });
 

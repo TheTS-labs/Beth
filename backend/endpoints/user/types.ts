@@ -4,12 +4,16 @@ import { DBBool } from "../../common/types";
 
 // >>> Create >>>
 export interface CreateArgs {
+  username: string
+  displayName: string
   email: string
   password: string
   repeatPassword: string
 }
 
 export const CreateArgsSchema = Joi.object({
+  username: Joi.string().required(),
+  displayName: Joi.string().required(),
   email: Joi.string().email().required(),
   password: Joi.string().pattern(new RegExp("^[a-zA-Z0-9]{8,64}$")).required(),
   repeatPassword: Joi.ref("password"),

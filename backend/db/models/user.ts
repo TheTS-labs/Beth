@@ -7,6 +7,8 @@ import { DBBool, SafeUserObject } from "../../common/types";
 
 export interface TUser {
   id: number
+  username: string
+  displayName: string
   email: string
   password: string
   isFreezen: DBBool
@@ -22,9 +24,13 @@ export default class UserModel {
     public config: ENV
   ) {}
 
-  public async insertUser(email: string, hash: string): Promise<void> {
-    this.logger.debug({ message: "Trying to insert user", path: module.filename, context: { email } });
-    await this.db<TUser>("user").insert({ email: email, password: hash });
+  public async insertUser(username: string, displayName: string, email: string, hash: string): Promise<void> {
+    this.logger.debug({
+      message: "Trying to insert user",
+      path: module.filename,
+      context: { email, username, displayName }
+    });
+    await this.db<TUser>("user").insert({ username, displayName, email, password: hash });
   }
 
   public async getSafeUser(email: string): Promise<SafeUserObject | undefined> {
@@ -32,7 +38,7 @@ export default class UserModel {
 
     const user = (await this.db<TUser>("user")
                             .where({ email })
-                            .select("id", "email", "isFreezen")
+                            .select("id", "email", "isFreezen", "username", "displayName")
                             .first()) as SafeUserObject | undefined;
 
     return user;

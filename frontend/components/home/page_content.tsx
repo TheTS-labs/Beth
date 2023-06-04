@@ -74,7 +74,6 @@ export default function PageContent(): JSX.Element {
       {((): JSX.Element => {
         if (initialPosts.error) return <BrokenPosts />;
         if (initialPosts.isLoading) return <LoadingPosts numberRecords={10} />;
-        
         return <PageContentPosts initialData={initialPosts.data} />;
       })()}
     </div>;
@@ -98,7 +97,6 @@ export default function PageContent(): JSX.Element {
     {((): JSX.Element => {
       if (initialPosts.error) return <BrokenPosts />;
       if (initialPosts.isLoading) return <LoadingPosts numberRecords={10} />;
-      
       return <PageContentPosts initialData={initialPosts.data} />;
     })()}
   </div>;

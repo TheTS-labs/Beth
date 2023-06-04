@@ -118,11 +118,7 @@ export default function PageContentPosts(props: Props): JSX.Element {
     })}
 
     <div className={styles.loader} ref={observerTarget}>
-      {((): JSX.Element => {
-        if (showLoader.current) {
-          return <Loader />;
-        }
-      })()}
+      {((): JSX.Element => { if (showLoader.current) return <Loader />; })()}
     </div>
     <Errors errors={errors} />
   </div>;

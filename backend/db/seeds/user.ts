@@ -23,7 +23,7 @@ export async function seed(knex: Knex): Promise<void> {
       {
         displayName: "♡𝔊𝔬𝔯𝔡𝔬𝔫 𝔍ℭ𝔓♡",
         username: "gordonjcp",
-        email: "gordonjcp@optonline.net", password: passwordHash, isFreezen: DBBool.Yes
+        email: "gordonjcp@optonline.net", password: passwordHash, isFrozen: DBBool.Yes
       }
   ]);
 }

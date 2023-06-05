@@ -14,8 +14,8 @@ export interface TPermissions {
   email: string
   UserView: PermissionStatus
   UserEditPassword: PermissionStatus
-  UserFreeze: PermissionStatus
-  UserSuperFreeze: PermissionStatus
+  UserFroze: PermissionStatus
+  UserSuperFroze: PermissionStatus
   UserEditTags: PermissionStatus
   UserVerify: PermissionStatus
   PermissionsView: PermissionStatus

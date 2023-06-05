@@ -14,9 +14,9 @@ export default function getJob(
     logger.info({
       message: "Deleting posts",
       path: module.filename,
-      context: {"freezenAt": ["<=", sevenDaysAgo]}
+      context: {"frozenAt": ["<=", sevenDaysAgo]}
     });
 
-    await db<TPost>("post").where("freezenAt", "<=", sevenDaysAgo).del();
+    await db<TPost>("post").where("frozenAt", "<=", sevenDaysAgo).del();
   });
 }

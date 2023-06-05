@@ -13,7 +13,7 @@ import knexfile from "./knexfile";
 import Logger from "./logger";
 import AuthenticationMiddleware from "./middlewares/authentication_middleware";
 import ErrorMiddleware from "./middlewares/error_middleware";
-import FreezenMiddleware from "./middlewares/freezen_middleware";
+import FrozenMiddleware from "./middlewares/frozen_middleware";
 import PermissionMiddleware from "./middlewares/permission_middleware";
 import Redis from "./redis";
 import initScheduledJobs from "./scheduledJobs/init_scheduled_jobs";
@@ -39,7 +39,7 @@ export default class App {
 
   authenticationMiddleware: AuthenticationMiddleware;
   permissionMiddleware: PermissionMiddleware;
-  freezenMiddleware: FreezenMiddleware;
+  frozenMiddleware: FrozenMiddleware;
   errorMiddleware: ErrorMiddleware;
 
   //! Disabling auth you also disabling permission check
@@ -52,7 +52,7 @@ export default class App {
 
       this.authenticationMiddleware = new AuthenticationMiddleware(this.logger, this.db, this.redisClient, this.config);
     this.permissionMiddleware = new PermissionMiddleware(this.logger, this.db, this.redisClient, this.config);
-    this.freezenMiddleware = new FreezenMiddleware(this.logger, this.db, this.redisClient, this.config);
+    this.frozenMiddleware = new FrozenMiddleware(this.logger, this.db, this.redisClient, this.config);
     this.errorMiddleware = new ErrorMiddleware(this.logger);
   
     initScheduledJobs(this.db, this.logger);
@@ -100,7 +100,7 @@ export default class App {
     this.app.use(express.urlencoded({ extended: true }));
     this.app.use(asyncMiddleware(this.authenticationMiddleware.middleware(disableAuthFor)));
     this.app.use(asyncMiddleware(this.permissionMiddleware.middleware()));
-    this.app.use(asyncMiddleware(this.freezenMiddleware.middleware()));
+    this.app.use(asyncMiddleware(this.frozenMiddleware.middleware()));
 
     this.logger.info({ message: "Create endpoint objects", path: module.filename });
     Object.keys(endpoints).map((routerName: string) => {

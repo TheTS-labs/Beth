@@ -18,7 +18,7 @@ type CallEndpointReturnType = { success: true } | {} | SafeUserObject;
 export default class UserEndpoint extends BaseEndpoint<type.UserRequestArgs, CallEndpointReturnType> {
   allowNames: Array<string> = [
     "create", "view", "editPassword",
-    "freeze", "editTags", "verify"
+    "froze", "editTags", "verify"
   ];
   userModel: UserModel | CachingUserModel;
   permissionModel: PermissionModel | CachingPermissionModel;
@@ -76,16 +76,16 @@ export default class UserEndpoint extends BaseEndpoint<type.UserRequestArgs, Cal
     return { success: true };
   }
 
-  async freeze(args: type.FreezeArgs, user: TUser): Promise<{ success: true }> {
-    args = await this.validate(type.FreezeArgsSchema, args);
+  async froze(args: type.FrozeArgs, user: TUser): Promise<{ success: true }> {
+    args = await this.validate(type.FrozeArgsSchema, args);
 
     const permissions = await this.permissionModel.getPermissions(user.email) as TPermissions;
 
-    if (args.email != user.email && permissions["UserSuperFreeze"] == PermissionStatus.Hasnt) {
-      throw new RequestError("PermissionError", "You can freeze only yourself", 403);
+    if (args.email != user.email && permissions["UserSuperFroze"] == PermissionStatus.Hasnt) {
+      throw new RequestError("PermissionError", "You can froze only yourself", 403);
     }
 
-    await this.userModel.freezeUser(args.email, args.freeze).catch((err: { message: string }) => {
+    await this.userModel.frozeUser(args.email, args.froze).catch((err: { message: string }) => {
       throw new RequestError("DatabaseError", err.message, 500);
     });
 

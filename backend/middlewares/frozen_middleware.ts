@@ -10,7 +10,7 @@ import { TUser } from "../db/models/user";
 
 type MiddlewareFunction = (req: RequestWithUser & { user: TUser }, res: Response, next: NextFunction) => Promise<void>;
 
-export default class FreezenMiddleware {
+export default class FrozenMiddleware {
   constructor(
     private logger: winston.Logger,
     private db: Knex,
@@ -25,8 +25,8 @@ export default class FreezenMiddleware {
         next();
       }
 
-      if (req.user.isFreezen) {
-        throw new RequestError("UserIsFreezen", `User(${req.user.email}) is freezen`, 403);
+      if (req.user.isFrozen) {
+        throw new RequestError("UserIsFrozen", `User(${req.user.email}) is frozen`, 403);
       }
   
       next();

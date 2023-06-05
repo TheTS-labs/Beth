@@ -6,7 +6,7 @@ export async function up(knex: Knex): Promise<void> {
     table.increments("id");
     table.string("author").notNullable();
     table.timestamp("createdAt").defaultTo(knex.fn.now());
-    table.timestamp("freezenAt");
+    table.timestamp("frozenAt");
     table.text("text").notNullable();
     table.integer("repliesTo");
     table.integer("parent");

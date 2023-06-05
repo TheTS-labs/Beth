@@ -9,7 +9,7 @@ export async function up(knex: Knex): Promise<void> {
     table.string("username").unique().notNullable();
     table.string("email").unique().notNullable();
     table.string("password").notNullable();
-    table.boolean("isFreezen").defaultTo(DBBool.No);
+    table.boolean("isFrozen").defaultTo(DBBool.No);
     table.text("tags").defaultTo("");
     table.boolean("verified").defaultTo(DBBool.No);
   });

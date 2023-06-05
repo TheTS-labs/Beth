@@ -11,7 +11,7 @@ export interface TUser {
   displayName: string
   email: string
   password: string
-  isFreezen: DBBool
+  isFrozen: DBBool
   tags: string
   verified: DBBool
 }
@@ -38,7 +38,7 @@ export default class UserModel {
 
     const user = (await this.db<TUser>("user")
                             .where({ email })
-                            .select("id", "email", "isFreezen", "username", "displayName")
+                            .select("id", "email", "isFrozen", "username", "displayName")
                             .first()) as SafeUserObject | undefined;
 
     return user;
@@ -58,26 +58,26 @@ export default class UserModel {
     await this.db<TUser>("user").where({ email }).update({ password: newHash });
   }
 
-  public async isFreezen(email: string): Promise<DBBool> {
-    this.logger.debug({ message: "Is the user freezen", path: module.filename, context: { email } });
+  public async isFrozen(email: string): Promise<DBBool> {
+    this.logger.debug({ message: "Is the user frozen", path: module.filename, context: { email } });
 
-    const record = await this.db<TUser>("user").where({ email }).select("isFreezen").first();
+    const record = await this.db<TUser>("user").where({ email }).select("isFrozen").first();
 
-    const result = record || { isFreezen: DBBool.No };
+    const result = record || { isFrozen: DBBool.No };
 
-    return result.isFreezen;
+    return result.isFrozen;
   }
 
-  public async unfreezeUser(email: string): Promise<void> {
+  public async unfrozeUser(email: string): Promise<void> {
     this.logger.debug({ message: `Unfreezing ${email}`, path: module.filename });
 
-    await this.db<TUser>("user").where({ email }).update({ isFreezen: 0 });
+    await this.db<TUser>("user").where({ email }).update({ isFrozen: 0 });
   }
 
-  public async freezeUser(email: string, freeze: DBBool): Promise<void> {
-    this.logger.debug({ message: `Freezing ${email}`, path: module.filename, context: { freeze } });
+  public async frozeUser(email: string, froze: DBBool): Promise<void> {
+    this.logger.debug({ message: `Freezing ${email}`, path: module.filename, context: { froze } });
 
-    await this.db<TUser>("user").where({ email }).update({ isFreezen: freeze });
+    await this.db<TUser>("user").where({ email }).update({ isFrozen: froze });
   }
 
   public async editTags(email: string, newTags: string): Promise<void> {
@@ -86,7 +86,7 @@ export default class UserModel {
   }
 
   public async verifyUser(email: string, verify: DBBool): Promise<void> {
-    this.logger.debug({ message: `Verificating ${email}`, path: module.filename, context: { verify } });
+    this.logger.debug({ message: `Verification ${email}`, path: module.filename, context: { verify } });
 
     await this.db<TUser>("user").where({ email }).update({ verified: verify });
   }

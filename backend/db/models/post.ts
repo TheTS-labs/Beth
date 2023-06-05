@@ -29,7 +29,7 @@ export interface TPost {
   id: number
   author: string
   createdAt: Date
-  freezenAt: Date
+  frozenAt: Date
   text: string
   repliesTo: number | null
   parent: number | null
@@ -80,10 +80,10 @@ export default class PostModel {
     await this.db<TPost>("post").where({ id: id }).del();
   }
 
-  public async freezePost(id: number): Promise<void> {
-    this.logger.debug({ message: "Trying to freeze post", path: module.filename, context: { id } });
+  public async frozePost(id: number): Promise<void> {
+    this.logger.debug({ message: "Trying to froze post", path: module.filename, context: { id } });
     await this.db<TPost>("post").where({ id: id }).update({
-      freezenAt: new Date(Date.now())
+      frozenAt: new Date(Date.now())
     });
   }
 
@@ -96,7 +96,7 @@ export default class PostModel {
     let query = this.db.queryBuilder()
                        .select("post.*")
                        .from("post")
-                       .where({ "freezenAt": null });
+                       .where({ "frozenAt": null });
 
     query = knexCursorPagination(query, { after: afterCursor, first: numberRecords });
 
@@ -112,7 +112,7 @@ export default class PostModel {
   public async getReplies(parent: number): Promise<TPost[]> {
     this.logger.debug({ message: "Trying to get replies", path: module.filename, context: { parent } });
 
-    const result = await this.db<TPost>("post").where("freezenAt", null)
+    const result = await this.db<TPost>("post").where("frozenAt", null)
                                                .andWhere("parent", parent)
                                                .select()
                                                .orderBy("createdAt", "DESC");
@@ -173,7 +173,7 @@ export default class PostModel {
     let query = this.db.queryBuilder()
       .select("p.text", "u.displayName", "u.username", "p.score", "u.verified")
       .fromRaw(`(
-        SELECT post.id, post.author, post.text, post."repliesTo", post."freezenAt", 
+        SELECT post.id, post.author, post.text, post."repliesTo", post."frozenAt", 
                SUM(CASE WHEN "vote"."voteType" = true THEN 1 ELSE -1 END) AS score
         FROM "post"
         JOIN "vote" ON post.id = "vote"."postId"
@@ -181,8 +181,8 @@ export default class PostModel {
       ) AS p`)
       .join("user as u", "p.author", "=", "u.email")
       .whereNull("p.repliesTo")
-      .whereNull("p.freezenAt")
-      .where("u.isFreezen", false)
+      .whereNull("p.frozenAt")
+      .where("u.isFrozen", false)
       .orderBy("p.id", "desc");
 
     query = knexCursorPagination(query, { after: afterCursor, first: numberRecords });

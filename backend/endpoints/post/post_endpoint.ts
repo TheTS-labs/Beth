@@ -65,7 +65,7 @@ export default class PostEndpoint extends BaseEndpoint<type.PostRequestArgs, Cal
 
     const post = await this.postModel.getPost(args.id);
 
-    if (post?.freezenAt) {
+    if (post?.frozenAt) {
       return {};
     }
 
@@ -105,7 +105,7 @@ export default class PostEndpoint extends BaseEndpoint<type.PostRequestArgs, Cal
       throw new RequestError("PermissionError", "You can only delete your own posts", 403);
     }
 
-    await this.postModel.freezePost(args.id);
+    await this.postModel.frozePost(args.id);
 
     return { success: true };
   }

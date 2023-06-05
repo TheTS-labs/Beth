@@ -40,17 +40,17 @@ export const EditPasswordArgsSchema = Joi.object({
 });
 // <<< Edit Password <<<
 
-// >>> Freeze >>>
-export interface FreezeArgs {
+// >>> Froze >>>
+export interface FrozeArgs {
   email: string
-  freeze: DBBool
+  froze: DBBool
 }
 
-export const FreezeArgsSchema = Joi.object({
+export const FrozeArgsSchema = Joi.object({
   email: Joi.string().email().required(),
-  freeze: Joi.number().min(0).max(1).default(1)
+  froze: Joi.number().min(0).max(1).default(1)
 });
-// <<< Freeze <<<
+// <<< Froze <<<
 
 // >>> Edit Tags >>>
 export interface EditTagsArgs {
@@ -76,4 +76,4 @@ export const VerifyArgsSchema = Joi.object({
 });
 // <<< Verify <<<
 
-export type UserRequestArgs = CreateArgs | ViewArgs | EditPasswordArgs | FreezeArgs | EditTagsArgs | VerifyArgs;
+export type UserRequestArgs = CreateArgs | ViewArgs | EditPasswordArgs | FrozeArgs | EditTagsArgs | VerifyArgs;

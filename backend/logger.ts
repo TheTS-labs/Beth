@@ -2,8 +2,6 @@ import winston, { format } from "winston";
 
 export default class Logger {
   get(): winston.Logger {
-    // const path = module.filename.split("/").slice(-2).join("/");
-
     return winston.createLogger({
       format: format.combine(
         format.colorize(),

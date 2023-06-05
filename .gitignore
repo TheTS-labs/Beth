@@ -62,3 +62,7 @@ typings/
 
 dist
 dev.db.sqlite3
+backend/docker-compose.yml
+backend/seed.py
+*.pem
+*.key

@@ -63,6 +63,11 @@ export default class App {
     this.logger.info({ message: "Registering endpoint objects", path: module.filename });
     Object.keys(this.endpoints).map((routerName: string) => {
       this.app.post(`${routerName}/:endPoint`, asyncHandler(async (req: RequestWithUser, res: Response) => {
+        res.setHeader(
+          "Access-Control-Allow-Origin",
+          this.config.get("ACCESS_CONTROL_ALLOW_ORIGIN_HEADER").required().asString()
+        );
+
         this.logger.debug({
           message: `Incoming request to ${routerName}/${req.params.endPoint}: ${JSON.stringify(req.body)}`,
           path: module.filename 

@@ -2,7 +2,7 @@
 /* eslint-disable max-len */
 import styles from "../../../public/styles/home/posts/broken_posts.module.sass";
 
-export default function BrokenPosts(): JSX.Element {
+export default function BrokenPosts(): React.JSX.Element {
   const posts = [
     { text: "The purple elephant danced gracefully on the flying toaster.\nButterflies sang in harmony while eating spicy marshmallows.\nThe moon turned green and started playing basketball with jellyfish.\nA talking cactus wore a polka-dot tuxedo and juggling pineapples.\nRainbows giggled as they rode bicycles made of bubblegum.\nThe toothbrushes formed a rock band and performed on the kitchen counter.\nThe clouds had a party with disco ball-shaped watermelons.\nSquirrels wore sunglasses and tap-danced on top of the water fountain.\nThe library shelves transformed into a roller coaster ride for unicorns.\nThe teapot grew legs and took a walk with the flying spaghetti monster.", 
       score: "-865", displayName: "🌟𝕊𝕥𝕒𝕣𝕘𝕚𝕣𝕝𝕖𝕪𝕖𝕤𝕥𝕖𝕣🌟", username: "StarGirl2023", verified: false },
@@ -31,7 +31,7 @@ export default function BrokenPosts(): JSX.Element {
         <div className={styles.user}>
           <div className={styles.username_and_checkmark}>
             <span className={styles.username}>{post.displayName}</span>
-            {((): JSX.Element => { if (post.verified) return <span className={styles.checkmark}>✓</span>; })()}
+            {((): React.JSX.Element => { if (post.verified) return <span className={styles.checkmark}>✓</span>; })()}
           </div>
           <span className={styles.email}>@{post.username}</span>
         </div>

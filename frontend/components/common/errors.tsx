@@ -8,7 +8,7 @@ interface Props {
   errors: string[]
 }
 
-export default function Errors(props: Props): JSX.Element {
+export default function Errors(props: Props): React.JSX.Element {
   const errorsRef = useRef(null);
 
   useEffect(() => {

@@ -45,7 +45,7 @@ function fetchPosts(
     });
 }
 
-export default function PageContentPosts(props: Props): JSX.Element {
+export default function PageContentPosts(props: Props): React.JSX.Element {
   const [ afterCursor, setAfterCursor ] = useState(props.initialData.endCursor);
   const [ errors, setErrors ] = useState<string[]>([]);
   const [ posts, setPosts ] = useState(props.initialData.results);
@@ -81,7 +81,7 @@ export default function PageContentPosts(props: Props): JSX.Element {
         <div className={styles.user}>
           <div className={styles.username_and_checkmark}>
             <span className={styles.username}>{post.displayName}</span>
-            {((): JSX.Element => { if (post.verified) return <span className={styles.checkmark}>✓</span>; })()}
+            {((): React.JSX.Element => { if (post.verified) return <span className={styles.checkmark}>✓</span>; })()}
           </div>
           <span className={styles.email}>@{post.username}</span>
         </div>
@@ -118,7 +118,7 @@ export default function PageContentPosts(props: Props): JSX.Element {
     })}
 
     <div className={styles.loader} ref={observerTarget}>
-      {((): JSX.Element => { if (showLoader.current) return <Loader />; })()}
+      {((): React.JSX.Element => { if (showLoader.current) return <Loader />; })()}
     </div>
     <Errors errors={errors} />
   </div>;

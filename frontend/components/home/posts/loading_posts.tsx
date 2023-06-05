@@ -2,7 +2,7 @@
 /* eslint-disable max-len */
 import styles from "../../../public/styles/home/posts/loading_posts.module.sass";
 
-export default function LoadingPosts(props: { numberRecords: number }): JSX.Element {
+export default function LoadingPosts(props: { numberRecords: number }): React.JSX.Element {
   return <div className={styles.posts}>
     <p className={styles.text}>Feed</p>
     {[...Array(props.numberRecords)].map((_, i) => {

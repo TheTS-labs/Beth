@@ -4,7 +4,7 @@ interface Props {
   searchActionURL: string
 }
 
-export default function Header(props: Props): JSX.Element {
+export default function Header(props: Props): React.JSX.Element {
   return <div className={styles.header}>
     <span className={styles.logo}>✨Beth✨</span>
     <div className={styles.search_bar}>

@@ -7,7 +7,7 @@ import BrokenPosts from "./posts/broken_posts";
 import LoadingPosts from "./posts/loading_posts";
 import PageContentPosts from "./posts/posts";
 
-export default function PageContent(): JSX.Element {
+export default function PageContent(): React.JSX.Element {
   const hotTags = useSWR("https://localhost:8081/recommendation/getHotTags", fetcher({ method: "POST" }));
   const initialPosts = useSWR<GetPostsReturnType>("https://localhost:8081/recommendation/getPosts", fetcher({
     method: "POST",
@@ -45,7 +45,7 @@ export default function PageContent(): JSX.Element {
         </div>
       </div>
   
-      {((): JSX.Element => {
+      {((): React.JSX.Element => {
         if (initialPosts.error) return <BrokenPosts />;
         if (initialPosts.isLoading) return <LoadingPosts numberRecords={10} />;
         return <PageContentPosts initialData={initialPosts.data} />;
@@ -71,7 +71,7 @@ export default function PageContent(): JSX.Element {
         </div>
       </div>
   
-      {((): JSX.Element => {
+      {((): React.JSX.Element => {
         if (initialPosts.error) return <BrokenPosts />;
         if (initialPosts.isLoading) return <LoadingPosts numberRecords={10} />;
         return <PageContentPosts initialData={initialPosts.data} />;
@@ -94,7 +94,7 @@ export default function PageContent(): JSX.Element {
       </div>
     </div>
 
-    {((): JSX.Element => {
+    {((): React.JSX.Element => {
       if (initialPosts.error) return <BrokenPosts />;
       if (initialPosts.isLoading) return <LoadingPosts numberRecords={10} />;
       return <PageContentPosts initialData={initialPosts.data} />;

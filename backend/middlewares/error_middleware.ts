@@ -6,7 +6,7 @@ import RequestError from "../common/request_error";
 export default class ErrorMiddleware {
   constructor(private logger: winston.Logger) {}
 
-  public middleware = (err: Error, req: Request, res: Response, _next: NextFunction): void => {
+  public middleware = (err: Error, _req: Request, res: Response, _next: NextFunction): void => {
     if (err instanceof RequestError) {
       this.logger.error({ message: err.message(), path: module.filename });
       res.status(err.status).json(err.object());
@@ -14,7 +14,11 @@ export default class ErrorMiddleware {
     }
 
     this.logger.debug({ message: err.stack, path: module.filename });
-    res.status(500).send("Sorry, something went wrong");
+    res.status(500).json({
+      errorStatus: 500,
+      errorType: "UnknownError",
+      errorMessage: "Sorry, something went wrong"
+    });
     return;
   };
 }

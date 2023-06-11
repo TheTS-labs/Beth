@@ -4,13 +4,13 @@ import winston from "winston";
 
 import { ENV } from "../../app";
 import BaseEndpoint from "../../common/base_endpoint_class";
-import { UserScore } from "../../common/types";
+import { Auth, UserScore } from "../../common/types";
 import CachingPermissionModel from "../../db/models/caching/caching_permission";
 import CachingPostModel from "../../db/models/caching/caching_post";
 import CachingUserModel from "../../db/models/caching/caching_user";
 import PermissionModel from "../../db/models/permission";
 import PostModel, { GetListReturnType, GetPostsReturnType, HotTags, TPost } from "../../db/models/post";
-import UserModel, { TUser } from "../../db/models/user";
+import UserModel from "../../db/models/user";
 import VoteModel, { Vote } from "../../db/models/vote";
 import * as type from "./types";
 
@@ -53,22 +53,22 @@ export default class RecommendationEndpoint extends BaseEndpoint<type.Recommenda
     this.voteModel = new VoteModel(this.db, this.logger, this.redisClient, this.config);
   }
 
-  async getPosts(args: type.GetPostsArgs, _user: TUser): Promise<GetPostsReturnType> {
+  async getPosts(args: type.GetPostsArgs, _auth: Auth): Promise<GetPostsReturnType> {
     args = await this.validate(type.GetPostsArgsSchema, args);
 
     const posts = await this.postModel.getPosts(args.afterCursor, args.numberRecords);
     return posts;
   }
 
-  async getHotTags(_args: type.GetHotTagsArgs, _user: TUser): Promise<{ result: HotTags }> {
+  async getHotTags(_args: type.GetHotTagsArgs, _auth: Auth): Promise<{ result: HotTags }> {
     const hotTags = await this.postModel.getHotTags();
     return { result: hotTags };
   }
 
-  async recommend(args: type.RecommendArgs, user: TUser): Promise<CallEndpointReturnType> {
+  async recommend(args: type.RecommendArgs, auth: Auth): Promise<CallEndpointReturnType> {
     args = await this.validate(type.RecommendArgsSchema, args);
 
-    const votes = await this.voteModel.getVotes(user.id);
+    const votes = await this.voteModel.getVotes(auth.user.id);
     
     const postsWithVoteType = await Promise.all(votes.map(async (vote) => {
       const post = await this.postModel.getPost(vote.postId);

@@ -5,10 +5,9 @@ import winston from "winston";
 
 import { ENV } from "../app";
 import RequestError from "../common/request_error";
-import { RequestWithUser } from "../common/types";
-import { TUser } from "../db/models/user";
+import { JWTRequest } from "../common/types";
 
-type MiddlewareFunction = (req: RequestWithUser & { user: TUser }, res: Response, next: NextFunction) => Promise<void>;
+type MiddlewareFunction = (req: JWTRequest, res: Response, next: NextFunction) => Promise<void>;
 
 export default class FrozenMiddleware {
   constructor(
@@ -19,14 +18,14 @@ export default class FrozenMiddleware {
   ) { }
 
   public middleware(): MiddlewareFunction {
-    return async (req: RequestWithUser & { user: TUser }, res: Response, next: NextFunction): Promise<void> => {
-      if (!req.user) {
+    return async (req: JWTRequest, res: Response, next: NextFunction): Promise<void> => {
+      if (!req.auth) {
         this.logger.debug({ message: "Excluded path. Skip", path: module.filename });
         next();
       }
 
-      if (req.user.isFrozen) {
-        throw new RequestError("UserIsFrozen", `User(${req.user.email}) is frozen`, 403);
+      if (req.auth?.user?.isFrozen) {
+        throw new RequestError("UserIsFrozen", `User(${req.auth.user.email}) is frozen`, 403);
       }
   
       next();

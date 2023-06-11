@@ -5,10 +5,9 @@ import winston from "winston";
 
 import { ENV } from "../app";
 import ActionModel from "../db/models/action";
-import { TUser } from "../db/models/user";
 import { IBaseEndpoint } from "./base_endpoint";
 import RequestError from "./request_error";
-import { EndpointThisType } from "./types";
+import { EndpointThisType, JWTRequest } from "./types";
 
 export default class BaseEndpoint<RequestArgsType extends object,
                                   CallEndpointReturnType extends object> implements IBaseEndpoint {
@@ -27,20 +26,20 @@ export default class BaseEndpoint<RequestArgsType extends object,
 
   async callEndpoint(
     this: EndpointThisType<this, RequestArgsType, Promise<CallEndpointReturnType>>,
-    name: string, args: RequestArgsType, user: TUser | undefined
+    name: string, args: RequestArgsType, auth: JWTRequest["auth"]
   ): Promise<CallEndpointReturnType> {
     const endpointIncludes = this.allowNames.includes(name);
     if (!endpointIncludes) {
       throw new RequestError("EndpointNotFound", `Endpoint ${this.endpointName}/${name} does not exist`, 404);
     }
 
-    const result: CallEndpointReturnType = await this[name](args, user);
+    const result: CallEndpointReturnType = await this[name](args, auth);
 
     const domain = this.endpointName.charAt(0).toUpperCase() + this.endpointName.slice(1);
     const endpoint = name.charAt(0).toUpperCase() + name.slice(1);
     const actionName = domain + endpoint;
 
-    this.actionModel.insertAction(user?.id||-1, actionName, args);
+    this.actionModel.insertAction(auth?.user?.id||-1, actionName, args);
 
     return result;
   }

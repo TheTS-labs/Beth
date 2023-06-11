@@ -22,11 +22,11 @@ export const CreateArgsSchema = Joi.object({
 
 // >>> View >>>
 export interface ViewArgs {
-  email: string
+  id: number
 }
 
 export const ViewArgsSchema = Joi.object({
-  email: Joi.string().email().required(),
+  id: Joi.number().positive().required(),
 });
 // <<< View <<<
 
@@ -42,38 +42,55 @@ export const EditPasswordArgsSchema = Joi.object({
 
 // >>> Froze >>>
 export interface FrozeArgs {
-  email: string
+  id: number
   froze: DBBool
 }
 
 export const FrozeArgsSchema = Joi.object({
-  email: Joi.string().email().required(),
+  id: Joi.number().positive().required(),
   froze: Joi.number().min(0).max(1).default(1)
 });
 // <<< Froze <<<
 
 // >>> Edit Tags >>>
 export interface EditTagsArgs {
-  email: string
+  id: number
   newTags: string
 }
 
 export const EditTagsArgsSchema = Joi.object({
-  email: Joi.string().email().required(),
+  id: Joi.number().positive().required(),
   newTags: Joi.string().pattern(/^[a-zA-Z0-9]+(?:,[a-zA-Z0-9]+)*$/).required()
 });
 // <<< Edit Tags <<<
 
 // >>> Verify >>>
 export interface VerifyArgs {
-  email: string
+  id: number
   verify: DBBool
 }
 
 export const VerifyArgsSchema = Joi.object({
-  email: Joi.string().email().required(),
+  id: Joi.number().positive().required(),
   verify: Joi.number().min(0).max(1).default(1)
 });
 // <<< Verify <<<
 
-export type UserRequestArgs = CreateArgs | ViewArgs | EditPasswordArgs | FrozeArgs | EditTagsArgs | VerifyArgs;
+// >>> Issue Token >>>
+export interface IssueTokenArgs {
+  email: string
+  password: string
+  expiresIn: string
+  scope: string[]
+}
+
+export const IssueTokenArgsSchema = Joi.object({
+  email: Joi.string().email().required(),
+  password: Joi.string().pattern(new RegExp("^[a-zA-Z0-9]{8,64}$")).required(),
+  expiresIn: Joi.alternatives().try(Joi.number(), Joi.string()).default(2592000), // 30 days
+  scope: Joi.array().items(Joi.string())
+});
+// <<< Issue Token <<<
+
+export type UserRequestArgs = CreateArgs | ViewArgs | EditPasswordArgs |
+                              FrozeArgs | EditTagsArgs | VerifyArgs | IssueTokenArgs;

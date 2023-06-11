@@ -5,13 +5,13 @@ import winston from "winston";
 import { ENV } from "../../app";
 import BaseEndpoint from "../../common/base_endpoint_class";
 import RequestError from "../../common/request_error";
-import { EndpointThisType } from "../../common/types";
+import { Auth } from "../../common/types";
 import CachingPermissionModel from "../../db/models/caching/caching_permission";
 import CachingPostModel from "../../db/models/caching/caching_post";
 import CachingUserModel from "../../db/models/caching/caching_user";
 import PermissionModel, { PermissionStatus, TPermissions } from "../../db/models/permission";
 import PostModel, { GetListReturnType, NestedTPost, TPost } from "../../db/models/post";
-import UserModel, { TUser } from "../../db/models/user";
+import UserModel from "../../db/models/user";
 import * as type from "./types";
 
 type CallEndpointReturnType = { success: true, id: number } | { success: true } | NestedTPost[] | {};
@@ -44,13 +44,13 @@ export default class PostEndpoint extends BaseEndpoint<type.PostRequestArgs, Cal
     this.postModel = new PostModelType(this.db, this.logger, this.redisClient, this.config);
   }
 
-  async create(args: type.CreateArgs, user: TUser): Promise<{ success: true, id: number }> {
+  async create(args: type.CreateArgs, auth: Auth): Promise<{ success: true, id: number }> {
     args = await this.validate(type.CreateArgsSchema, args);
 
     const parent = args.replyTo ? await this.postModel.findParent(args.replyTo) : undefined;
 
     const { id } = await this.postModel.insertPost(
-      user.email,
+      auth.user.email,
       args.text,
       args.replyTo, parent
     ).catch((err: Error) => {
@@ -60,7 +60,7 @@ export default class PostEndpoint extends BaseEndpoint<type.PostRequestArgs, Cal
     return { success: true, id: id };
   }
 
-  async view(args: type.ViewArgs, _user: TUser): Promise<CallEndpointReturnType> {
+  async view(args: type.ViewArgs, _auth: Auth): Promise<CallEndpointReturnType> {
     args = await this.validate(type.ViewArgsSchema, args);
 
     const post = await this.postModel.getPost(args.id);
@@ -72,17 +72,17 @@ export default class PostEndpoint extends BaseEndpoint<type.PostRequestArgs, Cal
     return post||{};
   }
 
-  async edit(args: type.EditArgs, user: TUser): Promise<CallEndpointReturnType> {
+  async edit(args: type.EditArgs, auth: Auth): Promise<CallEndpointReturnType> {
     args = await this.validate(type.EditArgsSchema, args);
 
     const post = await this.postModel.getPost(args.id);
-    const permissions = await this.permissionModel.getPermissions(user.email) as TPermissions;
+    const permissions = await this.permissionModel.getPermissions(auth.user.email) as TPermissions;
   
     if (!post) {
       throw new RequestError("DatabaseError", "Post doesn't exist", 404);
     }
 
-    if (post.author != user.email && permissions["PostSuperEdit"] == PermissionStatus.Hasnt) {
+    if (post.author != auth.user.email && permissions["PostSuperEdit"] == PermissionStatus.Hasnt) {
       throw new RequestError("PermissionError", "You can only edit your own posts", 403);
     }
 
@@ -91,17 +91,17 @@ export default class PostEndpoint extends BaseEndpoint<type.PostRequestArgs, Cal
     return { success: true };
   }
 
-  async delete(args: type.DeleteArgs, user: TUser): Promise<CallEndpointReturnType> {
+  async delete(args: type.DeleteArgs, auth: Auth): Promise<CallEndpointReturnType> {
     args = await this.validate(type.DeleteArgsSchema, args);
 
     const post = await this.postModel.getPost(args.id);
-    const permissions = await this.permissionModel.getPermissions(user.email) as TPermissions;
+    const permissions = await this.permissionModel.getPermissions(auth.user.email) as TPermissions;
 
     if (!post) {
       throw new RequestError("DatabaseError", "Post doesn't exist", 404);
     }
 
-    if (post.author != user.email && permissions["PostSuperDelete"] == PermissionStatus.Hasnt) {
+    if (post.author != auth.user.email && permissions["PostSuperDelete"] == PermissionStatus.Hasnt) {
       throw new RequestError("PermissionError", "You can only delete your own posts", 403);
     }
 
@@ -110,7 +110,7 @@ export default class PostEndpoint extends BaseEndpoint<type.PostRequestArgs, Cal
     return { success: true };
   }
 
-  async getList(args: type.GetListArgs, _user: TUser): Promise<GetListReturnType> {
+  async getList(args: type.GetListArgs, _auth: Auth): Promise<GetListReturnType> {
     args = await this.validate(type.GetListArgsSchema, args);
 
     const result = await this.postModel.getList(args.afterCursor, args.numberRecords||3)
@@ -121,7 +121,7 @@ export default class PostEndpoint extends BaseEndpoint<type.PostRequestArgs, Cal
     return result;
   }
 
-  async forceDelete(args: type.ForceDeleteArgs, _user: TUser): Promise<CallEndpointReturnType> {
+  async forceDelete(args: type.ForceDeleteArgs, _auth: Auth): Promise<CallEndpointReturnType> {
     args = await this.validate(type.ForceDeleteArgsSchema, args);
 
     const post = await this.postModel.getPost(args.id);
@@ -135,7 +135,7 @@ export default class PostEndpoint extends BaseEndpoint<type.PostRequestArgs, Cal
     return { success: true };
   }
 
-  async viewReplies(args: type.ViewRepliesArgs, _user: TUser): Promise<CallEndpointReturnType> {
+  async viewReplies(args: type.ViewRepliesArgs, _auth: Auth): Promise<CallEndpointReturnType> {
     args = await this.validate(type.ViewRepliesArgsSchema, args);
 
     const results = await this.postModel.getReplies(args.parent).catch((err: { message: string }) => {
@@ -145,17 +145,17 @@ export default class PostEndpoint extends BaseEndpoint<type.PostRequestArgs, Cal
     return this.getNestedChildren(results, args.parent);
   }
 
-  async editTags(args: type.EditTagsArgs, user: TUser): Promise<CallEndpointReturnType> {
+  async editTags(args: type.EditTagsArgs, auth: Auth): Promise<CallEndpointReturnType> {
     args = await this.validate(type.EditTagsArgsSchema, args);
 
     const post = await this.postModel.getPost(args.id);
-    const permissions = await this.permissionModel.getPermissions(user.email) as TPermissions;
+    const permissions = await this.permissionModel.getPermissions(auth.user.email) as TPermissions;
 
     if (!post) {
       throw new RequestError("DatabaseError", "Post doesn't exist", 404);
     }
 
-    if (post.author != user.email && permissions["PostSuperTagsEdit"] == PermissionStatus.Hasnt) {
+    if (post.author != auth.user.email && permissions["PostSuperTagsEdit"] == PermissionStatus.Hasnt) {
       throw new RequestError("PermissionError", "You can only edit tags of your own posts", 403);
     }
 

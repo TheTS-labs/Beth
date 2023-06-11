@@ -5,11 +5,11 @@ import winston from "winston";
 import { ENV } from "../../app";
 import BaseEndpoint from "../../common/base_endpoint_class";
 import RequestError from "../../common/request_error";
-import { EndpointThisType } from "../../common/types";
+import { Auth } from "../../common/types";
 import CachingPermissionModel from "../../db/models/caching/caching_permission";
 import CachingUserModel from "../../db/models/caching/caching_user";
 import PermissionModel, { TPermissions } from "../../db/models/permission";
-import UserModel, { TUser } from "../../db/models/user";
+import UserModel from "../../db/models/user";
 import * as type from "./types";
 
 type CallEndpointReturnType = {} | TPermissions | {success: true};
@@ -34,7 +34,7 @@ export default class PermissionEndpoint extends BaseEndpoint<type.PermissionRequ
     this.permissionModel = new PermissionModelType(this.db, this.logger, this.redisClient, this.config);
   }
 
-  async view(args: type.ViewArgs, _user: TUser): Promise<TPermissions> {
+  async view(args: type.ViewArgs, _auth: Auth): Promise<TPermissions> {
     args = await this.validate(type.ViewArgsSchema, args);
 
     const permissions = await this.permissionModel.getPermissions(args.email);
@@ -45,7 +45,7 @@ export default class PermissionEndpoint extends BaseEndpoint<type.PermissionRequ
     return permissions;
   }
   
-  async grant(args: type.GrantArgs, _user: TUser): Promise<{success: true}|never> {
+  async grant(args: type.GrantArgs, _auth: Auth): Promise<{success: true}|never> {
     args = await this.validate(type.GrantArgsSchema, args);
 
     await this.permissionModel.grantPermission(args.grantTo, args.grantPermission).catch((err: Error) => {
@@ -55,7 +55,7 @@ export default class PermissionEndpoint extends BaseEndpoint<type.PermissionRequ
     return { success: true };
   }
 
-  async rescind(args: type.RescindArgs, _user: TUser): Promise<{success: true}|never> {
+  async rescind(args: type.RescindArgs, _auth: Auth): Promise<{success: true}|never> {
     args = await this.validate(type.RescindArgsSchema, args);
 
     await this.permissionModel.rescindPermission(args.rescindFrom, args.rescindPermission).catch((err: Error) => {

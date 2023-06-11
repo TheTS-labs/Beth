@@ -4,7 +4,7 @@ import { RedisClientType } from "redis";
 import winston from "winston";
 
 import { ENV } from "../app";
-import { EndpointThisType } from "./types";
+import { EndpointThisType, JWTRequest } from "./types";
 
 declare class IBaseEndpoint {
   public allowNames: Array<string>;
@@ -18,7 +18,7 @@ declare class IBaseEndpoint {
 
   async callEndpoint(
     this: EndpointThisType<any, object, Promise<object>>,
-    name: string, args: object, user: TUser | undefined
+    name: string, args: object, auth: JWTRequest["auth"]
   ): Promise<object>;
   async validate<EType>(schema: unknown, args: EType): Promise<EType>;
 }

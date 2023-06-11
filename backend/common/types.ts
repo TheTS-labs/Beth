@@ -1,4 +1,5 @@
 import { Request } from "express";
+import { TToken } from "../db/models/token";
 
 import { TUser } from "../db/models/user";
 
@@ -8,11 +9,9 @@ export type RequestErrorObject = {
   errorMessage: string
   errorStatus: number
 };
-export type RequestWithUser = Request & {
-  user?: undefined | TUser
-};
+
 export type EndpointThisType<CType, AType, RType> = CType & {
-  [name: string]: (args: AType, user: TUser | undefined) => RType
+  [name: string]: (args: AType, auth: JWTRequest["auth"]) => RType
 };
 
 export enum DBBool {
@@ -25,3 +24,49 @@ export enum UserScore {
   Nothing = 0,
   Disliked = -1
 }
+
+export const ScopeShorthands = {
+  Read: [
+    "user:view",
+    "permissions:view",
+    "post:view",
+    "post:viewReplies",
+    "post:getList",
+    "voting:voteCount",
+    "voting:getVotes",
+    "recommendation:recommend"
+  ],
+  Write: [
+    "user:editPassword",
+    "user:froze",
+    "post:create",
+    "post:edit",
+    "post:delete",
+    "post:editTags",
+    "voting:vote",
+    "voting:unvote",
+  ],
+  Admin: [
+    "UserSuperFroze",
+    "UserEditTags",
+    "UserVerify",
+    "PermissionsGrand",
+    "PermissionsRescind",
+    "PostSuperEdit",
+    "PostSuperDelete",
+    "PostForceDelete",
+    "PostSuperTagsEdit",
+    "ActionSimpleSearch",
+    "ActionChainWhereSearch",
+  ]
+};
+
+export interface Auth {
+  userId: number
+  tokenId: number
+  scope: string[]
+  user: TUser
+  token: TToken
+}
+
+export type JWTRequest = Request & { auth?: Auth };

@@ -5,12 +5,13 @@ import winston from "winston";
 import { ENV } from "../../app";
 import BaseEndpoint from "../../common/base_endpoint_class";
 import RequestError from "../../common/request_error";
+import { Auth } from "../../common/types";
 import CachingPermissionModel from "../../db/models/caching/caching_permission";
 import CachingPostModel from "../../db/models/caching/caching_post";
 import CachingUserModel from "../../db/models/caching/caching_user";
 import PermissionModel from "../../db/models/permission";
 import PostModel from "../../db/models/post";
-import UserModel, { TUser } from "../../db/models/user";
+import UserModel from "../../db/models/user";
 import VoteModel, { Vote } from "../../db/models/vote";
 import * as type from "./types";
 
@@ -43,7 +44,7 @@ export default class VoteEndpoint extends BaseEndpoint<type.VoteRequestArgs, Cal
     this.voteModel = new VoteModel(this.db, this.logger, this.redisClient, this.config);
   }
  
-  async vote(args: type.VoteArgs, user: TUser): Promise<CallEndpointReturnType>{
+  async vote(args: type.VoteArgs, auth: Auth): Promise<CallEndpointReturnType>{
     args = await this.validate(type.VoteArgsSchema, args);
 
     const post = await this.postModel.getPost(args.postId);
@@ -51,19 +52,24 @@ export default class VoteEndpoint extends BaseEndpoint<type.VoteRequestArgs, Cal
       throw new RequestError("DatabaseError", "Post doesn't exist", 404);
     }
 
-    const vote = await this.voteModel.getVote(args.postId, user.id);
+    const vote = await this.voteModel.getVote(args.postId, auth.user.id);
     if (vote) {
       throw new RequestError("DatabaseError", "You already voted", 403);
     }
 
-    await this.voteModel.vote(args.postId, user.id, args.unvote, args.voteType).catch((err: { message: string }) => {
+    await this.voteModel.vote(
+      args.postId,
+      auth.user.id,
+      args.unvote,
+      args.voteType
+    ).catch((err: { message: string }) => {
       throw new RequestError("DatabaseError", err.message, 500);
     });
 
     return { success: true };
   }
   
-  async voteCount(args: type.VoteCountArgs, _user: TUser): Promise<CallEndpointReturnType>{
+  async voteCount(args: type.VoteCountArgs, _auth: Auth): Promise<CallEndpointReturnType>{
     args = await this.validate(type.VoteCountArgsSchema, args);
 
     const post = await this.postModel.getPost(args.postId);

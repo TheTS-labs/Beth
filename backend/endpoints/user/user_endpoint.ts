@@ -1,4 +1,5 @@
 import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
 import { Knex } from "knex";
 import { RedisClientType } from "redis";
 import winston from "winston";
@@ -6,14 +7,14 @@ import winston from "winston";
 import { ENV } from "../../app";
 import BaseEndpoint from "../../common/base_endpoint_class";
 import RequestError from "../../common/request_error";
-import { SafeUserObject } from "../../common/types";
+import { Auth,SafeUserObject } from "../../common/types";
 import CachingPermissionModel from "../../db/models/caching/caching_permission";
 import CachingUserModel from "../../db/models/caching/caching_user";
 import PermissionModel, { PermissionStatus, TPermissions } from "../../db/models/permission";
-import UserModel, { TUser } from "../../db/models/user";
+import UserModel from "../../db/models/user";
 import * as type from "./types";
 
-type CallEndpointReturnType = { success: true } | {} | SafeUserObject;
+type CallEndpointReturnType = { success: true } | {} | SafeUserObject | { token: string };
 
 export default class UserEndpoint extends BaseEndpoint<type.UserRequestArgs, CallEndpointReturnType> {
   allowNames: Array<string> = [
@@ -38,7 +39,7 @@ export default class UserEndpoint extends BaseEndpoint<type.UserRequestArgs, Cal
     this.permissionModel = new PermissionModelType(this.db, this.logger, this.redisClient, this.config);
   }
 
-  async create(args: type.CreateArgs, _user: TUser | undefined): Promise<{ success: true }> {
+  async create(args: type.CreateArgs, _auth: Auth | undefined): Promise<CallEndpointReturnType> {
     args = await this.validate(type.CreateArgsSchema, args);
 
     const hash = await bcrypt.hash(args.password, 3);
@@ -54,71 +55,87 @@ export default class UserEndpoint extends BaseEndpoint<type.UserRequestArgs, Cal
     return { success: true };
   }
 
-  async view(args: type.ViewArgs, _user: TUser): Promise<SafeUserObject | {}> {
+  async view(args: type.ViewArgs, _auth: Auth): Promise<CallEndpointReturnType> {
     args = await this.validate(type.ViewArgsSchema, args);
 
-    const requestedUser = await this.userModel.getSafeUser(args.email);
+    const requestedUser = await this.userModel.getSafeUser(args.id);
 
-    return requestedUser||{};
+    return requestedUser || {};
   }
 
-  async editPassword(args: type.EditPasswordArgs, user: TUser): Promise<{ success: true }> {
+  async editPassword(args: type.EditPasswordArgs, auth: Auth): Promise<CallEndpointReturnType> {
     args = await this.validate(type.EditPasswordArgsSchema, args);
 
     const newHash = await bcrypt.hash(args.newPassword, 3);
 
-    await this.userModel.changePassword(user.email, newHash);
+    await this.userModel.changePassword(auth.user.email, newHash);
     const REDIS_REQUIRED = this.config.get("REDIS_REQUIRED").required().asBool();
     if (REDIS_REQUIRED) {
-      await this.redisClient.del(user.email);
+      await this.redisClient.del(auth.user.email);
     }
 
     return { success: true };
   }
 
-  async froze(args: type.FrozeArgs, user: TUser): Promise<{ success: true }> {
+  async froze(args: type.FrozeArgs, auth: Auth): Promise<CallEndpointReturnType> {
     args = await this.validate(type.FrozeArgsSchema, args);
 
-    const permissions = await this.permissionModel.getPermissions(user.email) as TPermissions;
+    const permissions = await this.permissionModel.getPermissions(auth.user.email) as TPermissions;
 
-    if (args.email != user.email && permissions["UserSuperFroze"] == PermissionStatus.Hasnt) {
+    if (args.id != auth.user.id && permissions["UserSuperFroze"] == PermissionStatus.Hasnt) {
       throw new RequestError("PermissionError", "You can froze only yourself", 403);
     }
 
-    await this.userModel.frozeUser(args.email, args.froze).catch((err: { message: string }) => {
+    await this.userModel.frozeUser(args.id, args.froze).catch((err: { message: string }) => {
       throw new RequestError("DatabaseError", err.message, 500);
     });
 
     return { success: true };
   }
 
-  async editTags(args: type.EditTagsArgs, _user: TUser): Promise<CallEndpointReturnType> {
+  async editTags(args: type.EditTagsArgs, _auth: Auth): Promise<CallEndpointReturnType> {
     args = await this.validate(type.EditTagsArgsSchema, args);
 
-    const requestedUser = await this.userModel.getSafeUser(args.email);
+    const requestedUser = await this.userModel.getSafeUser(args.id);
     if (!requestedUser) {
       throw new RequestError("DatabaseError", "User doesn't exist", 404);
     }
 
-    await this.userModel.editTags(args.email, args.newTags).catch((err: { message: string }) => {
+    await this.userModel.editTags(args.id, args.newTags).catch((err: { message: string }) => {
       throw new RequestError("DatabaseError", err.message, 500);
     });
 
     return { success: true };
   }
 
-  async verify(args: type.VerifyArgs, _user: TUser): Promise<CallEndpointReturnType> {
+  async verify(args: type.VerifyArgs, _auth: Auth): Promise<CallEndpointReturnType> {
     args = await this.validate(type.VerifyArgsSchema, args);
 
-    const requestedUser = await this.userModel.getSafeUser(args.email);
+    const requestedUser = await this.userModel.getSafeUser(args.id);
     if (!requestedUser) {
       throw new RequestError("DatabaseError", "User doesn't exist", 404);
     }
 
-    await this.userModel.verifyUser(args.email, args.verify).catch((err: { message: string }) => {
+    await this.userModel.verifyUser(args.id, args.verify).catch((err: { message: string }) => {
       throw new RequestError("DatabaseError", err.message, 500);
     });
 
     return { success: true };
   }
+
+  // async issueToken(args: type.IssueTokenArgs, auth: Auth): Promise<CallEndpointReturnType> {
+  //   args = await this.validate(type.IssueTokenArgsSchema, args);
+
+  //   const hash = await bcrypt.hash(args.password, 3);
+
+  //   if (hash != auth.user.password) {
+  //     throw new RequestError("AuthError", "Wrong password or email", 403);
+  //   }
+
+  //   jwt.sign({
+  //     data: "foobar"
+  //   }, "secret", { expiresIn: "1h" });
+
+  //   return { token: "" };
+  // }
 }

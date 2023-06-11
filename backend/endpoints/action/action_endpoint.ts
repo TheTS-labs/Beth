@@ -5,8 +5,8 @@ import winston from "winston";
 import { ENV } from "../../app";
 import BaseEndpoint from "../../common/base_endpoint_class";
 import RequestError from "../../common/request_error";
+import { Auth } from "../../common/types";
 import { TAction } from "../../db/models/action";
-import { TUser } from "../../db/models/user";
 import * as type from "./types";
 
 type CallEndpointReturnType = TAction[];
@@ -25,7 +25,7 @@ export default class ActionEndpoint extends BaseEndpoint<type.ActionRequestArgs,
     super(db, redisClient, logger, config, "action");
   }
 
-  public async simpleSearch(args: type.SimpleSearchArgs, _user: TUser): Promise<TAction[]> {
+  public async simpleSearch(args: type.SimpleSearchArgs, _auth: Auth): Promise<TAction[]> {
     args = await this.validate(type.SimpleSearchArgsSchema, args);
 
     const result = this.actionModel.simpleSearch(
@@ -40,7 +40,7 @@ export default class ActionEndpoint extends BaseEndpoint<type.ActionRequestArgs,
     return result;
   }
 
-  public async chainWhereSearch(args: type.ChainWhereSearchArgs, _user: TUser): Promise<TAction[]> {
+  public async chainWhereSearch(args: type.ChainWhereSearchArgs, _auth: Auth): Promise<TAction[]> {
     args = await this.validate(type.ChainWhereSearchArgsSchema, args);
 
     const result = this.actionModel.chainWhereSearch(args).catch((err: Error) => {

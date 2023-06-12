@@ -3,6 +3,7 @@ import { ExtenderTypeOptional, from, IEnv, IOptionalVariable } from "env-var";
 import express, { Express, NextFunction, Response } from "express";
 import asyncHandler from "express-async-handler";
 import { expressjwt } from "express-jwt";
+import { IncomingMessage, Server, ServerResponse } from "http";
 import knex, { Knex } from "knex";
 import asyncMiddleware from "middleware-async";
 import { RedisClientType } from "redis";
@@ -17,7 +18,7 @@ import FrozenMiddleware from "./middlewares/frozen_middleware";
 import IdentityMiddleware from "./middlewares/identity_middleware";
 import PermissionMiddleware from "./middlewares/permission_middleware";
 import Redis from "./redis";
-import initScheduledJobs from "./scheduledJobs/init_scheduled_jobs";
+import ScheduledTasks from "./scheduledJobs/init_scheduled_jobs";
 
 dotenv.config();
 
@@ -35,32 +36,37 @@ export default class App {
   db: Knex;
   redisClient: RedisClientType;
   endpoints: TEndpointObjects = {};
-  logger: winston.Logger = new Logger().get();
+  logger: winston.Logger;
   config: ENV;
+  scheduledTasks: ScheduledTasks;
 
   identityMiddleware: IdentityMiddleware;
   permissionMiddleware: PermissionMiddleware;
   frozenMiddleware: FrozenMiddleware;
   errorMiddleware: ErrorMiddleware;
 
+  server!: Server<typeof IncomingMessage, typeof ServerResponse>;
+
   //! Disabling auth you also disabling permission check
   constructor(endpoints: TEndpointTypes, disableAuthFor:string[]=[]) {
     this.config = from(process.env, {}, (varname: string, str: string): void => this.envLoggerFn(varname, str));
-    this.db = knex(knexfile[this.config.get("NODE_ENV").required().asEnum([
-      "development", "production", "developmentSQLite"
-    ])]);
+    const env = this.config.get("NODE_ENV").required().asEnum([
+      "development", "production", "developmentSQLite", "test"
+    ]);
+    this.logger = new Logger().get(env === "test" ? "quiet" : this.config.get("LOG_LEVEL").required().asString());
+    this.db = knex(knexfile[env]);
     this.redisClient = new Redis(this.logger, this.config).get();
+    this.scheduledTasks = new ScheduledTasks(this.db, this.logger);
 
     this.identityMiddleware = new IdentityMiddleware(this.logger, this.db, this.redisClient, this.config);
     this.permissionMiddleware = new PermissionMiddleware(this.logger, this.db, this.redisClient, this.config);
     this.frozenMiddleware = new FrozenMiddleware(this.logger, this.db, this.redisClient, this.config);
     this.errorMiddleware = new ErrorMiddleware(this.logger);
   
-    initScheduledJobs(this.db, this.logger);
+    this.scheduledTasks.start();
     this.setMiddlewares(disableAuthFor);
     this.registerEndpoints(endpoints);
     this.registerRouters();
-    this.listen();
   }
 
   private setMiddlewares(disableAuthFor: string[]): void {
@@ -131,15 +137,17 @@ export default class App {
     this.app.use(this.errorMiddleware.middleware.bind(this.errorMiddleware));
   }
 
-  private listen(): void {
+  public listen(): void {
     const port = this.config.get("APP_PORT").required().asPortNumber();
 
-    this.app.listen(port, () => {
+    this.server = this.app.listen(port, () => {
       this.logger.info({ message: `Server is running at https://localhost:${port}`, path: module.filename });
     });
   }
 
   private envLoggerFn(varname: string, str: string): void {
-    this.logger.debug({ message: `${varname}: ${str}`, path: module.filename });
+    if (this.logger) {
+      this.logger.debug({ message: `${varname}: ${str}`, path: module.filename });
+    }
   }
 }

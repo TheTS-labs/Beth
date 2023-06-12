@@ -8,8 +8,7 @@ export async function up(knex: Knex): Promise<void> {
     table.increments("id");
     table.string("owner").unique().notNullable();
     table.boolean("revoked").defaultTo(DBBool.No);
-    table.timestamp("iat").notNullable();
-    table.timestamp("exp").notNullable();
+    table.timestamp("iat").defaultTo(knex.fn.now());
     table.string("scope").notNullable();
   });
 }

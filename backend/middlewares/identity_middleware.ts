@@ -43,6 +43,9 @@ export default class IdentityMiddleware {
       if (token.revoked) {
         throw new RequestError("AuthError", "This token revoked", 403);
       }
+      if (!user) {
+        throw new RequestError("AuthError", "User doesn't exist", 403);
+      }
 
       req.auth.token = token;
       req.auth.user = user;

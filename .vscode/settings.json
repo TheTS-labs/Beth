@@ -2,10 +2,12 @@
     "cSpell.words": [
         "Checkmark",
         "creds",
+        "downvotes",
         "Hasnt",
         "knexfile",
         "middlewares",
         "unnest",
-        "Unvote"
+        "Unvote",
+        "upvotes"
     ]
 }

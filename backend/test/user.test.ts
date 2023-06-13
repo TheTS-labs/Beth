@@ -1,12 +1,12 @@
 import request from "supertest";
 
 import App from "../app";
-import { disableAuthFor,endpoints } from "../common/endpoints";
+import { disableAuthFor, endpoints } from "../common/endpoints";
+import { DBBool } from "../common/types";
 import { PermissionStatus, TPermissions } from "../db/models/permission";
 import { TUser } from "../db/models/user";
 import userData, { credentials } from "./data/user_data";
 import auth from "./helpers/auth";
-import { DBBool } from "../common/types";
 
 process.env.REDIS_REQUIRED = "false";
 const server = new App(endpoints, disableAuthFor);

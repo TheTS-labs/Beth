@@ -142,7 +142,12 @@ export default class PostEndpoint extends BaseEndpoint<type.PostRequestArgs, Cal
       throw new RequestError("DatabaseError", err.message, 500);
     });
 
-    return this.getNestedChildren(results, args.parent);
+    const REDIS_REQUIRED = this.config.get("REDIS_REQUIRED").required().asBool();
+    if (REDIS_REQUIRED) {
+      return this.getNestedChildren(results, args.parent);
+    }
+
+    return this.getNestedChildrenWithoutRedis(results, args.parent);
   }
 
   async editTags(args: type.EditTagsArgs, auth: Auth): Promise<CallEndpointReturnType> {
@@ -226,5 +231,36 @@ export default class PostEndpoint extends BaseEndpoint<type.PostRequestArgs, Cal
 
     return result;
   }
-  
+
+  async getNestedChildrenWithoutRedis(arr: TPost[], repliesTo: number): Promise<NestedTPost[]> {
+    const stack: TPost[] = [];
+    const map = new Map<number, NestedTPost>();
+
+    for (const post of arr) {
+      const nestedPost = post as NestedTPost;
+
+      if (post.repliesTo == repliesTo) {
+        nestedPost.comments = [];
+        stack.push(post);
+      }
+      map.set(post.id, nestedPost);
+    }
+
+    while (stack.length) {
+      const post = stack.pop() as TPost;
+      const nestedPost = map.get(post.id) as NestedTPost;
+
+      nestedPost.comments = arr.filter((tpost) => tpost.repliesTo == post.id).map((tpost) => {
+        stack.push(tpost);
+        map.set(tpost.id, { ...tpost, comments: [] });
+        
+        return map.get(tpost.id) as NestedTPost;
+      });
+    }
+
+    const result = arr.filter((post) => post.repliesTo == repliesTo)
+                      .map((post) => map.get(post.id) as NestedTPost);
+
+    return result;
+  }
 }

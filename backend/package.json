@@ -7,7 +7,7 @@
     "migrate": "knex migrate:latest --knexfile knexfile.js --migrations-directory db/migrations",
     "seed": "knex seed:run",
     "migrateAndSeed": "knex migrate:latest --knexfile knexfile.js --migrations-directory db/migrations && knex seed:run",
-    "test": "jest --detectOpenHandles --forceExit"
+    "test": "jest --detectOpenHandles --forceExit --maxWorkers=50%"
   },
   "dependencies": {
     "bcrypt": "^5.1.0",

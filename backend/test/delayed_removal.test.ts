@@ -6,7 +6,7 @@ import knexfile from "../knexfile";
 import Logger from "../logger";
 import getJob from "../scheduledJobs/delayed_removal";
 
-const logger = new Logger().get("info");
+const logger = new Logger().get("quiet");
 const db = knex(knexfile["test"]);
 
 jest.mock("node-cron", () => {

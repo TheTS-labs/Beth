@@ -83,7 +83,7 @@ export default class RecommendationEndpoint extends BaseEndpoint<type.Recommenda
     const requirements = await this.getRecommendationRequirements(args, postsWithVoteType);
 
     const recommendations = requirements.posts.results.map(recommendPost => {
-      const tags = recommendPost.tags.split(",");
+      const tags = recommendPost.tags ? recommendPost.tags.split(",") : [];
       const likedTagsCount = tags.filter(tag => requirements.likedTags.includes(tag)).length;
       const dislikedTagsCount = tags.filter(tag => requirements.dislikedTags.includes(tag)).length;
       const tagScore = likedTagsCount - dislikedTagsCount;
@@ -91,7 +91,7 @@ export default class RecommendationEndpoint extends BaseEndpoint<type.Recommenda
       const isLiked = requirements.likedUsers.includes(recommendPost.author) ? UserScore.Liked : UserScore.Nothing;
       const isDisliked = requirements.dislikedUsers.includes(recommendPost.author) ? UserScore.Disliked 
                                                                                    : UserScore.Nothing;
-      const userScore = isLiked - isDisliked;
+      const userScore = isDisliked + isLiked;
 
       return {
         ...recommendPost,
@@ -105,7 +105,7 @@ export default class RecommendationEndpoint extends BaseEndpoint<type.Recommenda
   }
 
   private getPreferredTags(posts: TPostWithVote[], voteType: Vote): string[] {
-    return posts.filter(item => item.voteType == voteType).flatMap(item => item.tags.split(","));
+    return posts.filter(item => item.voteType == voteType).flatMap(item => item.tags ? item.tags.split(",") : []);
   }
 
   private getPreferredUsers(posts: TPostWithVote[], voteType: Vote): string[] {

@@ -2,8 +2,6 @@ import { Knex } from "knex";
 import CronJob from "node-cron";
 import winston from "winston";
 
-import { TPost } from "../db/models/post";
-
 export default function getJob(
   db: Knex,
   logger: winston.Logger,
@@ -17,6 +15,6 @@ export default function getJob(
       context: {"frozenAt": ["<=", sevenDaysAgo]}
     });
 
-    await db<TPost>("post").where("frozenAt", "<=", sevenDaysAgo).del();
+    await db.raw('delete from "post" where "frozenAt" <= to_timestamp(?)', [ sevenDaysAgo ]);
   });
 }

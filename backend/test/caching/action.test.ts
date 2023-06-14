@@ -6,7 +6,7 @@ import { TAction } from "../../db/models/action";
 import userData, { credentials } from "../data/user_data";
 import auth from "../helpers/auth";
 
-process.env.REDIS_REQUIRED = "false";
+process.env.REDIS_REQUIRED = "true";
 const server = new App(endpoints, disableAuthFor);
 const port = server.config.get("APP_PORT").required().asPortNumber();
 const req = request(`http://localhost:${port}`);

@@ -1,4 +1,5 @@
 import { NextFunction, Request, Response } from "express";
+import { UnauthorizedError } from "express-jwt";
 import winston from "winston";
 
 import RequestError from "../common/request_error";
@@ -13,7 +14,17 @@ export default class ErrorMiddleware {
       return;
     }
 
-    this.logger.debug({ message: err.stack, path: module.filename });
+    if (err instanceof UnauthorizedError) {
+      this.logger.error({ message: err.code, path: module.filename });
+      res.status(err.status).json({
+        errorStatus: err.status,
+        errorType: "UnauthorizedError",
+        errorMessage: err.code
+      });
+      return;
+    }
+
+    this.logger.error({ message: err.stack, path: module.filename });
     res.status(500).json({
       errorStatus: 500,
       errorType: "UnknownError",

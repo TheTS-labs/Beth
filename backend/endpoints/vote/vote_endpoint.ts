@@ -53,7 +53,7 @@ export default class VoteEndpoint extends BaseEndpoint<type.VoteRequestArgs, Cal
     }
 
     const vote = await this.voteModel.getVote(args.postId, auth.user.id);
-    if (vote) {
+    if (vote && !args.unvote) {
       throw new RequestError("DatabaseError", "You already voted", 403);
     }
 

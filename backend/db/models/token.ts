@@ -10,7 +10,6 @@ export interface TToken {
   owner: string
   revoked: DBBool
   iat: Date
-  exp: Date
   scope: string
 }
 
@@ -24,7 +23,7 @@ export default class TokenModel {
 
   public async issue(owner: string, iat: Date, exp: Date, scope: string): Promise<void> {
     this.logger.debug({ message: "Issued", path: module.filename, context: { owner, iat, exp, scope } });
-    await this.db<TToken>("token").insert({ owner, iat, exp, scope });
+    await this.db<TToken>("token").insert({ owner, scope });
   }
 
   public async revoke(id: number): Promise<void> {

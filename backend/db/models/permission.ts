@@ -18,9 +18,9 @@ export interface TPermissions {
   UserSuperFroze: PermissionStatus
   UserEditTags: PermissionStatus
   UserVerify: PermissionStatus
-  PermissionsView: PermissionStatus
-  PermissionsGrand: PermissionStatus
-  PermissionsRescind: PermissionStatus
+  PermissionView: PermissionStatus
+  PermissionGrand: PermissionStatus
+  PermissionRescind: PermissionStatus
   PostCreate: PermissionStatus
   PostView: PermissionStatus
   PostEdit: PermissionStatus

@@ -23,6 +23,23 @@ const config: { [key: string]: Knex.Config } = {
     }
   },
 
+  test: {
+    client: "postgresql",
+    connection: {
+      database: env.get("POSTGRES_DB").required().asString(),
+      user: env.get("POSTGRES_USER").required().asString(),
+      password: env.get("POSTGRES_PASSWORD").required().asString(),
+    },
+    useNullAsDefault: true,
+    migrations: {
+      tableName: "knex_migrations",
+      directory: "./db/migrations"
+    },
+    seeds: {
+      directory: "./db/seeds"
+    }
+  },
+
   developmentSQLite: {
     client: "sqlite3",
     connection: {

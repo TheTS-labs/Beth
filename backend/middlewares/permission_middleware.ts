@@ -29,7 +29,8 @@ export default class PermissionMiddleware {
     ): Promise<void> => {
       if (!req.auth?.token) {
         this.logger.debug({ message: "Excluded path. Skip", path: module.filename });
-        next();
+        next(); 
+        return;
       }
 
       const splitted = req.originalUrl.replace("/", "").split("/");

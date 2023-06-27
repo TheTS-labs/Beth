@@ -21,9 +21,11 @@ export default class TokenModel {
     public config: ENV
   ) {}
 
-  public async issue(owner: string, iat: Date, exp: Date, scope: string): Promise<void> {
-    this.logger.debug({ message: "Issued", path: module.filename, context: { owner, iat, exp, scope } });
-    await this.db<TToken>("token").insert({ owner, scope });
+  public async issue(owner: string, scope: string): Promise<number> {
+    this.logger.debug({ message: "Issued", path: module.filename, context: { owner, scope } });
+    const id = await this.db<TToken>("token").insert({ owner, scope }, ["id"]);
+
+    return id[0].id;
   }
 
   public async revoke(id: number): Promise<void> {

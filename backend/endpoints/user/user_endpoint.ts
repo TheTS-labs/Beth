@@ -11,6 +11,7 @@ import { Auth,SafeUserObject } from "../../common/types";
 import CachingPermissionModel from "../../db/models/caching/caching_permission";
 import CachingUserModel from "../../db/models/caching/caching_user";
 import PermissionModel, { PermissionStatus, TPermissions } from "../../db/models/permission";
+import TokenModel from "../../db/models/token";
 import UserModel from "../../db/models/user";
 import * as type from "./types";
 
@@ -19,10 +20,12 @@ type CallEndpointReturnType = { success: true } | {} | SafeUserObject | { token:
 export default class UserEndpoint extends BaseEndpoint<type.UserRequestArgs, CallEndpointReturnType> {
   allowNames: Array<string> = [
     "create", "view", "editPassword",
-    "froze", "editTags", "verify"
+    "froze", "editTags", "verify",
+    "issueToken"
   ];
   userModel: UserModel | CachingUserModel;
   permissionModel: PermissionModel | CachingPermissionModel;
+  tokenModel: TokenModel;
 
   constructor(
     public db: Knex,
@@ -37,6 +40,7 @@ export default class UserEndpoint extends BaseEndpoint<type.UserRequestArgs, Cal
 
     this.userModel = new UserModelType(this.db, this.logger, this.redisClient, this.config);
     this.permissionModel = new PermissionModelType(this.db, this.logger, this.redisClient, this.config);
+    this.tokenModel = new TokenModel(this.db, this.logger, this.redisClient, this.config);
   }
 
   async create(args: type.CreateArgs, _auth: Auth | undefined): Promise<CallEndpointReturnType> {
@@ -123,19 +127,57 @@ export default class UserEndpoint extends BaseEndpoint<type.UserRequestArgs, Cal
     return { success: true };
   }
 
-  // async issueToken(args: type.IssueTokenArgs, auth: Auth): Promise<CallEndpointReturnType> {
-  //   args = await this.validate(type.IssueTokenArgsSchema, args);
+  async issueToken(args: type.IssueTokenArgs, _auth: undefined): Promise<CallEndpointReturnType> {
+    args = await this.validate(type.IssueTokenArgsSchema, args);
+    const user = await this.userModel.getUnsafeUser(args.id);
 
-  //   const hash = await bcrypt.hash(args.password, 3);
+    if (!user) {
+      throw new RequestError("DatabaseError", "User doesn't exist", 404);
+    }
 
-  //   if (hash != auth.user.password) {
-  //     throw new RequestError("AuthError", "Wrong password or email", 403);
-  //   }
+    const hash = await bcrypt.compare(args.password, user.password);
+    if (!hash) {
+      throw new RequestError("AuthError", "Wrong password or id", 403);
+    }
 
-  //   jwt.sign({
-  //     data: "foobar"
-  //   }, "secret", { expiresIn: "1h" });
+    const permission = await this.permissionModel.getPermissions(user.email);
+    if (!permission) {
+      throw new RequestError("DatabaseError", "Permissions doesn't exist", 500);
+    }
 
-  //   return { token: "" };
-  // }
+    args.scope.forEach(scope => {
+      // TODO: Replace scope name format with the database's
+
+      let [ domain, endpoint ] = scope.split(":");
+
+      domain = domain.charAt(0).toUpperCase() + domain.slice(1);
+      endpoint = endpoint.charAt(0).toUpperCase() + endpoint.slice(1);
+
+      const permissionName = domain + endpoint;
+      
+      // TODO: Remove ts-ignore
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      //@ts-ignore
+      if (!permission[permissionName]) {
+        throw new RequestError(
+          "PermissionError",
+          `You don't have permission ${permissionName} to create the token with given scope`,
+          403
+        );
+      }
+    });
+
+    const tokenId = await this.tokenModel.issue(user.email, JSON.stringify(args.scope))
+                                         .catch((err: { message: string }) => {
+      throw new RequestError("DatabaseError", err.message, 500);
+    });
+
+    const token = jwt.sign({
+      userId: user.id,
+      tokenId,
+      scope: args.scope
+    }, this.config.get("JWT_TOKEN_SECRET").required().asString(), { expiresIn: args.expiresIn });
+
+    return { tokenId, token };
+  }
 }

@@ -78,17 +78,17 @@ export const VerifyArgsSchema = Joi.object({
 
 // >>> Issue Token >>>
 export interface IssueTokenArgs {
-  email: string
+  id: number
   password: string
   expiresIn: string
   scope: string[]
 }
 
 export const IssueTokenArgsSchema = Joi.object({
-  email: Joi.string().email().required(),
+  id: Joi.number().positive().required(),
   password: Joi.string().pattern(new RegExp("^[a-zA-Z0-9]{8,64}$")).required(),
   expiresIn: Joi.alternatives().try(Joi.number(), Joi.string()).default(2592000), // 30 days
-  scope: Joi.array().items(Joi.string())
+  scope: Joi.array().items(Joi.string()).required()
 });
 // <<< Issue Token <<<
 

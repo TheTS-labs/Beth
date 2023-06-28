@@ -131,6 +131,9 @@ export default class UserEndpoint extends BaseEndpoint<type.UserRequestArgs, Cal
     args = await this.validate(type.IssueTokenArgsSchema, args);
     const user = await this.userModel.getUnsafeUser(args.email);
 
+    // TODO: What if user is frozen?
+    // TODO: Scope shorthands
+
     if (!user) {
       throw new RequestError("DatabaseError", "User doesn't exist", 404);
     }

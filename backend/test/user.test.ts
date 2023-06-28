@@ -4,6 +4,7 @@ import App from "../app";
 import { disableAuthFor, endpoints } from "../common/endpoints";
 import { DBBool } from "../common/types";
 import { PermissionStatus, TPermissions } from "../db/models/permission";
+import { TToken } from "../db/models/token";
 import { TUser } from "../db/models/user";
 import userData, { credentials } from "./data/user_data";
 import auth from "./helpers/auth";
@@ -322,5 +323,106 @@ describe("POST /user/verify", () => {
 
     expect(res.body.errorMessage).not.toBeUndefined();
     expect(res.statusCode).toBe(404);
+  });
+});
+
+describe("POST /user/issueToken", () => {
+  it("should issue new token", async () => {
+    // Preparing
+    await server.db<TUser>("user").insert({
+      ...userData,
+      password: credentials.hash
+    });
+    await server.db<TPermissions>("permission").insert({ email: userData.email });
+    // Preparing
+
+    const res = await req.post("/user/issueToken")
+                         .send({
+                            email: userData.email,
+                            password: credentials.password,
+                            scope: ["user:view"]
+                          });
+
+    expect(res.body.errorMessage).toBeUndefined();
+    expect(res.statusCode).toBe(200);
+    expect(res.body.token).not.toBeUndefined();
+    expect(res.body.tokenId).not.toBeUndefined();
+
+    const token = await server.db<TToken>("token").where({ id: res.body.tokenId }).first();
+    expect(token).not.toBeUndefined();
+  });
+
+  it("should throw DatabaseError: User doesn't exist", async () => {
+    const res = await req.post("/user/issueToken")
+                         .send({
+                            email: userData.email,
+                            password: credentials.password,
+                            scope: ["user:view"]
+                          });
+
+    expect(res.body.errorMessage).not.toBeUndefined();
+    expect(res.statusCode).toBe(404);
+  });
+
+  it("should throw AuthError", async () => {
+    // Preparing
+    await server.db<TUser>("user").insert({
+      ...userData,
+      password: credentials.hash
+    });
+    await server.db<TPermissions>("permission").insert({ email: userData.email });
+    // Preparing
+
+    const res = await req.post("/user/issueToken")
+                         .send({
+                            email: userData.email,
+                            password: "WrongPassword123",
+                            scope: ["user:view"]
+                          });
+
+    expect(res.body.errorMessage).not.toBeUndefined();
+    expect(res.statusCode).toBe(403);
+  });
+
+  it("should throw DatabaseError: Permissions doesn't exist", async () => {
+    // Preparing
+    await server.db<TUser>("user").insert({
+      ...userData,
+      password: credentials.hash
+    });
+    // Preparing
+
+    const res = await req.post("/user/issueToken")
+                         .send({
+                            email: userData.email,
+                            password: credentials.password,
+                            scope: ["user:view"]
+                          });
+
+    expect(res.body.errorMessage).not.toBeUndefined();
+    expect(res.statusCode).toBe(500);
+  });
+
+  it("should throw PermissionError", async () => {
+    // Preparing
+    await server.db<TUser>("user").insert({
+      ...userData,
+      password: credentials.hash
+    });
+    await server.db<TPermissions>("permission").insert({
+      email: userData.email,
+      UserView: PermissionStatus.Hasnt
+    });
+    // Preparing
+
+    const res = await req.post("/user/issueToken")
+                         .send({
+                            email: userData.email,
+                            password: credentials.password,
+                            scope: ["user:view"]
+                          });
+
+    expect(res.body.errorMessage).not.toBeUndefined();
+    expect(res.statusCode).toBe(403);
   });
 });

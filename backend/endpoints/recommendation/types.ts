@@ -19,6 +19,7 @@ export const GetHotTagsArgsSchema = Joi.object({});
 // <<< Get Hot Tags <<<
 
 // >>> Get Posts >>>
+// TODO: Add LIMIT
 export interface GetPostsArgs {
   afterCursor: string
   numberRecords: number

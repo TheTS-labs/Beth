@@ -61,9 +61,10 @@ typings/
 .next
 
 dist
-dev.db.sqlite3
+*.sqlite3
 backend/docker-compose.yml
 backend/seed.py
 *.pem
 *.key
 .yarn
+backend/print_todos.py

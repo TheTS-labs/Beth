@@ -3,7 +3,15 @@
  * https://jestjs.io/docs/configuration
  */
 
-export default {
+import merge from "merge";
+
+// https://stackoverflow.com/a/52622141
+// https://stackoverflow.com/a/42505940
+
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const TSPreset = require("ts-jest/jest-preset");
+
+export default merge.recursive(TSPreset, {
   // All imported modules in your tests should be mocked automatically
   // automock: false,
 
@@ -100,7 +108,7 @@ export default {
   // notifyMode: "failure-change",
 
   // A preset that is used as a base for Jest's configuration
-  preset: "ts-jest",
+  // preset: "ts-jest",
 
   // Run tests from one or more projects
   // projects: undefined,
@@ -194,4 +202,4 @@ export default {
 
   // Whether to use watchman for file crawling
   // watchman: true,
-};
+});

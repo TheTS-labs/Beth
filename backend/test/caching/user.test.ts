@@ -10,11 +10,9 @@ import auth from "../helpers/auth";
 
 process.env.REDIS_REQUIRED = "true";
 const server = new App(endpoints, disableAuthFor);
-const port = server.config.get("APP_PORT").required().asPortNumber();
-const req = request(`http://localhost:${port}`);
+const req = request(server.app);
 
-beforeAll(() => { server.listen(); });
-afterAll((done) => { server.server.close(); server.scheduledTasks.stop(); server.redisClient.quit(); done(); });
+afterAll((done) => { server.scheduledTasks.stop(); server.redisClient.quit(); done(); });
 beforeEach(async () => {
   await server.redisClient.flushAll();
   await server.db("user").del();

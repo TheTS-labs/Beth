@@ -33,8 +33,11 @@ export default class PermissionMiddleware {
         return;
       }
 
-      const splitted = req.originalUrl.replace("/", "").split("/");
-      const requiredScope = splitted[0] + ":" + splitted[1];
+      let [ domain, endpoint ] = req.originalUrl.replace("/", "").split("/");
+      domain = domain.charAt(0).toUpperCase() + domain.slice(1);
+      endpoint = endpoint.charAt(0).toUpperCase() + endpoint.slice(1);
+
+      const requiredScope = domain + endpoint;
 
       this.logger.debug({ message: `Checking for ${requiredScope} scope`, path: module.filename });
   

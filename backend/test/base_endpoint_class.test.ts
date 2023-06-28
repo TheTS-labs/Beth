@@ -20,7 +20,7 @@ describe("General tests", () => {
     const { token } = await auth(server, {
       userData,
       password: credentials.hash,
-      scope: ["user:notFound"]
+      scope: ["UserNotFound"]
     });
 
     const res = await req.post("/user/notFound").send({}).set({ "Authorization": "Bearer " + token });

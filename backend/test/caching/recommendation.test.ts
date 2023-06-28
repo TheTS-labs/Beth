@@ -134,7 +134,7 @@ describe("POST /recommendation/recommend", () => {
     const { token } = await auth(server, {
       userData,
       password: credentials.hash,
-      scope: [ "recommendation:recommend" ]
+      scope: [ "RecommendationRecommend" ]
     });
 
     const posts = [
@@ -159,7 +159,7 @@ describe("POST /recommendation/recommend", () => {
     const { email, token } = await auth(server, {
       userData,
       password: credentials.hash,
-      scope: [ "recommendation:recommend" ]
+      scope: [ "RecommendationRecommend" ]
     });
 
     const posts = [
@@ -191,7 +191,7 @@ describe("POST /recommendation/recommend", () => {
     const { email, token } = await auth(server, {
       userData,
       password: credentials.hash,
-      scope: [ "recommendation:recommend" ]
+      scope: [ "RecommendationRecommend" ]
     });
 
     const posts = [
@@ -235,7 +235,7 @@ describe("POST /recommendation/recommend", () => {
     const { email, token } = await auth(server, {
       userData,
       password: credentials.hash,
-      scope: [ "recommendation:recommend" ]
+      scope: [ "RecommendationRecommend" ]
     });
 
     const posts = [
@@ -279,7 +279,7 @@ describe("POST /recommendation/recommend", () => {
     const { email, token } = await auth(server, {
       userData,
       password: credentials.hash,
-      scope: [ "recommendation:recommend" ]
+      scope: [ "RecommendationRecommend" ]
     });
 
     const posts = [

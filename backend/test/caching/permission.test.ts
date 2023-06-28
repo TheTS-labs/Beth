@@ -24,7 +24,7 @@ describe("POST /permission/view", () => {
     const { token } = await auth(server, {
       userData,
       password: credentials.hash,
-      scope: ["permission:view"]
+      scope: ["PermissionView"]
     });
     await server.db<TPermissions>("permission").insert({
       email: userData.email,
@@ -48,7 +48,7 @@ describe("POST /permission/view", () => {
     const { token } = await auth(server, {
       userData,
       password: credentials.hash,
-      scope: ["permission:view"]
+      scope: ["PermissionView"]
     });
     // Preparing
 
@@ -67,7 +67,7 @@ describe("POST /permission/grant", () => {
     const { token } = await auth(server, {
       userData,
       password: credentials.hash,
-      scope: ["permission:grant"]
+      scope: ["PermissionGrant"]
     });
     const id = (await server.db<TPermissions>("permission").insert({
       email: userData.email,
@@ -94,7 +94,7 @@ describe("POST /permission/rescind", () => {
     const { token } = await auth(server, {
       userData,
       password: credentials.hash,
-      scope: ["permission:rescind"]
+      scope: ["PermissionRescind"]
     });
     const id = (await server.db<TPermissions>("permission").insert({
       email: userData.email,

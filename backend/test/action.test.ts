@@ -24,7 +24,7 @@ describe("POST /action/simpleSearch", () => {
     const { token } = await auth(server, {
       userData,
       password: credentials.hash,
-      scope: ["action:simpleSearch"]
+      scope: ["ActionSimpleSearch"]
     });
     await server.db<TAction>("action").insert({
       userId: 8,
@@ -50,7 +50,7 @@ describe("POST /action/simpleSearch", () => {
     const { token } = await auth(server, {
       userData,
       password: credentials.hash,
-      scope: ["action:simpleSearch"]
+      scope: ["ActionSimpleSearch"]
     });
     await server.db<TAction>("action").insert({
       userId: 8,
@@ -79,7 +79,7 @@ describe("POST /action/chainWhereSearch", () => {
     const { token } = await auth(server, {
       userData,
       password: credentials.hash,
-      scope: ["action:chainWhereSearch"]
+      scope: ["ActionChainWhereSearch"]
     });
     await server.db<TAction>("action").insert({
       userId: 8,
@@ -108,7 +108,7 @@ describe("POST /action/chainWhereSearch", () => {
     const { token } = await auth(server, {
       userData,
       password: credentials.hash,
-      scope: ["action:chainWhereSearch"]
+      scope: ["ActionChainWhereSearch"]
     });
     await server.db<TAction>("action").insert({
       userId: 8,
@@ -138,7 +138,7 @@ describe("POST /action/chainWhereSearch", () => {
     const { token } = await auth(server, {
       userData,
       password: credentials.hash,
-      scope: ["action:chainWhereSearch"]
+      scope: ["ActionChainWhereSearch"]
     });
     await server.db<TAction>("action").insert({
       userId: 9,
@@ -181,7 +181,7 @@ describe("POST /action/chainWhereSearch", () => {
     const { token } = await auth(server, {
       userData,
       password: credentials.hash,
-      scope: ["action:chainWhereSearch"]
+      scope: ["ActionChainWhereSearch"]
     });
     await server.db<TAction>("action").insert({
       userId: 9,

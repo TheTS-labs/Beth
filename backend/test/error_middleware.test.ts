@@ -22,7 +22,7 @@ describe("General tests", () => {
     const { token } = await auth(server, {
       userData,
       password: credentials.hash,
-      scope: ["user:notFound"]
+      scope: ["UserNotFound"]
     });
 
     const res = await req.post("/user/notFound").send({}).set({ "Authorization": "Bearer " + token+"t" });
@@ -36,7 +36,7 @@ describe("General tests", () => {
     const { token } = await auth(server, {
       userData,
       password: credentials.hash,
-      scope: ["post:edit"]
+      scope: ["PostEdit"]
     });
     const id = (await server.db<TPost>("post").insert({
       text: "Example",

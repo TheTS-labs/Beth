@@ -26,7 +26,7 @@ describe("POST /voting/vote", () => {
     const { token } = await auth(server, {
       userData,
       password: credentials.hash,
-      scope: ["voting:vote"]
+      scope: ["VotingVote"]
     });
     const postId = (await server.db<TPost>("post").insert({
       author: userData.email,
@@ -49,7 +49,7 @@ describe("POST /voting/vote", () => {
     const { token } = await auth(server, {
       userData,
       password: credentials.hash,
-      scope: ["voting:vote"]
+      scope: ["VotingVote"]
     });
     // Preparing
 
@@ -66,7 +66,7 @@ describe("POST /voting/vote", () => {
     const { email, token } = await auth(server, {
       userData,
       password: credentials.hash,
-      scope: ["voting:vote"]
+      scope: ["VotingVote"]
     });
     const postId = (await server.db<TPost>("post").insert({
       author: userData.email,
@@ -89,7 +89,7 @@ describe("POST /voting/vote", () => {
     const { email, token } = await auth(server, {
       userData,
       password: credentials.hash,
-      scope: ["voting:vote"]
+      scope: ["VotingVote"]
     });
     const postId = (await server.db<TPost>("post").insert({
       author: userData.email,
@@ -118,7 +118,7 @@ describe("POST /voting/voteCount", () => {
     const { email, token } = await auth(server, {
       userData,
       password: credentials.hash,
-      scope: ["voting:voteCount"]
+      scope: ["VotingVoteCount"]
     });
     const postId = (await server.db<TPost>("post").insert({
       author: userData.email,
@@ -146,7 +146,7 @@ describe("POST /voting/voteCount", () => {
     const { email, token } = await auth(server, {
       userData,
       password: credentials.hash,
-      scope: ["voting:voteCount"]
+      scope: ["VotingVoteCount"]
     });
     const postId = (await server.db<TPost>("post").insert({
       author: userData.email,
@@ -174,7 +174,7 @@ describe("POST /voting/voteCount", () => {
     const { email, token } = await auth(server, {
       userData,
       password: credentials.hash,
-      scope: ["voting:voteCount"]
+      scope: ["VotingVoteCount"]
     });
     const postId = (await server.db<TPost>("post").insert({
       author: userData.email,
@@ -210,7 +210,7 @@ describe("POST /voting/voteCount", () => {
     const { token } = await auth(server, {
       userData,
       password: credentials.hash,
-      scope: ["voting:voteCount"]
+      scope: ["VotingVoteCount"]
     });
     // Preparing
 

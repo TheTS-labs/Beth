@@ -77,7 +77,7 @@ describe("POST /user/view", () => {
     const { email, token } = await auth(server, {
       userData,
       password: credentials.hash,
-      scope: ["user:view"]
+      scope: ["UserView"]
     });
     // Preparing
 
@@ -94,7 +94,7 @@ describe("POST /user/view", () => {
     const { token } = await auth(server, {
       userData,
       password: credentials.hash,
-      scope: ["user:view"]
+      scope: ["UserView"]
     });
     // Preparing
 
@@ -110,7 +110,7 @@ describe("POST /user/editPassword", () => {
     const { email, token } = await auth(server, {
       userData,
       password: credentials.hash,
-      scope: ["user:editPassword"]
+      scope: ["UserEditPassword"]
     });
     // Preparing
 
@@ -133,7 +133,7 @@ describe("POST /user/froze", () => {
     const { email, token } = await auth(server, {
       userData,
       password: credentials.hash,
-      scope: ["user:froze"]
+      scope: ["UserFroze"]
     });
     // Preparing
 
@@ -154,7 +154,7 @@ describe("POST /user/froze", () => {
     const { email } = await auth(server, {
       userData,
       password: credentials.hash,
-      scope: ["user:froze"]
+      scope: ["UserFroze"]
     });
     await server.db<TUser>("user").where({ email }).update({ isFrozen: DBBool.Yes });
     const { token } = await auth(server, {
@@ -164,7 +164,7 @@ describe("POST /user/froze", () => {
         username: "bethAdmin",
       },
       password: credentials.hash,
-      scope: ["user:froze"]
+      scope: ["UserFroze"]
     });
     await server.db<TPermissions>("permission").insert({
       email: "beth_admin@gmail.com",
@@ -189,7 +189,7 @@ describe("POST /user/froze", () => {
     const { token } = await auth(server, {
       userData,
       password: credentials.hash,
-      scope: ["user:froze"]
+      scope: ["UserFroze"]
     });
     await server.db<TPermissions>("permission").insert({ email: userData.email });
     // Preparing
@@ -209,7 +209,7 @@ describe("POST /user/editTags", () => {
     const { email, token } = await auth(server, {
       userData,
       password: credentials.hash,
-      scope: ["user:editTags"]
+      scope: ["UserEditTags"]
     });
     await server.db<TPermissions>("permission").insert({
       email: userData.email,
@@ -234,7 +234,7 @@ describe("POST /user/editTags", () => {
     const { token } = await auth(server, {
       userData,
       password: credentials.hash,
-      scope: ["user:editTags"]
+      scope: ["UserEditTags"]
     });
     await server.db<TPermissions>("permission").insert({
       email: userData.email,
@@ -257,7 +257,7 @@ describe("POST /user/verify", () => {
     const { email, token } = await auth(server, {
       userData,
       password: credentials.hash,
-      scope: ["user:verify"]
+      scope: ["UserVerify"]
     });
     await server.db<TPermissions>("permission").insert({
       email: userData.email,
@@ -282,7 +282,7 @@ describe("POST /user/verify", () => {
     const { email, token } = await auth(server, {
       userData,
       password: credentials.hash,
-      scope: ["user:verify"]
+      scope: ["UserVerify"]
     });
     await server.db<TUser>("user").where({ email }).update({ verified: DBBool.Yes });
     await server.db<TPermissions>("permission").insert({
@@ -308,7 +308,7 @@ describe("POST /user/verify", () => {
     const { token } = await auth(server, {
       userData,
       password: credentials.hash,
-      scope: ["user:verify"]
+      scope: ["UserVerify"]
     });
     await server.db<TPermissions>("permission").insert({
       email: userData.email,

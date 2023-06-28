@@ -16,6 +16,7 @@ import UserModel from "../../db/models/user";
 import * as type from "./types";
 
 type CallEndpointReturnType = { success: true } | {} | SafeUserObject | { token: string };
+type TPermissionsWithKey = TPermissions & { [key: string]: PermissionStatus | undefined };
 
 export default class UserEndpoint extends BaseEndpoint<type.UserRequestArgs, CallEndpointReturnType> {
   allowNames: Array<string> = [
@@ -131,11 +132,14 @@ export default class UserEndpoint extends BaseEndpoint<type.UserRequestArgs, Cal
     args = await this.validate(type.IssueTokenArgsSchema, args);
     const user = await this.userModel.getUnsafeUser(args.email);
 
-    // TODO: What if user is frozen?
     // TODO: Scope shorthands
 
     if (!user) {
       throw new RequestError("DatabaseError", "User doesn't exist", 404);
+    }
+
+    if (user.isFrozen) {
+      throw new RequestError("UserIsFrozen", `User(${user.email}) is frozen`, 403);
     }
 
     const hash = await bcrypt.compare(args.password, user.password);
@@ -143,28 +147,16 @@ export default class UserEndpoint extends BaseEndpoint<type.UserRequestArgs, Cal
       throw new RequestError("AuthError", "Wrong password or email", 403);
     }
 
-    const permission = await this.permissionModel.getPermissions(user.email);
+    const permission = await this.permissionModel.getPermissions(user.email) as TPermissionsWithKey;
     if (!permission) {
       throw new RequestError("DatabaseError", "Permissions doesn't exist", 500);
     }
 
     args.scope.forEach(scope => {
-      // TODO: Replace scope name format with the database's
-
-      let [ domain, endpoint ] = scope.split(":");
-
-      domain = domain.charAt(0).toUpperCase() + domain.slice(1);
-      endpoint = endpoint.charAt(0).toUpperCase() + endpoint.slice(1);
-
-      const permissionName = domain + endpoint;
-      
-      // TODO: Remove ts-ignore
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      //@ts-ignore
-      if (!permission[permissionName]) {
+      if (!permission[scope]) {
         throw new RequestError(
           "PermissionError",
-          `You don't have permission ${permissionName} to create the token with given scope`,
+          `You don't have permission ${scope} to issue the token with given scope`,
           403
         );
       }

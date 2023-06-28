@@ -22,11 +22,11 @@ export const CreateArgsSchema = Joi.object({
 
 // >>> View >>>
 export interface ViewArgs {
-  id: number
+  email: string
 }
 
 export const ViewArgsSchema = Joi.object({
-  id: Joi.number().positive().required(),
+  email: Joi.string().email().required(),
 });
 // <<< View <<<
 
@@ -42,50 +42,50 @@ export const EditPasswordArgsSchema = Joi.object({
 
 // >>> Froze >>>
 export interface FrozeArgs {
-  id: number
+  email: string
   froze: DBBool
 }
 
 export const FrozeArgsSchema = Joi.object({
-  id: Joi.number().positive().required(),
+  email: Joi.string().email().required(),
   froze: Joi.number().min(0).max(1).default(1)
 });
 // <<< Froze <<<
 
 // >>> Edit Tags >>>
 export interface EditTagsArgs {
-  id: number
+  email: string
   newTags: string
 }
 
 export const EditTagsArgsSchema = Joi.object({
-  id: Joi.number().positive().required(),
+  email: Joi.string().email().required(),
   newTags: Joi.string().pattern(/^[a-zA-Z0-9]+(?:,[a-zA-Z0-9]+)*$/).required()
 });
 // <<< Edit Tags <<<
 
 // >>> Verify >>>
 export interface VerifyArgs {
-  id: number
+  email: string
   verify: DBBool
 }
 
 export const VerifyArgsSchema = Joi.object({
-  id: Joi.number().positive().required(),
+  email: Joi.string().email().required(),
   verify: Joi.number().min(0).max(1).default(1)
 });
 // <<< Verify <<<
 
 // >>> Issue Token >>>
 export interface IssueTokenArgs {
-  id: number
+  email: string
   password: string
   expiresIn: string
   scope: string[]
 }
 
 export const IssueTokenArgsSchema = Joi.object({
-  id: Joi.number().positive().required(),
+  email: Joi.string().email().required(),
   password: Joi.string().pattern(new RegExp("^[a-zA-Z0-9]{8,64}$")).required(),
   expiresIn: Joi.alternatives().try(Joi.number(), Joi.string()).default(2592000), // 30 days
   scope: Joi.array().items(Joi.string()).required()

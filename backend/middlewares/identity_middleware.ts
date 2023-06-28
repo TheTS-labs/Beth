@@ -35,7 +35,6 @@ export default class IdentityMiddleware {
         return;
       }
 
-      const user = await this.userModel.getUnsafeUser(req.auth.userId);
       const token = await this.tokenModel.getToken(req.auth.tokenId);
       if (!token) {
         throw new RequestError("AuthError", "This token doesn't exist, even if it signed", 403);
@@ -43,6 +42,7 @@ export default class IdentityMiddleware {
       if (token.revoked) {
         throw new RequestError("AuthError", "This token revoked", 403);
       }
+      const user = await this.userModel.getUnsafeUser(token.owner);
       if (!user) {
         throw new RequestError("AuthError", "User doesn't exist", 403);
       }

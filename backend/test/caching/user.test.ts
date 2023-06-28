@@ -76,32 +76,31 @@ describe("POST /user/create", () => {
 describe("POST /user/view", () => {
   it("should return user object", async () => {
     // Preparing
-    const { id, token } = await auth(server, {
+    const { email, token } = await auth(server, {
       userData,
       password: credentials.hash,
       scope: ["user:view"]
     });
     // Preparing
 
-    const res = await req.post("/user/view").send({ id: id }).set({ "Authorization": "Bearer " + token });
+    const res = await req.post("/user/view").send({ email }).set({ "Authorization": "Bearer " + token });
 
     expect(res.body.displayName).toBe(userData.displayName);
     expect(res.body.email).toBe(userData.email);
     expect(res.body.username).toBe(userData.username);
-    expect(res.body.id).toBe(id);
     expect(res.body.isFrozen).toBeFalsy();
   });
 
   it("should return empty object", async () => {
     // Preparing
-    const { id, token } = await auth(server, {
+    const { token } = await auth(server, {
       userData,
       password: credentials.hash,
       scope: ["user:view"]
     });
     // Preparing
 
-    const res = await req.post("/user/view").send({ id: id + 1 }).set({ "Authorization": "Bearer " + token });
+    const res = await req.post("/user/view").send({ email: "q@mail.com" }).set({ "Authorization": "Bearer " + token });
 
     expect(JSON.stringify(res.body)).toBe("{}");
   });
@@ -110,7 +109,7 @@ describe("POST /user/view", () => {
 describe("POST /user/editPassword", () => {
   it("should change user password", async () => {
     // Preparing
-    const { id, token } = await auth(server, {
+    const { email, token } = await auth(server, {
       userData,
       password: credentials.hash,
       scope: ["user:editPassword"]
@@ -121,7 +120,7 @@ describe("POST /user/editPassword", () => {
                          .send({ newPassword: credentials.newPassword })
                          .set({ "Authorization": "Bearer " + token });
 
-    const newHash = await server.db<TUser>("user").select("password").where({ id }).first();
+    const newHash = await server.db<TUser>("user").select("password").where({ email }).first();
 
     expect(res.body.errorMessage).toBeUndefined();
     expect(res.statusCode).toBe(200);
@@ -133,7 +132,7 @@ describe("POST /user/editPassword", () => {
 describe("POST /user/froze", () => {
   it("should froze user", async () => {
     // Preparing
-    const { id, token } = await auth(server, {
+    const { email, token } = await auth(server, {
       userData,
       password: credentials.hash,
       scope: ["user:froze"]
@@ -141,25 +140,25 @@ describe("POST /user/froze", () => {
     // Preparing
 
     const res = await req.post("/user/froze")
-                         .send({ id, froze: 1 })
+                         .send({ email, froze: 1 })
                          .set({ "Authorization": "Bearer " + token });
 
     expect(res.body.errorMessage).toBeUndefined();
     expect(res.statusCode).toBe(200);
     expect(res.body.success).toBe(true);
 
-    const user = await server.db<TUser>("user").where({ id }).first();
+    const user = await server.db<TUser>("user").where({ email }).first();
     expect(user?.isFrozen).toBeTruthy();
   });
 
   it("should unfroze user", async () => {
     // Preparing
-    const { id } = await auth(server, {
+    const { email } = await auth(server, {
       userData,
       password: credentials.hash,
       scope: ["user:froze"]
     });
-    await server.db<TUser>("user").where({ id }).update({ isFrozen: DBBool.Yes });
+    await server.db<TUser>("user").where({ email }).update({ isFrozen: DBBool.Yes });
     const { token } = await auth(server, {
       userData: {
         email: "beth_admin@gmail.com",
@@ -176,20 +175,20 @@ describe("POST /user/froze", () => {
     // Preparing
 
     const res = await req.post("/user/froze")
-                         .send({ id, froze: 0 })
+                         .send({ email, froze: 0 })
                          .set({ "Authorization": "Bearer " + token });
 
     expect(res.body.errorMessage).toBeUndefined();
     expect(res.statusCode).toBe(200);
     expect(res.body.success).toBe(true);
 
-    const user = await server.db<TUser>("user").where({ id }).first();
+    const user = await server.db<TUser>("user").where({ email }).first();
     expect(user?.isFrozen).toBeFalsy();
   });
 
   it("should throw PermissionError", async () => {
     // Preparing
-    const { id, token } = await auth(server, {
+    const { token } = await auth(server, {
       userData,
       password: credentials.hash,
       scope: ["user:froze"]
@@ -198,7 +197,7 @@ describe("POST /user/froze", () => {
     // Preparing
 
     const res = await req.post("/user/froze")
-                         .send({ id: id+1, froze: 0 })
+                         .send({ email: "q@mail.com", froze: 0 })
                          .set({ "Authorization": "Bearer " + token });
 
     expect(res.body.errorMessage).not.toBeUndefined();
@@ -209,7 +208,7 @@ describe("POST /user/froze", () => {
 describe("POST /user/editTags", () => {
   it("should edit user tags", async () => {
     // Preparing
-    const { id, token } = await auth(server, {
+    const { email, token } = await auth(server, {
       userData,
       password: credentials.hash,
       scope: ["user:editTags"]
@@ -221,20 +220,20 @@ describe("POST /user/editTags", () => {
     // Preparing
 
     const res = await req.post("/user/editTags")
-                         .send({ id, newTags: "tag" })
+                         .send({ email, newTags: "tag" })
                          .set({ "Authorization": "Bearer " + token });
 
     expect(res.body.errorMessage).toBeUndefined();
     expect(res.statusCode).toBe(200);
     expect(res.body.success).toBe(true);
 
-    const user = await server.db<TUser>("user").where({ id }).first();
+    const user = await server.db<TUser>("user").where({ email }).first();
     expect(user?.tags).toBe("tag");
   });
 
   it("should throw DatabaseError", async () => {
     // Preparing
-    const { id, token } = await auth(server, {
+    const { token } = await auth(server, {
       userData,
       password: credentials.hash,
       scope: ["user:editTags"]
@@ -246,7 +245,7 @@ describe("POST /user/editTags", () => {
     // Preparing
 
     const res = await req.post("/user/editTags")
-                         .send({ id: id+1, newTags: "tag" })
+                         .send({ email: "q@mail.com", newTags: "tag" })
                          .set({ "Authorization": "Bearer " + token });
 
     expect(res.body.errorMessage).not.toBeUndefined();
@@ -257,7 +256,7 @@ describe("POST /user/editTags", () => {
 describe("POST /user/verify", () => {
   it("should verify tags", async () => {
     // Preparing
-    const { id, token } = await auth(server, {
+    const { email, token } = await auth(server, {
       userData,
       password: credentials.hash,
       scope: ["user:verify"]
@@ -269,25 +268,25 @@ describe("POST /user/verify", () => {
     // Preparing
 
     const res = await req.post("/user/verify")
-                         .send({ id, verify: 1 })
+                         .send({ email, verify: 1 })
                          .set({ "Authorization": "Bearer " + token });
 
     expect(res.body.errorMessage).toBeUndefined();
     expect(res.statusCode).toBe(200);
     expect(res.body.success).toBe(true);
 
-    const user = await server.db<TUser>("user").where({ id }).first();
+    const user = await server.db<TUser>("user").where({ email }).first();
     expect(user?.verified).toBeTruthy();
   });
 
   it("should unverify tags", async () => {
     // Preparing
-    const { id, token } = await auth(server, {
+    const { email, token } = await auth(server, {
       userData,
       password: credentials.hash,
       scope: ["user:verify"]
     });
-    await server.db<TUser>("user").where({ id }).update({ verified: DBBool.Yes });
+    await server.db<TUser>("user").where({ email }).update({ verified: DBBool.Yes });
     await server.db<TPermissions>("permission").insert({
       email: userData.email,
       UserVerify: PermissionStatus.Has
@@ -295,20 +294,20 @@ describe("POST /user/verify", () => {
     // Preparing
 
     const res = await req.post("/user/verify")
-                         .send({ id, verify: 0 })
+                         .send({ email, verify: 0 })
                          .set({ "Authorization": "Bearer " + token });
 
     expect(res.body.errorMessage).toBeUndefined();
     expect(res.statusCode).toBe(200);
     expect(res.body.success).toBe(true);
 
-    const user = await server.db<TUser>("user").where({ id }).first();
+    const user = await server.db<TUser>("user").where({ email }).first();
     expect(user?.verified).toBeFalsy();
   });
 
   it("should throw DatabaseError", async () => {
     // Preparing
-    const { id, token } = await auth(server, {
+    const { token } = await auth(server, {
       userData,
       password: credentials.hash,
       scope: ["user:verify"]
@@ -320,7 +319,7 @@ describe("POST /user/verify", () => {
     // Preparing
 
     const res = await req.post("/user/verify")
-                         .send({ id: id+1, verify: 1 })
+                         .send({ email: "q@mail.com", verify: 1 })
                          .set({ "Authorization": "Bearer " + token });
 
     expect(res.body.errorMessage).not.toBeUndefined();

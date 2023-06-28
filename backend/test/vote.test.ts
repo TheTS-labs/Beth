@@ -16,7 +16,6 @@ beforeAll(() => { server.listen(); });
 afterAll((done) => { server.server.close(); server.scheduledTasks.stop(); done(); });
 beforeEach(async () => {
   await server.db("user").del();
-  // await server.db("permission").del();
   await server.db("token").del();
   await server.db("post").del();
   await server.db("vote").del();
@@ -65,7 +64,7 @@ describe("POST /voting/vote", () => {
 
   it("should throw DatabaseError: You already voted", async () => {
     // Preparing
-    const { id, token } = await auth(server, {
+    const { email, token } = await auth(server, {
       userData,
       password: credentials.hash,
       scope: ["voting:vote"]
@@ -75,7 +74,7 @@ describe("POST /voting/vote", () => {
       text: "text",
       tags: "tag"
     }, "id"))[0].id;
-    await server.db<TVote>("vote").insert({ userId: id, postId, voteType: Vote.Up });
+    await server.db<TVote>("vote").insert({ userEmail: email, postId, voteType: Vote.Up });
     // Preparing
 
     const res = await req.post("/voting/vote")
@@ -88,7 +87,7 @@ describe("POST /voting/vote", () => {
 
   it("should delete vote", async () => {
     // Preparing
-    const { id, token } = await auth(server, {
+    const { email, token } = await auth(server, {
       userData,
       password: credentials.hash,
       scope: ["voting:vote"]
@@ -98,7 +97,7 @@ describe("POST /voting/vote", () => {
       text: "text",
       tags: "tag"
     }, "id"))[0].id;
-    const voteId = (await server.db<TVote>("vote").insert({ userId: id, postId, voteType: Vote.Up }, "id"))[0].id;
+    const voteId = (await server.db<TVote>("vote").insert({ userEmail: email, postId, voteType: Vote.Up }, "id"))[0].id;
     // Preparing
 
     const res = await req.post("/voting/vote")
@@ -117,7 +116,7 @@ describe("POST /voting/vote", () => {
 describe("POST /voting/voteCount", () => {
   it("should return: 4 Up votes", async () => {
     // Preparing
-    const { token } = await auth(server, {
+    const { email, token } = await auth(server, {
       userData,
       password: credentials.hash,
       scope: ["voting:voteCount"]
@@ -128,10 +127,10 @@ describe("POST /voting/voteCount", () => {
       tags: "tag"
     }, "id"))[0].id;
 
-    await server.db<TVote>("vote").insert({ userId: 1, postId, voteType: Vote.Up });
-    await server.db<TVote>("vote").insert({ userId: 1, postId, voteType: Vote.Up });
-    await server.db<TVote>("vote").insert({ userId: 1, postId, voteType: Vote.Up });
-    await server.db<TVote>("vote").insert({ userId: 1, postId, voteType: Vote.Up });
+    await server.db<TVote>("vote").insert({ userEmail: email, postId, voteType: Vote.Up });
+    await server.db<TVote>("vote").insert({ userEmail: email, postId, voteType: Vote.Up });
+    await server.db<TVote>("vote").insert({ userEmail: email, postId, voteType: Vote.Up });
+    await server.db<TVote>("vote").insert({ userEmail: email, postId, voteType: Vote.Up });
     // Preparing
 
     const res = await req.post("/voting/voteCount")
@@ -145,7 +144,7 @@ describe("POST /voting/voteCount", () => {
 
   it("should return: 4 Down votes", async () => {
     // Preparing
-    const { token } = await auth(server, {
+    const { email, token } = await auth(server, {
       userData,
       password: credentials.hash,
       scope: ["voting:voteCount"]
@@ -156,10 +155,10 @@ describe("POST /voting/voteCount", () => {
       tags: "tag"
     }, "id"))[0].id;
 
-    await server.db<TVote>("vote").insert({ userId: 1, postId, voteType: Vote.Down });
-    await server.db<TVote>("vote").insert({ userId: 1, postId, voteType: Vote.Down });
-    await server.db<TVote>("vote").insert({ userId: 1, postId, voteType: Vote.Down });
-    await server.db<TVote>("vote").insert({ userId: 1, postId, voteType: Vote.Down });
+    await server.db<TVote>("vote").insert({ userEmail: email, postId, voteType: Vote.Down });
+    await server.db<TVote>("vote").insert({ userEmail: email, postId, voteType: Vote.Down });
+    await server.db<TVote>("vote").insert({ userEmail: email, postId, voteType: Vote.Down });
+    await server.db<TVote>("vote").insert({ userEmail: email, postId, voteType: Vote.Down });
     // Preparing
 
     const res = await req.post("/voting/voteCount")
@@ -173,7 +172,7 @@ describe("POST /voting/voteCount", () => {
 
   it("should return: 2 Up votes and 2 Down votes", async () => {
     // Preparing
-    const { token } = await auth(server, {
+    const { email, token } = await auth(server, {
       userData,
       password: credentials.hash,
       scope: ["voting:voteCount"]
@@ -184,10 +183,10 @@ describe("POST /voting/voteCount", () => {
       tags: "tag"
     }, "id"))[0].id;
 
-    await server.db<TVote>("vote").insert({ userId: 1, postId, voteType: Vote.Up });
-    await server.db<TVote>("vote").insert({ userId: 1, postId, voteType: Vote.Up });
-    await server.db<TVote>("vote").insert({ userId: 1, postId, voteType: Vote.Down });
-    await server.db<TVote>("vote").insert({ userId: 1, postId, voteType: Vote.Down });
+    await server.db<TVote>("vote").insert({ userEmail: email, postId, voteType: Vote.Up });
+    await server.db<TVote>("vote").insert({ userEmail: email, postId, voteType: Vote.Up });
+    await server.db<TVote>("vote").insert({ userEmail: email, postId, voteType: Vote.Down });
+    await server.db<TVote>("vote").insert({ userEmail: email, postId, voteType: Vote.Down });
     // Preparing
 
     const upvotes = await req.post("/voting/voteCount")

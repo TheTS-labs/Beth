@@ -62,7 +62,7 @@ export default class UserEndpoint extends BaseEndpoint<type.UserRequestArgs, Cal
   async view(args: type.ViewArgs, _auth: Auth): Promise<CallEndpointReturnType> {
     args = await this.validate(type.ViewArgsSchema, args);
 
-    const requestedUser = await this.userModel.getSafeUser(args.id);
+    const requestedUser = await this.userModel.getSafeUser(args.email);
 
     return requestedUser || {};
   }
@@ -86,11 +86,11 @@ export default class UserEndpoint extends BaseEndpoint<type.UserRequestArgs, Cal
 
     const permissions = await this.permissionModel.getPermissions(auth.user.email) as TPermissions;
 
-    if (args.id != auth.user.id && permissions["UserSuperFroze"] == PermissionStatus.Hasnt) {
+    if (args.email != auth.user.email && permissions["UserSuperFroze"] == PermissionStatus.Hasnt) {
       throw new RequestError("PermissionError", "You can froze only yourself", 403);
     }
 
-    await this.userModel.frozeUser(args.id, args.froze).catch((err: { message: string }) => {
+    await this.userModel.frozeUser(args.email, args.froze).catch((err: { message: string }) => {
       throw new RequestError("DatabaseError", err.message, 500);
     });
 
@@ -100,12 +100,12 @@ export default class UserEndpoint extends BaseEndpoint<type.UserRequestArgs, Cal
   async editTags(args: type.EditTagsArgs, _auth: Auth): Promise<CallEndpointReturnType> {
     args = await this.validate(type.EditTagsArgsSchema, args);
 
-    const requestedUser = await this.userModel.getSafeUser(args.id);
+    const requestedUser = await this.userModel.getSafeUser(args.email);
     if (!requestedUser) {
       throw new RequestError("DatabaseError", "User doesn't exist", 404);
     }
 
-    await this.userModel.editTags(args.id, args.newTags).catch((err: { message: string }) => {
+    await this.userModel.editTags(args.email, args.newTags).catch((err: { message: string }) => {
       throw new RequestError("DatabaseError", err.message, 500);
     });
 
@@ -115,12 +115,12 @@ export default class UserEndpoint extends BaseEndpoint<type.UserRequestArgs, Cal
   async verify(args: type.VerifyArgs, _auth: Auth): Promise<CallEndpointReturnType> {
     args = await this.validate(type.VerifyArgsSchema, args);
 
-    const requestedUser = await this.userModel.getSafeUser(args.id);
+    const requestedUser = await this.userModel.getSafeUser(args.email);
     if (!requestedUser) {
       throw new RequestError("DatabaseError", "User doesn't exist", 404);
     }
 
-    await this.userModel.verifyUser(args.id, args.verify).catch((err: { message: string }) => {
+    await this.userModel.verifyUser(args.email, args.verify).catch((err: { message: string }) => {
       throw new RequestError("DatabaseError", err.message, 500);
     });
 
@@ -129,7 +129,7 @@ export default class UserEndpoint extends BaseEndpoint<type.UserRequestArgs, Cal
 
   async issueToken(args: type.IssueTokenArgs, _auth: undefined): Promise<CallEndpointReturnType> {
     args = await this.validate(type.IssueTokenArgsSchema, args);
-    const user = await this.userModel.getUnsafeUser(args.id);
+    const user = await this.userModel.getUnsafeUser(args.email);
 
     if (!user) {
       throw new RequestError("DatabaseError", "User doesn't exist", 404);
@@ -137,7 +137,7 @@ export default class UserEndpoint extends BaseEndpoint<type.UserRequestArgs, Cal
 
     const hash = await bcrypt.compare(args.password, user.password);
     if (!hash) {
-      throw new RequestError("AuthError", "Wrong password or id", 403);
+      throw new RequestError("AuthError", "Wrong password or email", 403);
     }
 
     const permission = await this.permissionModel.getPermissions(user.email);
@@ -173,7 +173,6 @@ export default class UserEndpoint extends BaseEndpoint<type.UserRequestArgs, Cal
     });
 
     const token = jwt.sign({
-      userId: user.id,
       tokenId,
       scope: args.scope
     }, this.config.get("JWT_TOKEN_SECRET").required().asString(), { expiresIn: args.expiresIn });

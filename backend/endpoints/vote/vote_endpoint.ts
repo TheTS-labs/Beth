@@ -52,14 +52,14 @@ export default class VoteEndpoint extends BaseEndpoint<type.VoteRequestArgs, Cal
       throw new RequestError("DatabaseError", "Post doesn't exist", 404);
     }
 
-    const vote = await this.voteModel.getVote(args.postId, auth.user.id);
+    const vote = await this.voteModel.getVote(args.postId, auth.user.email);
     if (vote && !args.unvote) {
       throw new RequestError("DatabaseError", "You already voted", 403);
     }
 
     await this.voteModel.vote(
       args.postId,
-      auth.user.id,
+      auth.user.email,
       args.unvote,
       args.voteType
     ).catch((err: { message: string }) => {

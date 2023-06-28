@@ -32,7 +32,7 @@ describe("POST /recommendation/getPosts", () => {
 
   it("should return posts", async () => {
     // Preparing
-    const { id } = await auth(server, {
+    const { email } = await auth(server, {
       userData,
       password: credentials.hash,
       scope: []
@@ -42,9 +42,9 @@ describe("POST /recommendation/getPosts", () => {
     const id2 = (await server.db<TPost>("post").insert({ text: "Example 2", author: userData.email }, "id"))[0].id;
     const id3 = (await server.db<TPost>("post").insert({ text: "Example 3", author: userData.email }, "id"))[0].id;
 
-    await server.db<TVote>("vote").insert({ userId: id, postId: id1, voteType: Vote.Up });
-    await server.db<TVote>("vote").insert({ userId: id, postId: id2, voteType: Vote.Up });
-    await server.db<TVote>("vote").insert({ userId: id, postId: id3, voteType: Vote.Up });
+    await server.db<TVote>("vote").insert({ userEmail: email, postId: id1, voteType: Vote.Up });
+    await server.db<TVote>("vote").insert({ userEmail: email, postId: id2, voteType: Vote.Up });
+    await server.db<TVote>("vote").insert({ userEmail: email, postId: id3, voteType: Vote.Up });
     // Preparing
 
     const res = await req.post("/recommendation/getPosts");
@@ -61,7 +61,7 @@ describe("POST /recommendation/getPosts", () => {
 describe("POST /recommendation/getHotTags", () => {
   it("should return hot tag", async () => {
     // Preparing
-    const { id } = await auth(server, {
+    const { email } = await auth(server, {
       userData,
       password: credentials.hash,
       scope: []
@@ -77,9 +77,9 @@ describe("POST /recommendation/getHotTags", () => {
       text: "Example 3", author: userData.email, tags: "tag"
     }, "id"))[0].id;
 
-    await server.db<TVote>("vote").insert({ userId: id, postId: id1, voteType: Vote.Up });
-    await server.db<TVote>("vote").insert({ userId: id, postId: id2, voteType: Vote.Up });
-    await server.db<TVote>("vote").insert({ userId: id, postId: id3, voteType: Vote.Up });
+    await server.db<TVote>("vote").insert({ userEmail: email, postId: id1, voteType: Vote.Up });
+    await server.db<TVote>("vote").insert({ userEmail: email, postId: id2, voteType: Vote.Up });
+    await server.db<TVote>("vote").insert({ userEmail: email, postId: id3, voteType: Vote.Up });
     // Preparing
 
     const res = await req.post("/recommendation/getHotTags");
@@ -94,7 +94,7 @@ describe("POST /recommendation/getHotTags", () => {
 
   it("should return hot tags", async () => {
     // Preparing
-    const { id } = await auth(server, {
+    const { email } = await auth(server, {
       userData,
       password: credentials.hash,
       scope: []
@@ -110,9 +110,9 @@ describe("POST /recommendation/getHotTags", () => {
       text: "Example 3", author: userData.email, tags: "tag"
     }, "id"))[0].id;
 
-    await server.db<TVote>("vote").insert({ userId: id, postId: id1, voteType: Vote.Up });
-    await server.db<TVote>("vote").insert({ userId: id, postId: id2, voteType: Vote.Up });
-    await server.db<TVote>("vote").insert({ userId: id, postId: id3, voteType: Vote.Up });
+    await server.db<TVote>("vote").insert({ userEmail: email, postId: id1, voteType: Vote.Up });
+    await server.db<TVote>("vote").insert({ userEmail: email, postId: id2, voteType: Vote.Up });
+    await server.db<TVote>("vote").insert({ userEmail: email, postId: id3, voteType: Vote.Up });
     // Preparing
 
     const res = await req.post("/recommendation/getHotTags");
@@ -157,7 +157,7 @@ describe("POST /recommendation/recommend", () => {
 
   it("should correctly set scores: empty tags", async () => {
     // Preparing
-    const { id, token } = await auth(server, {
+    const { email, token } = await auth(server, {
       userData,
       password: credentials.hash,
       scope: [ "recommendation:recommend" ]
@@ -169,7 +169,7 @@ describe("POST /recommendation/recommend", () => {
       (await server.db<TPost>("post").insert({ text: "Example 3", author: "3@gmail.com" }).returning("*"))[0],
     ];
 
-    await server.db<TVote>("vote").insert({ userId: id, postId: posts[2].id, voteType: Vote.Up });
+    await server.db<TVote>("vote").insert({ userEmail: email, postId: posts[2].id, voteType: Vote.Up });
     // Preparing
 
     const res = await req.post("/recommendation/recommend").set({ "Authorization": "Bearer " + token });
@@ -189,7 +189,7 @@ describe("POST /recommendation/recommend", () => {
 
   it("should correctly set scores: liked and not liked tags", async () => {
     // Preparing
-    const { id, token } = await auth(server, {
+    const { email, token } = await auth(server, {
       userData,
       password: credentials.hash,
       scope: [ "recommendation:recommend" ]
@@ -213,7 +213,7 @@ describe("POST /recommendation/recommend", () => {
       }).returning("*"))[0],
     ];
 
-    await server.db<TVote>("vote").insert({ userId: id, postId: posts[2].id, voteType: Vote.Up });
+    await server.db<TVote>("vote").insert({ userEmail: email, postId: posts[2].id, voteType: Vote.Up });
     // Preparing
 
     const res = await req.post("/recommendation/recommend").set({ "Authorization": "Bearer " + token });
@@ -233,7 +233,7 @@ describe("POST /recommendation/recommend", () => {
 
   it("should correctly set scores: disliked and not disliked tag", async () => {
     // Preparing
-    const { id, token } = await auth(server, {
+    const { email, token } = await auth(server, {
       userData,
       password: credentials.hash,
       scope: [ "recommendation:recommend" ]
@@ -257,7 +257,7 @@ describe("POST /recommendation/recommend", () => {
       }).returning("*"))[0],
     ];
 
-    await server.db<TVote>("vote").insert({ userId: id, postId: posts[2].id, voteType: Vote.Down });
+    await server.db<TVote>("vote").insert({ userEmail: email, postId: posts[2].id, voteType: Vote.Down });
     // Preparing
 
     const res = await req.post("/recommendation/recommend").set({ "Authorization": "Bearer " + token });
@@ -277,7 +277,7 @@ describe("POST /recommendation/recommend", () => {
 
   it("should correctly set scores: disliked and not disliked user", async () => {
     // Preparing
-    const { id, token } = await auth(server, {
+    const { email, token } = await auth(server, {
       userData,
       password: credentials.hash,
       scope: [ "recommendation:recommend" ]
@@ -289,7 +289,7 @@ describe("POST /recommendation/recommend", () => {
       (await server.db<TPost>("post").insert({ text: "Example 3", author: "2@gmail.com" }).returning("*"))[0],
     ];
 
-    await server.db<TVote>("vote").insert({ userId: id, postId: posts[2].id, voteType: Vote.Down });
+    await server.db<TVote>("vote").insert({ userEmail: email, postId: posts[2].id, voteType: Vote.Down });
     // Preparing
 
     const res = await req.post("/recommendation/recommend").set({ "Authorization": "Bearer " + token });

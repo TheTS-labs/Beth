@@ -62,7 +62,6 @@ export const ScopeShorthands = {
 };
 
 export interface Auth {
-  userId: number
   tokenId: number
   scope: string[]
   user: TUser

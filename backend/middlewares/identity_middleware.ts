@@ -37,14 +37,15 @@ export default class IdentityMiddleware {
 
       const token = await this.tokenModel.getToken(req.auth.tokenId);
       if (!token) {
-        throw new RequestError("AuthError", "This token doesn't exist, even if it signed", 403);
+        // throw new RequestError("AuthError", "This token doesn't exist, even if it signed", 403);
+        throw new RequestError("AuthError", "", 2);
       }
       if (token.revoked) {
-        throw new RequestError("AuthError", "This token revoked", 403);
+        throw new RequestError("AuthError", "", 1);
       }
       const user = await this.userModel.getUnsafeUser(token.owner);
       if (!user) {
-        throw new RequestError("AuthError", "User doesn't exist", 403);
+        throw new RequestError("DatabaseError", "", 3);
       }
 
       req.auth.token = token;

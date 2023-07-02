@@ -25,7 +25,7 @@ export default class FrozenMiddleware {
       }
 
       if (req.auth?.user?.isFrozen) {
-        throw new RequestError("UserIsFrozen", `User(${req.auth.user.email}) is frozen`, 403);
+        throw new RequestError("UserIsFrozen", req.auth.user.email);
       }
   
       next();

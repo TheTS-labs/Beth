@@ -50,11 +50,11 @@ export default class UserEndpoint extends BaseEndpoint<type.UserRequestArgs, Cal
     const hash = await bcrypt.hash(args.password, 3);
 
     await this.userModel.insertUser(args.username, args.displayName, args.email, hash).catch((err: Error) => {
-      throw new RequestError("DatabaseError", err.message, 500);
+      throw new RequestError("DatabaseError", err.message);
     });
 
     await this.permissionModel.insertPermissions(args.email).catch((err: Error) => {
-      throw new RequestError("DatabaseError", err.message, 500);
+      throw new RequestError("DatabaseError", err.message);
     });
 
     return { success: true };
@@ -88,11 +88,11 @@ export default class UserEndpoint extends BaseEndpoint<type.UserRequestArgs, Cal
     const permissions = await this.permissionModel.getPermissions(auth.user.email) as TPermissions;
 
     if (args.email != auth.user.email && permissions["UserSuperFroze"] == PermissionStatus.Hasnt) {
-      throw new RequestError("PermissionError", "You can froze only yourself", 403);
+      throw new RequestError("PermissionError", "", 3);
     }
 
     await this.userModel.frozeUser(args.email, args.froze).catch((err: { message: string }) => {
-      throw new RequestError("DatabaseError", err.message, 500);
+      throw new RequestError("DatabaseError", err.message);
     });
 
     return { success: true };
@@ -103,11 +103,11 @@ export default class UserEndpoint extends BaseEndpoint<type.UserRequestArgs, Cal
 
     const requestedUser = await this.userModel.getSafeUser(args.email);
     if (!requestedUser) {
-      throw new RequestError("DatabaseError", "User doesn't exist", 404);
+      throw new RequestError("DatabaseError", "", 3);
     }
 
     await this.userModel.editTags(args.email, args.newTags).catch((err: { message: string }) => {
-      throw new RequestError("DatabaseError", err.message, 500);
+      throw new RequestError("DatabaseError", err.message);
     });
 
     return { success: true };
@@ -118,11 +118,11 @@ export default class UserEndpoint extends BaseEndpoint<type.UserRequestArgs, Cal
 
     const requestedUser = await this.userModel.getSafeUser(args.email);
     if (!requestedUser) {
-      throw new RequestError("DatabaseError", "User doesn't exist", 404);
+      throw new RequestError("DatabaseError", "", 3);
     }
 
     await this.userModel.verifyUser(args.email, args.verify).catch((err: { message: string }) => {
-      throw new RequestError("DatabaseError", err.message, 500);
+      throw new RequestError("DatabaseError", err.message);
     });
 
     return { success: true };
@@ -135,36 +135,32 @@ export default class UserEndpoint extends BaseEndpoint<type.UserRequestArgs, Cal
     // TODO: Scope shorthands
 
     if (!user) {
-      throw new RequestError("DatabaseError", "User doesn't exist", 404);
+      throw new RequestError("DatabaseError", "", 3);
     }
 
     if (user.isFrozen) {
-      throw new RequestError("UserIsFrozen", `User(${user.email}) is frozen`, 403);
+      throw new RequestError("UserIsFrozen", user.email);
     }
 
     const hash = await bcrypt.compare(args.password, user.password);
     if (!hash) {
-      throw new RequestError("AuthError", "Wrong password or email", 403);
+      throw new RequestError("AuthError");
     }
 
     const permission = await this.permissionModel.getPermissions(user.email) as TPermissionsWithKey;
     if (!permission) {
-      throw new RequestError("DatabaseError", "Permissions doesn't exist", 500);
+      throw new RequestError("DatabaseError", user.email, 1);
     }
 
     args.scope.forEach(scope => {
       if (!permission[scope]) {
-        throw new RequestError(
-          "PermissionError",
-          `You don't have permission ${scope} to issue the token with given scope`,
-          403
-        );
+        throw new RequestError("PermissionError", scope, 4);
       }
     });
 
     const tokenId = await this.tokenModel.issue(user.email, JSON.stringify(args.scope))
                                          .catch((err: { message: string }) => {
-      throw new RequestError("DatabaseError", err.message, 500);
+      throw new RequestError("DatabaseError", err.message);
     });
 
     const token = jwt.sign({

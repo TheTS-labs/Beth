@@ -39,7 +39,7 @@ export default class PermissionEndpoint extends BaseEndpoint<type.PermissionRequ
 
     const permissions = await this.permissionModel.getPermissions(args.email);
     if (!permissions) {
-      throw new RequestError("DatabaseError", `User permissions with email ${args.email} not found`, 500);
+      throw new RequestError("DatabaseError", args.email, 1);
     }
 
     return permissions;
@@ -49,7 +49,7 @@ export default class PermissionEndpoint extends BaseEndpoint<type.PermissionRequ
     args = await this.validate(type.GrantArgsSchema, args);
 
     await this.permissionModel.grantPermission(args.grantTo, args.grantPermission).catch((err: Error) => {
-      throw new RequestError("DatabaseError", err.message, 500);
+      throw new RequestError("DatabaseError", err.message);
     });
 
     return { success: true };
@@ -59,7 +59,7 @@ export default class PermissionEndpoint extends BaseEndpoint<type.PermissionRequ
     args = await this.validate(type.RescindArgsSchema, args);
 
     await this.permissionModel.rescindPermission(args.rescindFrom, args.rescindPermission).catch((err: Error) => {
-      throw new RequestError("DatabaseError", err.message, 500);
+      throw new RequestError("DatabaseError", err.message);
     });
 
     return { success: true };

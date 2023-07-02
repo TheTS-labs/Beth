@@ -49,12 +49,12 @@ export default class VoteEndpoint extends BaseEndpoint<type.VoteRequestArgs, Cal
 
     const post = await this.postModel.getPost(args.postId);
     if (!post) {
-      throw new RequestError("DatabaseError", "Post doesn't exist", 404);
+      throw new RequestError("DatabaseError", "", 2);
     }
 
     const vote = await this.voteModel.getVote(args.postId, auth.user.email);
     if (vote && !args.unvote) {
-      throw new RequestError("DatabaseError", "You already voted", 403);
+      throw new RequestError("DatabaseError", "", 4);
     }
 
     await this.voteModel.vote(
@@ -63,7 +63,7 @@ export default class VoteEndpoint extends BaseEndpoint<type.VoteRequestArgs, Cal
       args.unvote,
       args.voteType
     ).catch((err: { message: string }) => {
-      throw new RequestError("DatabaseError", err.message, 500);
+      throw new RequestError("DatabaseError", err.message);
     });
 
     return { success: true };
@@ -74,7 +74,7 @@ export default class VoteEndpoint extends BaseEndpoint<type.VoteRequestArgs, Cal
 
     const post = await this.postModel.getPost(args.postId);
     if (!post) {
-      throw new RequestError("DatabaseError", "Post doesn't exist", 404);
+      throw new RequestError("DatabaseError", "", 2);
     }
 
     const count = await this.voteModel.getVoteCount(args.postId, args.voteType);

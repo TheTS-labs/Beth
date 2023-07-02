@@ -68,3 +68,4 @@ backend/seed.py
 *.key
 .yarn
 backend/print_todos.py
+backend/print_request_errors.py

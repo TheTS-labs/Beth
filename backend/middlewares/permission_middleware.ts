@@ -42,7 +42,7 @@ export default class PermissionMiddleware {
       this.logger.debug({ message: `Checking for ${requiredScope} scope`, path: module.filename });
   
       if (!req.auth?.scope.includes(requiredScope)) {
-        throw new RequestError("PermissionDenied", `You don't have scope: ${requiredScope}`, 403);
+        throw new RequestError("PermissionDenied", requiredScope);
       }
   
       next();

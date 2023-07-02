@@ -8,11 +8,9 @@ import auth from "./helpers/auth";
 
 process.env.REDIS_REQUIRED = "false";
 const server = new App(endpoints, disableAuthFor);
-const port = server.config.get("APP_PORT").required().asPortNumber();
-const req = request(`http://localhost:${port}`);
+const req = request(server.app);
 
-beforeAll(() => { server.listen(); });
-afterAll((done) => { server.server.close(); server.scheduledTasks.stop(); done(); });
+afterAll((done) => { server.scheduledTasks.stop(); done(); });
 beforeEach(async () => {
   await server.db("user").del();
   await server.db("permission").del();
@@ -25,7 +23,7 @@ describe("POST /permission/view", () => {
     const { token } = await auth(server, {
       userData,
       password: credentials.hash,
-      scope: ["permission:view"]
+      scope: ["PermissionView"]
     });
     await server.db<TPermissions>("permission").insert({
       email: userData.email,
@@ -49,7 +47,7 @@ describe("POST /permission/view", () => {
     const { token } = await auth(server, {
       userData,
       password: credentials.hash,
-      scope: ["permission:view"]
+      scope: ["PermissionView"]
     });
     // Preparing
 
@@ -68,7 +66,7 @@ describe("POST /permission/grant", () => {
     const { token } = await auth(server, {
       userData,
       password: credentials.hash,
-      scope: ["permission:grant"]
+      scope: ["PermissionGrant"]
     });
     const id = (await server.db<TPermissions>("permission").insert({
       email: userData.email,
@@ -95,7 +93,7 @@ describe("POST /permission/rescind", () => {
     const { token } = await auth(server, {
       userData,
       password: credentials.hash,
-      scope: ["permission:rescind"]
+      scope: ["PermissionRescind"]
     });
     const id = (await server.db<TPermissions>("permission").insert({
       email: userData.email,

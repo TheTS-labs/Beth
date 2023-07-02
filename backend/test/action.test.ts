@@ -8,11 +8,9 @@ import auth from "./helpers/auth";
 
 process.env.REDIS_REQUIRED = "true";
 const server = new App(endpoints, disableAuthFor);
-const port = server.config.get("APP_PORT").required().asPortNumber();
-const req = request(`http://localhost:${port}`);
+const req = request(server.app);
 
-beforeAll(() => { server.listen(); });
-afterAll((done) => { server.server.close(); server.scheduledTasks.stop(); done(); });
+afterAll((done) => { server.scheduledTasks.stop(); done(); });
 beforeEach(async () => {
   await server.db("user").del();
   await server.db("token").del();
@@ -26,7 +24,7 @@ describe("POST /action/simpleSearch", () => {
     const { token } = await auth(server, {
       userData,
       password: credentials.hash,
-      scope: ["action:simpleSearch"]
+      scope: ["ActionSimpleSearch"]
     });
     await server.db<TAction>("action").insert({
       userId: 8,
@@ -52,7 +50,7 @@ describe("POST /action/simpleSearch", () => {
     const { token } = await auth(server, {
       userData,
       password: credentials.hash,
-      scope: ["action:simpleSearch"]
+      scope: ["ActionSimpleSearch"]
     });
     await server.db<TAction>("action").insert({
       userId: 8,
@@ -81,7 +79,7 @@ describe("POST /action/chainWhereSearch", () => {
     const { token } = await auth(server, {
       userData,
       password: credentials.hash,
-      scope: ["action:chainWhereSearch"]
+      scope: ["ActionChainWhereSearch"]
     });
     await server.db<TAction>("action").insert({
       userId: 8,
@@ -110,7 +108,7 @@ describe("POST /action/chainWhereSearch", () => {
     const { token } = await auth(server, {
       userData,
       password: credentials.hash,
-      scope: ["action:chainWhereSearch"]
+      scope: ["ActionChainWhereSearch"]
     });
     await server.db<TAction>("action").insert({
       userId: 8,
@@ -140,7 +138,7 @@ describe("POST /action/chainWhereSearch", () => {
     const { token } = await auth(server, {
       userData,
       password: credentials.hash,
-      scope: ["action:chainWhereSearch"]
+      scope: ["ActionChainWhereSearch"]
     });
     await server.db<TAction>("action").insert({
       userId: 9,
@@ -183,7 +181,7 @@ describe("POST /action/chainWhereSearch", () => {
     const { token } = await auth(server, {
       userData,
       password: credentials.hash,
-      scope: ["action:chainWhereSearch"]
+      scope: ["ActionChainWhereSearch"]
     });
     await server.db<TAction>("action").insert({
       userId: 9,

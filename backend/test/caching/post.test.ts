@@ -9,11 +9,9 @@ import auth from "../helpers/auth";
 
 process.env.REDIS_REQUIRED = "true";
 const server = new App(endpoints, disableAuthFor);
-const port = server.config.get("APP_PORT").required().asPortNumber();
-const req = request(`http://localhost:${port}`);
+const req = request(server.app);
 
-beforeAll(() => { server.listen(); });
-afterAll((done) => { server.server.close(); server.scheduledTasks.stop(); server.redisClient.quit(); done(); });
+afterAll((done) => { server.scheduledTasks.stop(); server.redisClient.quit(); done(); });
 beforeEach(async () => {
   await server.redisClient.flushAll();
   await server.db("user").del();
@@ -28,7 +26,7 @@ describe("POST /post/create", () => {
     const { token } = await auth(server, {
       userData,
       password: credentials.hash,
-      scope: ["post:create"]
+      scope: ["PostCreate"]
     });
     // Preparing
 
@@ -49,7 +47,7 @@ describe("POST /post/create", () => {
     const { token } = await auth(server, {
       userData,
       password: credentials.hash,
-      scope: ["post:create"]
+      scope: ["PostCreate"]
     });
     const replyTo = (await server.db<TPost>("post").insert({
       text: "Example 1",
@@ -78,7 +76,7 @@ describe("POST /post/create", () => {
     const { token } = await auth(server, {
       userData,
       password: credentials.hash,
-      scope: ["post:create"]
+      scope: ["PostCreate"]
     });
     const parent = (await server.db<TPost>("post").insert({
       text: "Example 1",
@@ -115,7 +113,7 @@ describe("POST /post/view", () => {
     const { token } = await auth(server, {
       userData,
       password: credentials.hash,
-      scope: ["post:view"]
+      scope: ["PostView"]
     });
     const id = (await server.db<TPost>("post").insert({
       text: "Example",
@@ -137,7 +135,7 @@ describe("POST /post/view", () => {
     const { token } = await auth(server, {
       userData,
       password: credentials.hash,
-      scope: ["post:view"]
+      scope: ["PostView"]
     });
     // Preparing
 
@@ -153,7 +151,7 @@ describe("POST /post/view", () => {
     const { token } = await auth(server, {
       userData,
       password: credentials.hash,
-      scope: ["post:view"]
+      scope: ["PostView"]
     });
     const id = (await server.db<TPost>("post").insert({
       text: "Example",
@@ -176,7 +174,7 @@ describe("POST /post/edit", () => {
     const { token } = await auth(server, {
       userData,
       password: credentials.hash,
-      scope: ["post:edit"]
+      scope: ["PostEdit"]
     });
     const id = (await server.db<TPost>("post").insert({
       text: "Example",
@@ -199,7 +197,7 @@ describe("POST /post/edit", () => {
     const { token } = await auth(server, {
       userData,
       password: credentials.hash,
-      scope: ["post:edit"]
+      scope: ["PostEdit"]
     });
     // Preparing
 
@@ -216,7 +214,7 @@ describe("POST /post/edit", () => {
     const { token } = await auth(server, {
       userData,
       password: credentials.hash,
-      scope: ["post:edit"]
+      scope: ["PostEdit"]
     });
     const id = (await server.db<TPost>("post").insert({
       text: "Example",
@@ -241,7 +239,7 @@ describe("POST /post/edit", () => {
     const { token } = await auth(server, {
       userData,
       password: credentials.hash,
-      scope: ["post:edit"]
+      scope: ["PostEdit"]
     });
     const id = (await server.db<TPost>("post").insert({
       text: "Example",
@@ -272,7 +270,7 @@ describe("POST /post/delete", () => {
     const { token } = await auth(server, {
       userData,
       password: credentials.hash,
-      scope: ["post:delete"]
+      scope: ["PostDelete"]
     });
     const id = (await server.db<TPost>("post").insert({
       text: "Example",
@@ -295,7 +293,7 @@ describe("POST /post/delete", () => {
     const { token } = await auth(server, {
       userData,
       password: credentials.hash,
-      scope: ["post:delete"]
+      scope: ["PostDelete"]
     });
     // Preparing
 
@@ -312,7 +310,7 @@ describe("POST /post/delete", () => {
     const { token } = await auth(server, {
       userData,
       password: credentials.hash,
-      scope: ["post:delete"]
+      scope: ["PostDelete"]
     });
     const id = (await server.db<TPost>("post").insert({
       text: "Example",
@@ -337,7 +335,7 @@ describe("POST /post/delete", () => {
     const { token } = await auth(server, {
       userData,
       password: credentials.hash,
-      scope: ["post:delete"]
+      scope: ["PostDelete"]
     });
     const id = (await server.db<TPost>("post").insert({
       text: "Example",
@@ -368,7 +366,7 @@ describe("POST /post/getList", () => {
     const { token } = await auth(server, {
       userData,
       password: credentials.hash,
-      scope: ["post:getList"]
+      scope: ["PostGetList"]
     });
     await server.db<TPost>("post").insert({ text: "Example", author: userData.email });
     await server.db<TPost>("post").insert({ text: "Example", author: userData.email });
@@ -388,7 +386,7 @@ describe("POST /post/getList", () => {
     const { token } = await auth(server, {
       userData,
       password: credentials.hash,
-      scope: ["post:getList"]
+      scope: ["PostGetList"]
     });
     await server.db<TPost>("post").insert({ text: "Example", author: userData.email });
     await server.db<TPost>("post").insert({ text: "Example", author: userData.email });
@@ -409,7 +407,7 @@ describe("POST /post/getList", () => {
     const { token } = await auth(server, {
       userData,
       password: credentials.hash,
-      scope: ["post:getList"]
+      scope: ["PostGetList"]
     });
     // Preparing
 
@@ -426,7 +424,7 @@ describe("POST /post/forceDelete", () => {
     const { token } = await auth(server, {
       userData,
       password: credentials.hash,
-      scope: ["post:forceDelete"]
+      scope: ["PostForceDelete"]
     });
     const id = (await server.db<TPost>("post").insert({
       text: "Example",
@@ -449,7 +447,7 @@ describe("POST /post/forceDelete", () => {
     const { token } = await auth(server, {
       userData,
       password: credentials.hash,
-      scope: ["post:forceDelete"]
+      scope: ["PostForceDelete"]
     });
     // Preparing
 
@@ -468,7 +466,7 @@ describe("POST /post/viewReplies", () => {
     const { token } = await auth(server, {
       userData,
       password: credentials.hash,
-      scope: ["post:viewReplies"]
+      scope: ["PostViewReplies"]
     });
     const parent = (await server.db<TPost>("post").insert({
       text: "Example",
@@ -495,7 +493,7 @@ describe("POST /post/editTags", () => {
     const { token } = await auth(server, {
       userData,
       password: credentials.hash,
-      scope: ["post:editTags"]
+      scope: ["PostEditTags"]
     });
     const id = (await server.db<TPost>("post").insert({
       text: "Example",
@@ -520,7 +518,7 @@ describe("POST /post/editTags", () => {
     const { token } = await auth(server, {
       userData,
       password: credentials.hash,
-      scope: ["post:editTags"]
+      scope: ["PostEditTags"]
     });
     // Preparing
 
@@ -537,7 +535,7 @@ describe("POST /post/editTags", () => {
     const { token } = await auth(server, {
       userData,
       password: credentials.hash,
-      scope: ["post:editTags"]
+      scope: ["PostEditTags"]
     });
     const id = (await server.db<TPost>("post").insert({
       text: "Example",
@@ -562,7 +560,7 @@ describe("POST /post/editTags", () => {
     const { token } = await auth(server, {
       userData,
       password: credentials.hash,
-      scope: ["post:editTags"]
+      scope: ["PostEditTags"]
     });
     const id = (await server.db<TPost>("post").insert({
       text: "Example",

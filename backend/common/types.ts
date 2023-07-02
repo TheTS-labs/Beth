@@ -1,6 +1,6 @@
 import { Request } from "express";
-import { TToken } from "../db/models/token";
 
+import { TToken } from "../db/models/token";
 import { TUser } from "../db/models/user";
 
 export type SafeUserObject = Pick<TUser, "email" | "id" | "isFrozen">;
@@ -62,7 +62,6 @@ export const ScopeShorthands = {
 };
 
 export interface Auth {
-  userId: number
   tokenId: number
   scope: string[]
   user: TUser

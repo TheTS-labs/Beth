@@ -4,17 +4,16 @@ import App from "../app";
 import { disableAuthFor, endpoints } from "../common/endpoints";
 import { DBBool } from "../common/types";
 import { PermissionStatus, TPermissions } from "../db/models/permission";
+import { TToken } from "../db/models/token";
 import { TUser } from "../db/models/user";
 import userData, { credentials } from "./data/user_data";
 import auth from "./helpers/auth";
 
 process.env.REDIS_REQUIRED = "false";
 const server = new App(endpoints, disableAuthFor);
-const port = server.config.get("APP_PORT").required().asPortNumber();
-const req = request(`http://localhost:${port}`);
+const req = request(server.app);
 
-beforeAll(() => { server.listen(); });
-afterAll((done) => { server.server.close(); server.scheduledTasks.stop(); done(); });
+afterAll((done) => { server.scheduledTasks.stop(); done(); });
 beforeEach(async () => {
   await server.db("user").del();
   await server.db("permission").del();
@@ -75,32 +74,32 @@ describe("POST /user/create", () => {
 describe("POST /user/view", () => {
   it("should return user object", async () => {
     // Preparing
-    const { id, token } = await auth(server, {
+    const { email, token } = await auth(server, {
       userData,
       password: credentials.hash,
-      scope: ["user:view"]
+      scope: ["UserView"]
     });
     // Preparing
 
-    const res = await req.post("/user/view").send({ id: id }).set({ "Authorization": "Bearer " + token });
+    const res = await req.post("/user/view").send({ email }).set({ "Authorization": "Bearer " + token });
 
     expect(res.body.displayName).toBe(userData.displayName);
     expect(res.body.email).toBe(userData.email);
     expect(res.body.username).toBe(userData.username);
-    expect(res.body.id).toBe(id);
+    expect(res.body.email).toBe(email);
     expect(res.body.isFrozen).toBeFalsy();
   });
 
   it("should return empty object", async () => {
     // Preparing
-    const { id, token } = await auth(server, {
+    const { token } = await auth(server, {
       userData,
       password: credentials.hash,
-      scope: ["user:view"]
+      scope: ["UserView"]
     });
     // Preparing
 
-    const res = await req.post("/user/view").send({ id: id + 1 }).set({ "Authorization": "Bearer " + token });
+    const res = await req.post("/user/view").send({ email: "q@gmail.com" }).set({ "Authorization": "Bearer " + token });
 
     expect(JSON.stringify(res.body)).toBe("{}");
   });
@@ -109,10 +108,10 @@ describe("POST /user/view", () => {
 describe("POST /user/editPassword", () => {
   it("should change user password", async () => {
     // Preparing
-    const { id, token } = await auth(server, {
+    const { email, token } = await auth(server, {
       userData,
       password: credentials.hash,
-      scope: ["user:editPassword"]
+      scope: ["UserEditPassword"]
     });
     // Preparing
 
@@ -120,7 +119,7 @@ describe("POST /user/editPassword", () => {
                          .send({ newPassword: credentials.newPassword })
                          .set({ "Authorization": "Bearer " + token });
 
-    const newHash = await server.db<TUser>("user").select("password").where({ id }).first();
+    const newHash = await server.db<TUser>("user").select("password").where({ email }).first();
 
     expect(res.body.errorMessage).toBeUndefined();
     expect(res.statusCode).toBe(200);
@@ -132,33 +131,33 @@ describe("POST /user/editPassword", () => {
 describe("POST /user/froze", () => {
   it("should froze user", async () => {
     // Preparing
-    const { id, token } = await auth(server, {
+    const { email, token } = await auth(server, {
       userData,
       password: credentials.hash,
-      scope: ["user:froze"]
+      scope: ["UserFroze"]
     });
     // Preparing
 
     const res = await req.post("/user/froze")
-                         .send({ id, froze: 1 })
+                         .send({ email, froze: 1 })
                          .set({ "Authorization": "Bearer " + token });
 
     expect(res.body.errorMessage).toBeUndefined();
     expect(res.statusCode).toBe(200);
     expect(res.body.success).toBe(true);
 
-    const user = await server.db<TUser>("user").where({ id }).first();
+    const user = await server.db<TUser>("user").where({ email }).first();
     expect(user?.isFrozen).toBeTruthy();
   });
 
   it("should unfroze user", async () => {
     // Preparing
-    const { id } = await auth(server, {
+    const { email } = await auth(server, {
       userData,
       password: credentials.hash,
-      scope: ["user:froze"]
+      scope: ["UserFroze"]
     });
-    await server.db<TUser>("user").where({ id }).update({ isFrozen: DBBool.Yes });
+    await server.db<TUser>("user").where({ email }).update({ isFrozen: DBBool.Yes });
     const { token } = await auth(server, {
       userData: {
         email: "beth_admin@gmail.com",
@@ -166,7 +165,7 @@ describe("POST /user/froze", () => {
         username: "bethAdmin",
       },
       password: credentials.hash,
-      scope: ["user:froze"]
+      scope: ["UserFroze"]
     });
     await server.db<TPermissions>("permission").insert({
       email: "beth_admin@gmail.com",
@@ -175,29 +174,29 @@ describe("POST /user/froze", () => {
     // Preparing
 
     const res = await req.post("/user/froze")
-                         .send({ id, froze: 0 })
+                         .send({ email, froze: 0 })
                          .set({ "Authorization": "Bearer " + token });
 
     expect(res.body.errorMessage).toBeUndefined();
     expect(res.statusCode).toBe(200);
     expect(res.body.success).toBe(true);
 
-    const user = await server.db<TUser>("user").where({ id }).first();
+    const user = await server.db<TUser>("user").where({ email }).first();
     expect(user?.isFrozen).toBeFalsy();
   });
 
   it("should throw PermissionError", async () => {
     // Preparing
-    const { id, token } = await auth(server, {
+    const { token } = await auth(server, {
       userData,
       password: credentials.hash,
-      scope: ["user:froze"]
+      scope: ["UserFroze"]
     });
     await server.db<TPermissions>("permission").insert({ email: userData.email });
     // Preparing
 
     const res = await req.post("/user/froze")
-                         .send({ id: id+1, froze: 0 })
+                         .send({ email: "q@gmail.com", froze: 0 })
                          .set({ "Authorization": "Bearer " + token });
 
     expect(res.body.errorMessage).not.toBeUndefined();
@@ -208,10 +207,10 @@ describe("POST /user/froze", () => {
 describe("POST /user/editTags", () => {
   it("should edit user tags", async () => {
     // Preparing
-    const { id, token } = await auth(server, {
+    const { email, token } = await auth(server, {
       userData,
       password: credentials.hash,
-      scope: ["user:editTags"]
+      scope: ["UserEditTags"]
     });
     await server.db<TPermissions>("permission").insert({
       email: userData.email,
@@ -220,23 +219,23 @@ describe("POST /user/editTags", () => {
     // Preparing
 
     const res = await req.post("/user/editTags")
-                         .send({ id, newTags: "tag" })
+                         .send({ email, newTags: "tag" })
                          .set({ "Authorization": "Bearer " + token });
 
     expect(res.body.errorMessage).toBeUndefined();
     expect(res.statusCode).toBe(200);
     expect(res.body.success).toBe(true);
 
-    const user = await server.db<TUser>("user").where({ id }).first();
+    const user = await server.db<TUser>("user").where({ email }).first();
     expect(user?.tags).toBe("tag");
   });
 
   it("should throw DatabaseError", async () => {
     // Preparing
-    const { id, token } = await auth(server, {
+    const { token } = await auth(server, {
       userData,
       password: credentials.hash,
-      scope: ["user:editTags"]
+      scope: ["UserEditTags"]
     });
     await server.db<TPermissions>("permission").insert({
       email: userData.email,
@@ -245,7 +244,7 @@ describe("POST /user/editTags", () => {
     // Preparing
 
     const res = await req.post("/user/editTags")
-                         .send({ id: id+1, newTags: "tag" })
+                         .send({ email: "q@gmail.com", newTags: "tag" })
                          .set({ "Authorization": "Bearer " + token });
 
     expect(res.body.errorMessage).not.toBeUndefined();
@@ -256,10 +255,10 @@ describe("POST /user/editTags", () => {
 describe("POST /user/verify", () => {
   it("should verify tags", async () => {
     // Preparing
-    const { id, token } = await auth(server, {
+    const { email, token } = await auth(server, {
       userData,
       password: credentials.hash,
-      scope: ["user:verify"]
+      scope: ["UserVerify"]
     });
     await server.db<TPermissions>("permission").insert({
       email: userData.email,
@@ -268,25 +267,25 @@ describe("POST /user/verify", () => {
     // Preparing
 
     const res = await req.post("/user/verify")
-                         .send({ id, verify: 1 })
+                         .send({ email, verify: 1 })
                          .set({ "Authorization": "Bearer " + token });
 
     expect(res.body.errorMessage).toBeUndefined();
     expect(res.statusCode).toBe(200);
     expect(res.body.success).toBe(true);
 
-    const user = await server.db<TUser>("user").where({ id }).first();
+    const user = await server.db<TUser>("user").where({ email }).first();
     expect(user?.verified).toBeTruthy();
   });
 
   it("should unverify tags", async () => {
     // Preparing
-    const { id, token } = await auth(server, {
+    const { email, token } = await auth(server, {
       userData,
       password: credentials.hash,
-      scope: ["user:verify"]
+      scope: ["UserVerify"]
     });
-    await server.db<TUser>("user").where({ id }).update({ verified: DBBool.Yes });
+    await server.db<TUser>("user").where({ email }).update({ verified: DBBool.Yes });
     await server.db<TPermissions>("permission").insert({
       email: userData.email,
       UserVerify: PermissionStatus.Has
@@ -294,23 +293,23 @@ describe("POST /user/verify", () => {
     // Preparing
 
     const res = await req.post("/user/verify")
-                         .send({ id, verify: 0 })
+                         .send({ email, verify: 0 })
                          .set({ "Authorization": "Bearer " + token });
 
     expect(res.body.errorMessage).toBeUndefined();
     expect(res.statusCode).toBe(200);
     expect(res.body.success).toBe(true);
 
-    const user = await server.db<TUser>("user").where({ id }).first();
+    const user = await server.db<TUser>("user").where({ email }).first();
     expect(user?.verified).toBeFalsy();
   });
 
   it("should throw DatabaseError", async () => {
     // Preparing
-    const { id, token } = await auth(server, {
+    const { token } = await auth(server, {
       userData,
       password: credentials.hash,
-      scope: ["user:verify"]
+      scope: ["UserVerify"]
     });
     await server.db<TPermissions>("permission").insert({
       email: userData.email,
@@ -319,10 +318,111 @@ describe("POST /user/verify", () => {
     // Preparing
 
     const res = await req.post("/user/verify")
-                         .send({ id: id+1, verify: 1 })
+                         .send({ email: "q@gmail.com", verify: 1 })
                          .set({ "Authorization": "Bearer " + token });
 
     expect(res.body.errorMessage).not.toBeUndefined();
     expect(res.statusCode).toBe(404);
+  });
+});
+
+describe("POST /user/issueToken", () => {
+  it("should issue new token", async () => {
+    // Preparing
+    await server.db<TUser>("user").insert({
+      ...userData,
+      password: credentials.hash
+    });
+    await server.db<TPermissions>("permission").insert({ email: userData.email });
+    // Preparing
+
+    const res = await req.post("/user/issueToken")
+                         .send({
+                            email: userData.email,
+                            password: credentials.password,
+                            scope: ["UserView"]
+                          });
+
+    expect(res.body.errorMessage).toBeUndefined();
+    expect(res.statusCode).toBe(200);
+    expect(res.body.token).not.toBeUndefined();
+    expect(res.body.tokenId).not.toBeUndefined();
+
+    const token = await server.db<TToken>("token").where({ id: res.body.tokenId }).first();
+    expect(token).not.toBeUndefined();
+  });
+
+  it("should throw DatabaseError: User doesn't exist", async () => {
+    const res = await req.post("/user/issueToken")
+                         .send({
+                            email: userData.email,
+                            password: credentials.password,
+                            scope: ["UserView"]
+                          });
+
+    expect(res.body.errorMessage).not.toBeUndefined();
+    expect(res.statusCode).toBe(404);
+  });
+
+  it("should throw AuthError", async () => {
+    // Preparing
+    await server.db<TUser>("user").insert({
+      ...userData,
+      password: credentials.hash
+    });
+    await server.db<TPermissions>("permission").insert({ email: userData.email });
+    // Preparing
+
+    const res = await req.post("/user/issueToken")
+                         .send({
+                            email: userData.email,
+                            password: "WrongPassword123",
+                            scope: ["UserView"]
+                          });
+
+    expect(res.body.errorMessage).not.toBeUndefined();
+    expect(res.statusCode).toBe(403);
+  });
+
+  it("should throw DatabaseError: Permissions doesn't exist", async () => {
+    // Preparing
+    await server.db<TUser>("user").insert({
+      ...userData,
+      password: credentials.hash
+    });
+    // Preparing
+
+    const res = await req.post("/user/issueToken")
+                         .send({
+                            email: userData.email,
+                            password: credentials.password,
+                            scope: ["UserView"]
+                          });
+
+    expect(res.body.errorMessage).not.toBeUndefined();
+    expect(res.statusCode).toBe(500);
+  });
+
+  it("should throw PermissionError", async () => {
+    // Preparing
+    await server.db<TUser>("user").insert({
+      ...userData,
+      password: credentials.hash
+    });
+    await server.db<TPermissions>("permission").insert({
+      email: userData.email,
+      UserView: PermissionStatus.Hasnt
+    });
+    // Preparing
+
+    const res = await req.post("/user/issueToken")
+                         .send({
+                            email: userData.email,
+                            password: credentials.password,
+                            scope: ["UserView"]
+                          });
+
+    expect(res.body.errorMessage).not.toBeUndefined();
+    expect(res.statusCode).toBe(403);
   });
 });

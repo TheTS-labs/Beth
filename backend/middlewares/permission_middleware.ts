@@ -29,16 +29,20 @@ export default class PermissionMiddleware {
     ): Promise<void> => {
       if (!req.auth?.token) {
         this.logger.debug({ message: "Excluded path. Skip", path: module.filename });
-        next();
+        next(); 
+        return;
       }
 
-      const splitted = req.originalUrl.replace("/", "").split("/");
-      const requiredScope = splitted[0] + ":" + splitted[1];
+      let [ domain, endpoint ] = req.originalUrl.replace("/", "").split("/");
+      domain = domain.charAt(0).toUpperCase() + domain.slice(1);
+      endpoint = endpoint.charAt(0).toUpperCase() + endpoint.slice(1);
+
+      const requiredScope = domain + endpoint;
 
       this.logger.debug({ message: `Checking for ${requiredScope} scope`, path: module.filename });
   
       if (!req.auth?.scope.includes(requiredScope)) {
-        throw new RequestError("PermissionDenied", `You don't have scope: ${requiredScope}`, 403);
+        throw new RequestError("PermissionDenied", requiredScope);
       }
   
       next();

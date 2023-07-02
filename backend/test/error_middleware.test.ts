@@ -8,11 +8,9 @@ import auth from "./helpers/auth";
 
 process.env.REDIS_REQUIRED = "false";
 const server = new App(endpoints, disableAuthFor);
-const port = server.config.get("APP_PORT").required().asPortNumber();
-const req = request(`http://localhost:${port}`);
+const req = request(server.app);
 
-beforeAll(() => { server.listen(); });
-afterAll((done) => { server.server.close(); server.scheduledTasks.stop(); done(); });
+afterAll((done) => { server.scheduledTasks.stop(); done(); });
 beforeEach(async () => {
   await server.db("user").del();
   await server.db("token").del();
@@ -24,7 +22,7 @@ describe("General tests", () => {
     const { token } = await auth(server, {
       userData,
       password: credentials.hash,
-      scope: ["user:notFound"]
+      scope: ["UserNotFound"]
     });
 
     const res = await req.post("/user/notFound").send({}).set({ "Authorization": "Bearer " + token+"t" });
@@ -38,7 +36,7 @@ describe("General tests", () => {
     const { token } = await auth(server, {
       userData,
       password: credentials.hash,
-      scope: ["post:edit"]
+      scope: ["PostEdit"]
     });
     const id = (await server.db<TPost>("post").insert({
       text: "Example",

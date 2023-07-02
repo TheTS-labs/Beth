@@ -6,7 +6,7 @@ import { ENV } from "../../app";
 
 export interface TVote {
   id: number
-  userId: number
+  userEmail: string
   postId: number
   createdAt: Date
   voteType: Vote
@@ -25,21 +25,21 @@ export default class VoteModel {
     public config: ENV
   ) {}
 
-  public async vote(postId: number, userId: number, unvote=false, voteType=Vote.Up): Promise<void> {
+  public async vote(postId: number, userEmail: string, unvote=false, voteType=Vote.Up): Promise<void> {
     if (unvote) {
-      this.logger.debug({ message: "Unvoted", path: module.filename, context: { userId, postId } });
-      await this.db<TVote>("vote").where({ postId, userId }).del();
+      this.logger.debug({ message: "Unvoted", path: module.filename, context: { userEmail, postId } });
+      await this.db<TVote>("vote").where({ postId, userEmail }).del();
 
       return;
     }
 
-    this.logger.debug({ message: "Voted", path: module.filename, context: { userId, postId } });
-    await this.db<TVote>("vote").insert({ userId, postId, voteType });
+    this.logger.debug({ message: "Voted", path: module.filename, context: { userEmail, postId } });
+    await this.db<TVote>("vote").insert({ userEmail, postId, voteType });
   }
 
-  public async getVote(postId: number, userId: number): Promise<TVote | undefined> {
-    this.logger.debug({ message: "Getting a vote", path: module.filename, context: { userId, postId } });
-    const vote = await this.db<TVote>("vote").where({ postId, userId }).first();
+  public async getVote(postId: number, userEmail: string): Promise<TVote | undefined> {
+    this.logger.debug({ message: "Getting a vote", path: module.filename, context: { userEmail, postId } });
+    const vote = await this.db<TVote>("vote").where({ postId, userEmail }).first();
     return vote;
   }
 
@@ -51,9 +51,9 @@ export default class VoteModel {
     return Number(count[0]["count"]);
   }
 
-  public async getVotes(userId: number): Promise<TVote[]> {
-    this.logger.debug({ message: "Getting all votes", path: module.filename, context: { userId } });
-    const votes = await this.db<TVote>("vote").where({ userId });
+  public async getVotes(userEmail: string): Promise<TVote[]> {
+    this.logger.debug({ message: "Getting all votes", path: module.filename, context: { userEmail } });
+    const votes = await this.db<TVote>("vote").where({ userEmail });
     return votes;
   }
 }

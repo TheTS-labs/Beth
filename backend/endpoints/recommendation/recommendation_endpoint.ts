@@ -68,7 +68,7 @@ export default class RecommendationEndpoint extends BaseEndpoint<type.Recommenda
   async recommend(args: type.RecommendArgs, auth: Auth): Promise<CallEndpointReturnType> {
     args = await this.validate(type.RecommendArgsSchema, args);
 
-    const votes = await this.voteModel.getVotes(auth.user.id);
+    const votes = await this.voteModel.getVotes(auth.user.email);
     
     const postsWithVoteType = await Promise.all(votes.map(async (vote) => {
       const post = await this.postModel.getPost(vote.postId);

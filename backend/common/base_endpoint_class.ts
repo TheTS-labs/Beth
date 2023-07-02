@@ -30,7 +30,7 @@ export default class BaseEndpoint<RequestArgsType extends object,
   ): Promise<CallEndpointReturnType> {
     const endpointIncludes = this.allowNames.includes(name);
     if (!endpointIncludes) {
-      throw new RequestError("EndpointNotFound", `Endpoint ${this.endpointName}/${name} does not exist`, 404);
+      throw new RequestError("EndpointNotFound", [this.endpointName, name]);
     }
 
     const result: CallEndpointReturnType = await this[name](args, auth);
@@ -47,7 +47,7 @@ export default class BaseEndpoint<RequestArgsType extends object,
   async validate<EType>(schema: Joi.ObjectSchema, args: EType): Promise<EType> {
     const { error, value } = schema.validate(args);
     if (error) {
-      throw new RequestError("ValidationError", error.message, 400);
+      throw new RequestError("ValidationError", error.message);
     }
 
     return value as EType;

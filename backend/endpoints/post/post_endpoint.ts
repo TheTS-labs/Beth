@@ -54,7 +54,7 @@ export default class PostEndpoint extends BaseEndpoint<type.PostRequestArgs, Cal
       args.text,
       args.replyTo, parent
     ).catch((err: Error) => {
-      throw new RequestError("DatabaseError", err.message, 500);
+      throw new RequestError("DatabaseError", err.message);
     }) as Pick<TPost, "id">;
 
     return { success: true, id: id };
@@ -79,11 +79,11 @@ export default class PostEndpoint extends BaseEndpoint<type.PostRequestArgs, Cal
     const permissions = await this.permissionModel.getPermissions(auth.user.email) as TPermissions;
   
     if (!post) {
-      throw new RequestError("DatabaseError", "Post doesn't exist", 404);
+      throw new RequestError("DatabaseError", "", 2);
     }
 
     if (post.author != auth.user.email && permissions["PostSuperEdit"] == PermissionStatus.Hasnt) {
-      throw new RequestError("PermissionError", "You can only edit your own posts", 403);
+      throw new RequestError("PermissionError");
     }
 
     await this.postModel.editPost(args.id, args.newText);
@@ -98,11 +98,11 @@ export default class PostEndpoint extends BaseEndpoint<type.PostRequestArgs, Cal
     const permissions = await this.permissionModel.getPermissions(auth.user.email) as TPermissions;
 
     if (!post) {
-      throw new RequestError("DatabaseError", "Post doesn't exist", 404);
+      throw new RequestError("DatabaseError", "", 2);
     }
 
     if (post.author != auth.user.email && permissions["PostSuperDelete"] == PermissionStatus.Hasnt) {
-      throw new RequestError("PermissionError", "You can only delete your own posts", 403);
+      throw new RequestError("PermissionError", "", 1);
     }
 
     await this.postModel.frozePost(args.id);
@@ -115,7 +115,7 @@ export default class PostEndpoint extends BaseEndpoint<type.PostRequestArgs, Cal
 
     const result = await this.postModel.getList(args.afterCursor, args.numberRecords||3)
                                        .catch((err: { message: string }) => {
-      throw new RequestError("DatabaseError", err.message, 500);
+      throw new RequestError("DatabaseError", err.message);
     });
 
     return result;
@@ -127,7 +127,7 @@ export default class PostEndpoint extends BaseEndpoint<type.PostRequestArgs, Cal
     const post = await this.postModel.getPost(args.id);
 
     if (!post) {
-      throw new RequestError("DatabaseError", "Post doesn't exist", 404);
+      throw new RequestError("DatabaseError", "", 2);
     }
 
     await this.postModel.deletePost(args.id);
@@ -139,7 +139,7 @@ export default class PostEndpoint extends BaseEndpoint<type.PostRequestArgs, Cal
     args = await this.validate(type.ViewRepliesArgsSchema, args);
 
     const results = await this.postModel.getReplies(args.parent).catch((err: { message: string }) => {
-      throw new RequestError("DatabaseError", err.message, 500);
+      throw new RequestError("DatabaseError", err.message);
     });
 
     const REDIS_REQUIRED = this.config.get("REDIS_REQUIRED").required().asBool();
@@ -157,15 +157,15 @@ export default class PostEndpoint extends BaseEndpoint<type.PostRequestArgs, Cal
     const permissions = await this.permissionModel.getPermissions(auth.user.email) as TPermissions;
 
     if (!post) {
-      throw new RequestError("DatabaseError", "Post doesn't exist", 404);
+      throw new RequestError("DatabaseError", "", 2);
     }
 
     if (post.author != auth.user.email && permissions["PostSuperTagsEdit"] == PermissionStatus.Hasnt) {
-      throw new RequestError("PermissionError", "You can only edit tags of your own posts", 403);
+      throw new RequestError("PermissionError", "", 2);
     }
 
     await this.postModel.editTags(args.id, args.newTags).catch((err: { message: string }) => {
-      throw new RequestError("DatabaseError", err.message, 500);
+      throw new RequestError("DatabaseError", err.message);
     });
 
     return { success: true };

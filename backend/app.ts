@@ -20,6 +20,8 @@ import PermissionMiddleware from "./middlewares/permission_middleware";
 import Redis from "./redis";
 import ScheduledTasks from "./scheduledJobs/init_scheduled_jobs";
 
+// TODO: Simpify it
+
 dotenv.config();
 
 export interface TEndpointTypes {

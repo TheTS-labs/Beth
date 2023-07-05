@@ -23,7 +23,7 @@ function fetchPosts(
   const headers = new Headers({ "Content-Type": "application/x-www-form-urlencoded" });
   const body = new URLSearchParams({ afterCursor });
 
-  fetch("https://localhost:8081/recommendation/getPosts", {
+  fetch("http://localhost:8081/recommendation/getPosts", {
     method: "POST",
     headers: headers,
     body: body,

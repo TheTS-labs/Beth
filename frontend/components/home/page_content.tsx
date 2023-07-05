@@ -8,8 +8,8 @@ import LoadingPosts from "./posts/loading_posts";
 import PageContentPosts from "./posts/posts";
 
 export default function PageContent(): React.JSX.Element {
-  const hotTags = useSWR("https://localhost:8081/recommendation/getHotTags", fetcher({ method: "POST" }));
-  const initialPosts = useSWR<GetPostsReturnType>("https://localhost:8081/recommendation/getPosts", fetcher({
+  const hotTags = useSWR("http://localhost:8081/recommendation/getHotTags", fetcher({ method: "POST" }));
+  const initialPosts = useSWR<GetPostsReturnType>("http://localhost:8081/recommendation/getPosts", fetcher({
     method: "POST",
     headers: new Headers({ "Content-Type": "application/x-www-form-urlencoded" }),
     redirect: "follow"

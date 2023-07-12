@@ -15,7 +15,9 @@ export const CreateArgsSchema = Joi.object({
   username: Joi.string().required(),
   displayName: Joi.string().required(),
   email: Joi.string().email().required(),
-  password: Joi.string().pattern(new RegExp("^[a-zA-Z0-9]{8,64}$")).required(),
+  password: Joi.string().regex(
+    /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$/mi
+  ).required(),
   repeatPassword: Joi.ref("password"),
 }).with("password", "repeatPassword");
 // <<< Create <<<
@@ -36,7 +38,9 @@ export interface EditPasswordArgs {
 }
 
 export const EditPasswordArgsSchema = Joi.object({
-  newPassword: Joi.string().pattern(new RegExp("^[a-zA-Z0-9]{8,64}$")).required(),
+  newPassword: Joi.string().regex(
+    new RegExp("^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$")
+  ).required(),
 });
 // <<< Edit Password <<<
 
@@ -86,7 +90,7 @@ export interface IssueTokenArgs {
 
 export const IssueTokenArgsSchema = Joi.object({
   email: Joi.string().email().required(),
-  password: Joi.string().pattern(new RegExp("^[a-zA-Z0-9]{8,64}$")).required(),
+  password: Joi.string().pattern(new RegExp("^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$")).required(),
   expiresIn: Joi.alternatives().try(Joi.number(), Joi.string()).default(2592000), // 30 days
   scope: Joi.array().items(Joi.string()).required()
 });

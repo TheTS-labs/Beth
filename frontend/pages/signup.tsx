@@ -1,6 +1,8 @@
+import axios from "axios";
 import Link from "next/link";
 import { FormEvent, useState } from "react";
 
+import axiosConfig from "../axios.config";
 import Errors from "../components/common/errors";
 import Header from "../components/common/header";
 import headerStyles from "../public/styles/auth/header.module.sass";
@@ -34,7 +36,6 @@ export default function Singup(): React.JSX.Element {
       return;
     }
 
-    const headers = new Headers({ "Content-Type": "application/x-www-form-urlencoded" });
     const body = new URLSearchParams({
       username: e.target.username.value,
       displayName: e.target.displayName.value,
@@ -43,13 +44,9 @@ export default function Singup(): React.JSX.Element {
       repeatPassword: e.target.repeatPassword.value
     });
 
-    const response = await fetch("http://localhost:8081/user/create", {
-      method: "POST",
-      headers: headers,
-      body: body,
-      redirect: "follow"
-    }).then(async (response) => response.json())
-      .catch(e => {
+    const response = await axios.request({...axiosConfig, ...{ url: "user/create", data: body }})
+                                .then(response => response.data)
+                                .catch(e => {
       setErrors(prevErrors => [...prevErrors, String(e)]);
     });
 
@@ -58,7 +55,7 @@ export default function Singup(): React.JSX.Element {
     }
 
     if ("errorType" in response && "errorMessage" in response) {
-      setErrors(prevErrors => [...prevErrors, `${response.errorType}: ${response.errorMessage}`]);
+      setErrors(prevErrors => [...prevErrors, response.errorMessage]);
       return;
     }
 

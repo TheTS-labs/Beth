@@ -1,9 +1,11 @@
 // Ignore SVG lines
 /* eslint-disable max-len */
+import axios from "axios";
 import { Dispatch, MutableRefObject, SetStateAction, useEffect, useRef, useState } from "react";
 
 import { RequestErrorObject } from "../../../../backend/common/types";
 import { GetPostsReturnType } from "../../../../backend/db/models/post";
+import axiosConfig from "../../../axios.config";
 import styles from "../../../public/styles/home/posts/posts.module.sass";
 import Errors from "../../common/errors";
 import Loader from "../../common/loader";
@@ -20,16 +22,11 @@ function fetchPosts(
   showLoader: MutableRefObject<boolean>
 ): void {
   showLoader.current = true;
-  const headers = new Headers({ "Content-Type": "application/x-www-form-urlencoded" });
   const body = new URLSearchParams({ afterCursor });
 
-  fetch("http://localhost:8081/recommendation/getPosts", {
-    method: "POST",
-    headers: headers,
-    body: body,
-    redirect: "follow"
-  }).then(async res => res.json() as Promise<GetPostsReturnType | RequestErrorObject>)
-    .then(value => {
+  axios.request({...axiosConfig, ...{ url: "recommendation/getPosts", data: body }})
+  .then(res => res.data as GetPostsReturnType | RequestErrorObject)
+  .then(value => {
       if ("errorStatus" in value) {
         showLoader.current = false;
         setErrors(prevErrors => [...prevErrors, `${value.errorType}: ${value.errorMessage}`]);

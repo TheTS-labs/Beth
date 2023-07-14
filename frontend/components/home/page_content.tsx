@@ -9,7 +9,7 @@ import PageContentPosts from "./posts/posts";
 
 export default function PageContent(): React.JSX.Element {
   const hotTags = useSWR("recommendation/getHotTags", fetcher({}));
-  const initialPosts = useSWR<GetPostsReturnType>("recommendation/getPosts", fetcher({}));
+  const initialPosts = useSWR<GetPostsReturnType>("recommendation/getPosts", fetcher<GetPostsReturnType>());
 
   if (hotTags.error) {
     const failedHotTags = [

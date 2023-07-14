@@ -1,11 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import axios, { AxiosRequestConfig, AxiosResponse } from "axios";
+import axios, { AxiosRequestConfig } from "axios";
 
 import axiosConfig from "../axios.config";
 
-export default (config: AxiosRequestConfig) => {
-  return async (url): Promise<AxiosResponse<any, any>> => {
-    return axios.request({ ...axiosConfig, ...config, url })
-                .then((res) => res.data);
+export default <DataType=any>(config: AxiosRequestConfig={}): (url: string) => Promise<DataType> => {
+  return async (url: string): Promise<DataType> => {
+    const { data } = await axios.request({ ...axiosConfig, ...config, url });
+    return data;
   };
 };

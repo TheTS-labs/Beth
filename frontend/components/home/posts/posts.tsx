@@ -3,7 +3,6 @@
 import axios from "axios";
 import { Dispatch, MutableRefObject, SetStateAction, useEffect, useRef, useState } from "react";
 
-import { RequestErrorObject } from "../../../../backend/common/types";
 import { GetPostsReturnType } from "../../../../backend/db/models/post";
 import axiosConfig from "../../../axios.config";
 import styles from "../../../public/styles/home/posts/posts.module.sass";
@@ -14,32 +13,34 @@ interface Props {
   initialData: GetPostsReturnType
 }
 
-function fetchPosts(
+async function fetchPosts(
   afterCursor: string,
   setErrors: Dispatch<SetStateAction<string[]>>,
   setAfterCursor: Dispatch<SetStateAction<string>>,
   setPosts: Dispatch<SetStateAction<GetPostsReturnType["results"]>>,
   showLoader: MutableRefObject<boolean>
-): void {
+): Promise<void> {
   showLoader.current = true;
   const body = new URLSearchParams({ afterCursor });
 
-  axios.request({...axiosConfig, ...{ url: "recommendation/getPosts", data: body }})
-  .then(res => res.data as GetPostsReturnType | RequestErrorObject)
-  .then(value => {
-      if ("errorStatus" in value) {
-        showLoader.current = false;
-        setErrors(prevErrors => [...prevErrors, `${value.errorType}: ${value.errorMessage}`]);
-        return;
-      }
-      
-      setAfterCursor(value.endCursor);
-      setPosts(prevPosts => [...prevPosts, ...value.results]);
-    })
-    .catch(() => {
-      showLoader.current = false;
-      setErrors(prevErrors => [...prevErrors, "Failed to fetch more posts"]);
-    });
+  const response = await axios.request({...axiosConfig, ...{ url: "recommendation/getPosts", data: body }})
+                              .catch(() => {
+    showLoader.current = false;
+    setErrors(prevErrors => [...prevErrors, "Failed to fetch more posts"]);
+  });
+
+  if (!response) {
+    return;
+  }
+
+  if ("errorStatus" in response.data) {
+    showLoader.current = false;
+    setErrors(prevErrors => [...prevErrors, `${response.data.errorType}: ${response.data.errorMessage}`]);
+    return;
+  }
+
+  setAfterCursor(response.data.endCursor);
+  setPosts(prevPosts => [...prevPosts, ...response.data.results]);
 }
 
 export default function PageContentPosts(props: Props): React.JSX.Element {

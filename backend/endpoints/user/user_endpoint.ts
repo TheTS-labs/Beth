@@ -7,6 +7,7 @@ import winston from "winston";
 import { ENV } from "../../app";
 import BaseEndpoint from "../../common/base_endpoint_class";
 import RequestError from "../../common/request_error";
+import scopes from "../../common/scopes";
 import { Auth,SafeUserObject } from "../../common/types";
 import CachingPermissionModel from "../../db/models/caching/caching_permission";
 import CachingUserModel from "../../db/models/caching/caching_user";
@@ -152,20 +153,26 @@ export default class UserEndpoint extends BaseEndpoint<type.UserRequestArgs, Cal
       throw new RequestError("DatabaseError", user.email, 1);
     }
 
-    args.scope.forEach(scope => {
-      if (!permission[scope]) {
-        throw new RequestError("PermissionError", scope, 4);
+    let scope: string[] = [];
+
+    if (args.shorthand) {
+      scope = scopes[args.shorthand];
+    }
+
+    scope.forEach(exactScope => {
+      if (!permission[exactScope]) {
+        throw new RequestError("PermissionError", exactScope, 4);
       }
     });
 
-    const tokenId = await this.tokenModel.issue(user.email, JSON.stringify(args.scope))
+    const tokenId = await this.tokenModel.issue(user.email, JSON.stringify(scope))
                                          .catch((err: { message: string }) => {
       throw new RequestError("DatabaseError", err.message);
     });
 
     const token = jwt.sign({
       tokenId,
-      scope: args.scope
+      scope: scope,
     }, this.config.get("JWT_TOKEN_SECRET").required().asString(), { expiresIn: args.expiresIn });
 
     return { tokenId, token };

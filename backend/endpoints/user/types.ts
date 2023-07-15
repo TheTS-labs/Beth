@@ -1,5 +1,6 @@
 import Joi from "joi";
 
+import scopes from "../../common/scopes";
 import { DBBool } from "../../common/types";
 
 // >>> Create >>>
@@ -39,7 +40,7 @@ export interface EditPasswordArgs {
 
 export const EditPasswordArgsSchema = Joi.object({
   newPassword: Joi.string().regex(
-    new RegExp("^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$")
+    /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$/mi
   ).required(),
 });
 // <<< Edit Password <<<
@@ -81,19 +82,28 @@ export const VerifyArgsSchema = Joi.object({
 // <<< Verify <<<
 
 // >>> Issue Token >>>
-export interface IssueTokenArgs {
+export type IssueTokenArgs = {
   email: string
   password: string
   expiresIn: string
   scope: string[]
-}
+  shorthand: undefined
+} | {
+  email: string
+  password: string
+  expiresIn: undefined
+  shorthand: keyof typeof scopes
+};
 
 export const IssueTokenArgsSchema = Joi.object({
   email: Joi.string().email().required(),
-  password: Joi.string().pattern(new RegExp("^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$")).required(),
+  password: Joi.string().regex(
+    /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$/mi
+  ).required(),
   expiresIn: Joi.alternatives().try(Joi.number(), Joi.string()).default(2592000), // 30 days
-  scope: Joi.array().items(Joi.string()).required()
-});
+  scope: Joi.array().items(Joi.string()),
+  shorthand: Joi.string().valid("login")
+}).xor("scope", "shorthand");
 // <<< Issue Token <<<
 
 export type UserRequestArgs = CreateArgs | ViewArgs | EditPasswordArgs |

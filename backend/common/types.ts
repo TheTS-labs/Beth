@@ -25,42 +25,6 @@ export enum UserScore {
   Disliked = -1
 }
 
-export const ScopeShorthands = {
-  Read: [
-    "user:view",
-    "permissions:view",
-    "post:view",
-    "post:viewReplies",
-    "post:getList",
-    "voting:voteCount",
-    "voting:getVotes",
-    "recommendation:recommend"
-  ],
-  Write: [
-    "user:editPassword",
-    "user:froze",
-    "post:create",
-    "post:edit",
-    "post:delete",
-    "post:editTags",
-    "voting:vote",
-    "voting:unvote",
-  ],
-  Admin: [
-    "UserSuperFroze",
-    "UserEditTags",
-    "UserVerify",
-    "PermissionsGrand",
-    "PermissionsRescind",
-    "PostSuperEdit",
-    "PostSuperDelete",
-    "PostForceDelete",
-    "PostSuperTagsEdit",
-    "ActionSimpleSearch",
-    "ActionChainWhereSearch",
-  ]
-};
-
 export interface Auth {
   tokenId: number
   scope: string[]

@@ -6,7 +6,7 @@ import axiosConfig from "../axios.config";
 import Errors from "../components/common/errors";
 import Header from "../components/common/header";
 import headerStyles from "../public/styles/auth/header.module.sass";
-import styles from "../public/styles/auth/singup.module.sass";
+import styles from "../public/styles/auth/main.module.sass";
 
 interface Entry {
   value: string

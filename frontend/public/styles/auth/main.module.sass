@@ -49,3 +49,30 @@
       &:focus
         outline: none
         border-width: 4px
+
+.logout
+  color: #000000
+  background-color: primary-color()
+  border: none
+
+  width: 250px
+  height: 30px
+  margin-bottom: 20px
+  padding: 0
+
+  box-sizing: border-box
+  text-align: center
+  font-weight: bold
+  font-size: 1rem
+
+  transition: background-color 100ms easy
+
+  &:hover
+    background-color: primary-color(0.8)
+    cursor: pointer
+  
+  &:disabled
+    background-color: primary-color(0.5)
+
+    &:hover
+      cursor: default

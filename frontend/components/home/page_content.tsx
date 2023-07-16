@@ -8,13 +8,12 @@ import BrokenPosts from "./posts/broken_posts";
 import LoadingPosts from "./posts/loading_posts";
 import PageContentPosts from "./posts/posts";
 
-export default function PageContent(): React.JSX.Element {
-  const [ token ] = useCookies(["AUTH_TOKEN"]);
+export default function PageContent(props: { token: string | undefined }): React.JSX.Element {
   const hotTags = useSWR("recommendation/getHotTags", fetcher({}));
   const initialPosts = useSWR<GetPostsReturnType>(
-    token.AUTH_TOKEN ? "recommendation/recommend" : "recommendation/getPosts",
+    props.token ? "recommendation/recommend" : "recommendation/getPosts",
     fetcher<GetPostsReturnType>(
-      token.AUTH_TOKEN ? { headers: { "Authorization": `Bearer ${token.AUTH_TOKEN}` } } : {}
+      props.token ? { headers: { "Authorization": `Bearer ${props.token}` } } : {}
     )
   );
 

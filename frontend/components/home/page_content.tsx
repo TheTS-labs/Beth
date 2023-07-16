@@ -1,3 +1,4 @@
+import { useCookies } from "react-cookie";
 import useSWR from "swr";
 
 import { GetPostsReturnType } from "../../../backend/db/models/post";
@@ -8,8 +9,14 @@ import LoadingPosts from "./posts/loading_posts";
 import PageContentPosts from "./posts/posts";
 
 export default function PageContent(): React.JSX.Element {
+  const [ token ] = useCookies(["AUTH_TOKEN"]);
   const hotTags = useSWR("recommendation/getHotTags", fetcher({}));
-  const initialPosts = useSWR<GetPostsReturnType>("recommendation/getPosts", fetcher<GetPostsReturnType>());
+  const initialPosts = useSWR<GetPostsReturnType>(
+    token.AUTH_TOKEN ? "recommendation/recommend" : "recommendation/getPosts",
+    fetcher<GetPostsReturnType>(
+      token.AUTH_TOKEN ? { headers: { "Authorization": `Bearer ${token.AUTH_TOKEN}` } } : {}
+    )
+  );
 
   if (hotTags.error) {
     const failedHotTags = [

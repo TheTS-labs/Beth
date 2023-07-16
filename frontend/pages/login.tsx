@@ -1,13 +1,13 @@
 import axios from "axios";
 import Link from "next/link";
 import { FormEvent, useState } from "react";
+import { useCookies } from "react-cookie";
 
 import axiosConfig from "../axios.config";
 import Errors from "../components/common/errors";
 import Header from "../components/common/header";
 import headerStyles from "../public/styles/auth/header.module.sass";
 import styles from "../public/styles/auth/singup.module.sass";
-import { useCookies } from "react-cookie";
 
 interface Entry {
   value: string
@@ -52,9 +52,11 @@ export default function LogIn(): React.JSX.Element {
       return;
     }
 
-    setToken("AUTH_TOKEN", response.data.token);
-
     e.target.submit.value = "done, redirecting...";
+
+    const payload = JSON.parse(atob(response.data.token.split(".")[1]));
+
+    setToken("AUTH_TOKEN", response.data.token, { expires: new Date(payload.exp*1000) });
     window.location.replace("/");
   };
 

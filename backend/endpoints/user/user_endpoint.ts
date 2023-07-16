@@ -172,7 +172,8 @@ export default class UserEndpoint extends BaseEndpoint<type.UserRequestArgs, Cal
 
     const token = jwt.sign({
       tokenId,
-      scope: scope,
+      scope,
+      email: user.email
     }, this.config.get("JWT_TOKEN_SECRET").required().asString(), { expiresIn: args.expiresIn });
 
     return { tokenId, token };

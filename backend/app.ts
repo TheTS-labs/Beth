@@ -20,7 +20,7 @@ import PermissionMiddleware from "./middlewares/permission_middleware";
 import Redis from "./redis";
 import ScheduledTasks from "./scheduledJobs/init_scheduled_jobs";
 
-// TODO: Simpify it
+// TODO: Simplify it
 
 dotenv.config();
 
@@ -96,6 +96,10 @@ export default class App {
       res.setHeader(
         "Access-Control-Allow-Origin",
         this.config.get("ACCESS_CONTROL_ALLOW_ORIGIN_HEADER").required().asString()
+      );
+      res.setHeader(
+        "Access-Control-Allow-Headers",
+        "Authorization"
       );
       next();
     });

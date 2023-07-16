@@ -94,9 +94,19 @@ export default class PostModel {
       context: { afterCursor, numberRecords }
     });
     let query = this.db.queryBuilder()
-                       .select("post.*")
-                       .from("post")
-                       .where({ "frozenAt": null });
+                        .select("p.text", "u.displayName", "u.username", "p.score", "u.verified")
+                        .fromRaw(`(
+                          SELECT post.id, post.author, post.text, post."repliesTo", post."frozenAt", 
+                                SUM(CASE WHEN "vote"."voteType" = true THEN 1 ELSE -1 END) AS score
+                          FROM "post"
+                          JOIN "vote" ON post.id = "vote"."postId"
+                          GROUP BY post.id 
+                        ) AS p`)
+                        .join("user as u", "p.author", "=", "u.email")
+                        .whereNull("p.repliesTo")
+                        .whereNull("p.frozenAt")
+                        .where("u.isFrozen", false)
+                        .orderBy("p.id", "desc");
 
     query = knexCursorPagination(query, { after: afterCursor, first: numberRecords });
 

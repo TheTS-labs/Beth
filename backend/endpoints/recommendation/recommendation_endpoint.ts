@@ -14,9 +14,9 @@ import UserModel from "../../db/models/user";
 import VoteModel, { Vote } from "../../db/models/vote";
 import * as type from "./types";
 
-type CallEndpointReturnType = TPostWithScore[] | { result: HotTags[] };
+type CallEndpointReturnType = { results: TPostWithRate[] } | { result: HotTags[] } | GetPostsReturnType;
 type TPostWithVote = TPost & { voteType: Vote };
-type TPostWithScore = TPost & { score: number };
+type TPostWithRate = TPost & { rate: number };
 interface RecommendationRequirements {
   likedTags: string[]
   dislikedTags: string[]
@@ -95,13 +95,16 @@ export default class RecommendationEndpoint extends BaseEndpoint<type.Recommenda
 
       return {
         ...recommendPost,
-        score: tagScore + userScore
+        rate: tagScore + userScore
       };
-    }) as TPostWithScore[];
+    }) as TPostWithRate[];
 
-    recommendations.sort((a, b) => b.score - a.score);
+    recommendations.sort((a, b) => b.rate - a.rate);
 
-    return recommendations;
+    return {
+      results: recommendations,
+      endCursor: requirements.posts.endCursor
+    };
   }
 
   private getPreferredTags(posts: TPostWithVote[], voteType: Vote): string[] {

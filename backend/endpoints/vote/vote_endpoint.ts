@@ -15,7 +15,7 @@ import UserModel from "../../db/models/user";
 import VoteModel, { Vote } from "../../db/models/vote";
 import * as type from "./types";
 
-type CallEndpointReturnType = { success: true } | { count: number, voteType: Vote };
+type CallEndpointReturnType = { success: true } | { goodCount: number, badCount: number, total: number };
 
 export default class VoteEndpoint extends BaseEndpoint<type.VoteRequestArgs, CallEndpointReturnType> {
   public allowNames: string[] = [
@@ -77,8 +77,10 @@ export default class VoteEndpoint extends BaseEndpoint<type.VoteRequestArgs, Cal
       throw new RequestError("DatabaseError", "", 2);
     }
 
-    const count = await this.voteModel.getVoteCount(args.postId, args.voteType);
+    const goodCount = await this.voteModel.getVoteCount(args.postId, Vote.Up);
+    const badCount = await this.voteModel.getVoteCount(args.postId, Vote.Down);
+    const total = goodCount - badCount;
 
-    return { count: count, voteType: args.voteType };
+    return { goodCount, badCount, total };
   }
 }

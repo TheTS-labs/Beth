@@ -9,6 +9,8 @@ import styles from "../../../public/styles/home/posts/posts.module.sass";
 import Errors from "../../common/errors";
 import Loader from "../../common/loader";
 import Post from "../../common/post";
+import { useCookies } from "react-cookie";
+import voteOnClick from "../../common/vote_on_click";
 
 interface Props {
   initialData: GetPostsReturnType
@@ -45,6 +47,7 @@ async function fetchPosts(
 }
 
 export default function PageContentPosts(props: Props): React.JSX.Element {
+  const [ token ] = useCookies(["AUTH_TOKEN"]);
   const [ afterCursor, setAfterCursor ] = useState(props.initialData.endCursor);
   const [ errors, setErrors ] = useState<string[]>([]);
   const [ posts, setPosts ] = useState(props.initialData.results);
@@ -75,9 +78,7 @@ export default function PageContentPosts(props: Props): React.JSX.Element {
   return <div className={styles.posts}>
     <p className={styles.text}>Feed</p>
     
-    {posts.map((post, i) => <Post key={i} post={post} voteOnClick={(): void => {
-      setErrors(prevErrors => [...prevErrors, "Log In or Sing Up to vote, please"]);
-    }} />)}
+    {posts.map((post, i) => <Post key={i} post={post} voteOnClick={voteOnClick(token.AUTH_TOKEN, setErrors)} />)}
 
     <div className={styles.loader} ref={observerTarget}>
       {((): React.JSX.Element => { if (showLoader.current) return <Loader />; })()}

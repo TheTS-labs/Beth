@@ -2,24 +2,13 @@ import { useCookies } from "react-cookie";
 import Header from "../components/common/header";
 import headerStyles from "../public/styles/auth/header.module.sass";
 import Link from "next/link";
-import Errors from "../components/common/errors";
-import { useState, MouseEvent, useEffect } from "react";
+import { MouseEvent } from "react";
 import styles from "../public/styles/auth/main.module.sass";
 
 export default function LogOut() {
-  const [ errors, setErrors ] = useState<string[]>([]);
-  const [token, _setToken, removeToken] = useCookies(["AUTH_TOKEN"]);
-  const [ disabled, setDisabled ] = useState(false);
+  const [ _token, _setToken, removeToken ] = useCookies(["AUTH_TOKEN"]);
 
-  useEffect(() => {
-    console.log(!token.AUTH_TOKEN)
-    if (!token.AUTH_TOKEN) {
-      setErrors(prevErrors => [...prevErrors, "You can't log out, because you are not logged in"]);
-      setDisabled(true);
-    }
-  }, [])
-
-  const logout = (event: MouseEvent<HTMLButtonElement>) => {
+  const logout = (_event: MouseEvent<HTMLButtonElement>) => {
     removeToken("AUTH_TOKEN");
     window.location.replace("/");
   }
@@ -49,9 +38,7 @@ export default function LogOut() {
     <div className={styles.form_wrap}>
       <h1 className={styles.text}><i>log out here</i></h1>
       <p><i>Do it if you want</i></p>
-      <button className={styles.logout} disabled={disabled} onClick={logout}>Log Out</button>
+      <button className={styles.logout} onClick={logout}>Log Out</button>
     </div>
-
-    <Errors errors={errors} />
   </>;
 }

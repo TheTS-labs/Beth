@@ -25,9 +25,13 @@ export const VoteArgsSchema = base.keys({
 // <<< Vote <<<
 
 // >>> Vote count >>>
-export type VoteCountArgs = Base;
+export interface VoteCountArgs {
+  postId: number
+}
 
-export const VoteCountArgsSchema = base;
+export const VoteCountArgsSchema = Joi.object().keys({
+  postId: Joi.number().positive().required()
+});
 // <<< Vote count <<<
 
 export type VoteRequestArgs = VoteArgs | VoteCountArgs;

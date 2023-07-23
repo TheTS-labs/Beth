@@ -9,7 +9,7 @@ import CachingPermissionModel from "../../db/models/caching/caching_permission";
 import CachingPostModel from "../../db/models/caching/caching_post";
 import CachingUserModel from "../../db/models/caching/caching_user";
 import PermissionModel from "../../db/models/permission";
-import PostModel, { GetListReturnType, GetPostsReturnType, HotTags, TPost } from "../../db/models/post";
+import PostModel, { GetPostsReturnType, HotTags, TPost } from "../../db/models/post";
 import UserModel from "../../db/models/user";
 import VoteModel, { Vote } from "../../db/models/vote";
 import * as type from "./types";
@@ -22,13 +22,13 @@ interface RecommendationRequirements {
   dislikedTags: string[]
   likedUsers: string[]
   dislikedUsers: string[]
-  posts: GetListReturnType
+  posts: GetPostsReturnType
 }
 
 export default class RecommendationEndpoint extends BaseEndpoint<type.RecommendationRequestArgs,
                                                                  CallEndpointReturnType> {
   public allowNames: string[] = [
-    "recommend", "getHotTags", "getPosts"
+    "recommend", "getHotTags", "globalRecommend"
   ];
   userModel: UserModel | CachingUserModel;
   permissionModel: PermissionModel | CachingPermissionModel;
@@ -53,10 +53,19 @@ export default class RecommendationEndpoint extends BaseEndpoint<type.Recommenda
     this.voteModel = new VoteModel(this.db, this.logger, this.redisClient, this.config);
   }
 
-  async getPosts(args: type.GetPostsArgs, _auth: Auth): Promise<GetPostsReturnType> {
+  async globalRecommend(args: type.GetPostsArgs, _auth: Auth): Promise<GetPostsReturnType> {
     args = await this.validate(type.GetPostsArgsSchema, args);
 
     const posts = await this.postModel.getPosts(args.afterCursor, args.numberRecords);
+
+    posts.results.sort((a, b) => b.score - a.score);
+
+    // posts.results.sort((a, b) => {
+    //   const millisecondsFromCreationA = Date.now() - a.createdAt.getTime(),
+    //         millisecondsFromCreationB = Date.now() - b.createdAt.getTime();
+    //   return millisecondsFromCreationB/b.score - millisecondsFromCreationA/a.score;
+    // });
+
     return posts;
   }
 
@@ -80,7 +89,7 @@ export default class RecommendationEndpoint extends BaseEndpoint<type.Recommenda
       }
     })) as TPostWithVote[];
 
-    const requirements = await this.getRecommendationRequirements(args, postsWithVoteType);
+    const requirements = await this.getRecommendationRequirements(args, postsWithVoteType, auth.user.email);
 
     const recommendations = requirements.posts.results.map(recommendPost => {
       const tags = recommendPost.tags ? recommendPost.tags.split(",") : [];
@@ -97,7 +106,7 @@ export default class RecommendationEndpoint extends BaseEndpoint<type.Recommenda
         ...recommendPost,
         rate: tagScore + userScore
       };
-    }) as TPostWithRate[];
+    });
 
     recommendations.sort((a, b) => b.rate - a.rate);
 
@@ -116,14 +125,14 @@ export default class RecommendationEndpoint extends BaseEndpoint<type.Recommenda
   }
 
   private async getRecommendationRequirements(
-    args: type.RecommendArgs, postsWithVoteType: TPostWithVote[]
+    args: type.RecommendArgs, postsWithVoteType: TPostWithVote[], email: string
   ): Promise<RecommendationRequirements> {
     return {
       likedTags: this.getPreferredTags(postsWithVoteType, Vote.Up),
       dislikedTags: this.getPreferredTags(postsWithVoteType, Vote.Down),
       likedUsers: this.getPreferredUsers(postsWithVoteType, Vote.Up),
       dislikedUsers: this.getPreferredUsers(postsWithVoteType, Vote.Down),
-      posts: await this.postModel.getList(args.afterCursor, args.numberRecords)
+      posts: await this.postModel.getPosts(args.afterCursor, args.numberRecords, email)
     };
   }
 }

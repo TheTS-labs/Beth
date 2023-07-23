@@ -4,6 +4,8 @@ import { RedisClientType } from "redis";
 import winston from "winston";
 
 import { ENV } from "../../app";
+import { TUser } from "./user";
+import { TVote, Vote } from "./vote";
 
 export type NestedTPost = (TPost & { comments: NestedTPost[] });
 export type HotTags = { tag: string, post_count: string }[];
@@ -14,14 +16,15 @@ export interface GetListReturnType {
 }
 
 export interface GetPostsReturnType {
-  results: {
-      text: string
-      displayName: string
-      username: string
-      score: string
-      verified: boolean
+  results: (
+    Omit<TPost, "id"> &
+    Omit<TUser, "password" | "id" | "tags"> &
+    { 
       _cursor_0: number
-  }[]
+      score: number
+      userVote: null | boolean | Vote
+    }
+  )[]
   endCursor: string
 }
 
@@ -88,6 +91,7 @@ export default class PostModel {
   }
 
   public async getList(afterCursor: string | null, numberRecords: number): Promise<GetListReturnType> {
+    // TODO: Make the same thingy as in getPosts for this function, please
     this.logger.debug({
       message: "Trying to get list",
       path: module.filename,
@@ -179,29 +183,47 @@ export default class PostModel {
     return hotTags.rows;
   }
 
-  public async getPosts(afterCursor: string, numberRecords: number): Promise<GetPostsReturnType> {
-    let query = this.db.queryBuilder()
-      .select("p.text", "u.displayName", "u.username", "p.score", "u.verified")
-      .fromRaw(`(
-        SELECT post.id, post.author, post.text, post."repliesTo", post."frozenAt", 
-               SUM(CASE WHEN "vote"."voteType" = true THEN 1 ELSE -1 END) AS score
-        FROM "post"
-        JOIN "vote" ON post.id = "vote"."postId"
-        GROUP BY post.id 
-      ) AS p`)
-      .join("user as u", "p.author", "=", "u.email")
-      .whereNull("p.repliesTo")
-      .whereNull("p.frozenAt")
-      .where("u.isFrozen", false)
-      .orderBy("p.id", "desc");
-
-    query = knexCursorPagination(query, { after: afterCursor, first: numberRecords });
-
-    const results = await query;
+  public async getPosts(afterCursor: string, numberRecords: number, email?: string): Promise<GetPostsReturnType> {
+    const results = await knexCursorPagination(this.db.queryBuilder()
+      .select(
+        "post.*",
+        "user.isFrozen",
+        "user.displayName",
+        "user.username",
+        "user.email",
+        "user.verified"
+      )
+      .from("post")
+      .join("user", "post.author", "=", "user.email")
+      .whereNull("post.repliesTo")
+      .whereNull("post.frozenAt")
+      .where("user.isFrozen", false)
+      .orderBy("post.id", "desc"), { after: afterCursor, first: numberRecords });
     const endCursor = getCursor(results[results.length - 1]);
 
+    const votes = (await this.db.transaction(async trx => {
+      return Promise.all(results.map(result => 
+        trx<TVote>("vote").select().where("vote.postId", result.id)
+      ));
+    })).flat();
+
+    const additionalInfo: { [key: number]: { score: number, userVote: null | boolean | Vote } } = {};
+
+    votes.forEach(vote => {
+      if (!additionalInfo.hasOwnProperty(vote.postId)) {
+        additionalInfo[vote.postId] = {
+          score: 0,
+          userVote: null
+        };
+      }
+      if (email && vote.userEmail == email) {
+        additionalInfo[vote.postId].userVote = vote.voteType;
+      }
+      additionalInfo[vote.postId].score += vote.voteType ? 1 : -1;
+    });
+
     return {
-      results: results,
+      results: results.map(result => ({ ...result, ...additionalInfo[result.id] })),
       endCursor: endCursor
     };
   }

@@ -18,6 +18,6 @@ export const endpoints: TEndpointTypes = {
 export const disableAuthFor = [
   "/user/create",
   "/recommendation/getHotTags",
-  "/recommendation/getPosts",
+  "/recommendation/globalRecommend",
   "/user/issueToken" // Authenticates itself
 ];

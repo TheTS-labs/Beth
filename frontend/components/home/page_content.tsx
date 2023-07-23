@@ -11,7 +11,7 @@ import PageContentPosts from "./posts/posts";
 export default function PageContent(props: { token: string | undefined }): React.JSX.Element {
   const hotTags = useSWR("recommendation/getHotTags", fetcher({}));
   const initialPosts = useSWR<GetPostsReturnType>(
-    props.token ? "recommendation/recommend" : "recommendation/getPosts",
+    props.token ? "recommendation/recommend" : "recommendation/globalRecommend",
     fetcher<GetPostsReturnType>(
       props.token ? { headers: { "Authorization": `Bearer ${props.token}` } } : {}
     )

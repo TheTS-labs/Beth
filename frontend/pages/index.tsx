@@ -21,7 +21,7 @@ export default function App(): React.JSX.Element {
       const payload = JSON.parse(atob(token.AUTH_TOKEN.split(".")[1]))
       setEmail(payload.email);
     }
-  })
+  }, [])
 
   return <>
     <Header>

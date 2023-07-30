@@ -5,9 +5,9 @@ import winston from "winston";
 
 import { ENV } from "../app";
 import ActionModel from "../db/models/action";
-import { IBaseEndpoint } from "./base_endpoint";
 import RequestError from "./request_error";
 import { EndpointThisType, JWTRequest } from "./types";
+import IBaseEndpoint from "./types/base_endpoint";
 
 export default class BaseEndpoint<RequestArgsType extends object,
                                   CallEndpointReturnType extends object> implements IBaseEndpoint {
@@ -39,7 +39,7 @@ export default class BaseEndpoint<RequestArgsType extends object,
     const endpoint = name.charAt(0).toUpperCase() + name.slice(1);
     const actionName = domain + endpoint;
 
-    this.actionModel.insertAction(auth?.user?.id||-1, actionName, args);
+    this.actionModel.create({ userId: auth?.user?.id||-1, actionType: actionName, context: JSON.stringify(args) });
 
     return result;
   }

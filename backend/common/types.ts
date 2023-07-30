@@ -1,9 +1,10 @@
 import { Request } from "express";
 
-import { TToken } from "../db/models/token";
-import { TUser } from "../db/models/user";
+import { Token } from "../db/models/token";
+import { User } from "../db/models/user";
 
-export type SafeUserObject = Pick<TUser, "email" | "id" | "isFrozen">;
+// TODO: SafeUserObject type is out-dated
+export type SafeUserObject = Pick<User, "email" | "id" | "isFrozen">;
 export type RequestErrorObject = {
   errorType: string
   errorMessage: string
@@ -28,8 +29,8 @@ export enum UserScore {
 export interface Auth {
   tokenId: number
   scope: string[]
-  user: TUser
-  token: TToken
+  user: User
+  token: Token
 }
 
 export type JWTRequest = Request & { auth?: Auth };

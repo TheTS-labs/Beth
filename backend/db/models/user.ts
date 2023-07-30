@@ -3,9 +3,10 @@ import { RedisClientType } from "redis";
 import winston from "winston";
 
 import { ENV } from "../../app";
-import { DBBool, SafeUserObject } from "../../common/types";
+import { DBBool } from "../../common/types";
+import ICRUDModel from "../../common/types/crud_model";
 
-export interface TUser {
+export interface User {
   id: number
   username: string
   displayName: string
@@ -16,72 +17,66 @@ export interface TUser {
   verified: DBBool
 }
 
-export default class UserModel {
+export default class UserModel implements ICRUDModel<Omit<User, "id" | "isFrozen" | "tags" | "verified">, User> {
   constructor(
     public db: Knex,
     public logger: winston.Logger,
-    public redisClient: RedisClientType, 
+    public redisClient: RedisClientType,
     public config: ENV
   ) {}
 
-  public async insertUser(username: string, displayName: string, email: string, hash: string): Promise<void> {
-    this.logger.debug({
-      message: "Trying to insert user",
+  public async create(args: Omit<User, "id" | "isFrozen" | "tags" | "verified">): Promise<number> {
+    this.logger.log({
+      level: "trying",
+      message: "To create user",
       path: module.filename,
-      context: { email, username, displayName }
+      context: args
     });
-    await this.db<TUser>("user").insert({ username, displayName, email, password: hash });
+
+    const user = await this.db<User>("user").insert(args, ["id"]);
+
+    return user[0].id;
   }
 
-  public async getSafeUser(email: string): Promise<SafeUserObject | undefined> {
-    this.logger.debug({ message: "Getting safe user", path: module.filename, context: { email } });
+  // TODO: Return User type if select="*"
+  public async read<SelectType extends keyof User>(
+    identifier: string,
+    select?: SelectType[] | "*"
+  ): Promise<User | Pick<User, SelectType> | undefined> {
+    this.logger.log({
+      level: "trying",
+      message: "To read user",
+      path: module.filename,
+      context: { identifier, select }
+    });
 
-    const user = (await this.db<TUser>("user")
-                            .where({ email })
-                            .select("id", "email", "isFrozen", "username", "displayName")
-                            .first()) as SafeUserObject | undefined;
-
-    return user;
+    const user = await this.db<User>("user")
+                           .where({ email: identifier })
+                           .select(select||["id", "email", "isFrozen", "username", "displayName"])
+                           .first();
+    
+    return user as Pick<User, SelectType>;
   }
 
-  public async getUnsafeUser(email: string): Promise<TUser | undefined> {
-    this.logger.debug({ message: "Getting unsafe user", path: module.filename, context: { email } });
+  public async update(identifier: string, args: Partial<User>): Promise<void> {
+    this.logger.log({
+      level: "trying",
+      message: "To update user",
+      path: module.filename,
+      context: { identifier, args }
+    });
 
-    const user = await this.db<TUser>("user").where({ email }).select().first();
-
-    return user;
+    await this.db<User>("user").where({ email: identifier }).update(args);
   }
 
-  public async changePassword(email: string, newHash: string): Promise<void> {
-    this.logger.debug({ message: "Changing user's password", path: module.filename, context: { email } });
+  public async delete(identifier: string): Promise<void> {
+    this.logger.log({
+      level: "trying",
+      message: "To delete user",
+      path: module.filename,
+      context: { identifier }
+    });
 
-    await this.db<TUser>("user").where({ email }).update({ password: newHash });
-  }
-
-  public async isFrozen(email: string): Promise<DBBool> {
-    this.logger.debug({ message: "Is the user frozen", path: module.filename, context: { email } });
-
-    const record = await this.db<TUser>("user").where({ email }).select("isFrozen").first();
-
-    const result = record || { isFrozen: DBBool.No };
-
-    return result.isFrozen;
-  }
-
-  public async frozeUser(email: string, froze: DBBool): Promise<void> {
-    this.logger.debug({ message: `Freezing ${email}`, path: module.filename, context: { froze } });
-
-    await this.db<TUser>("user").where({ email }).update({ isFrozen: froze });
-  }
-
-  public async editTags(email: string, newTags: string): Promise<void> {
-    this.logger.debug({ message: "Editing tags", path: module.filename, context: { email, newTags } });
-    await this.db<TUser>("user").where({ email }).update({ tags: newTags });
-  }
-
-  public async verifyUser(email: string, verify: DBBool): Promise<void> {
-    this.logger.debug({ message: `Verification ${email}`, path: module.filename, context: { verify } });
-
-    await this.db<TUser>("user").where({ email }).update({ verified: verify });
-  }
+    await this.db<User>("user").where({ email: identifier }).del();
+  } 
 }

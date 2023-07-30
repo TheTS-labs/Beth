@@ -1,108 +1,105 @@
-import { Knex } from "knex";
-import { RedisClientType } from "redis";
-import winston from "winston";
+import pick from "../../../common/pick";
+import UserModel, { User } from "../user";
 
-import { ENV } from "../../../app";
-import { DBBool, SafeUserObject } from "../../../common/types";
-import UserModel, { TUser } from "../user";
-
-export default class CachingUserModel implements UserModel {
-  constructor(
-    public db: Knex,
-    public logger: winston.Logger,
-    public redisClient: RedisClientType, 
-    public config: ENV
-  ) {}
-  
-  public async insertUser(username: string, displayName: string, email: string, hash: string): Promise<void> {
-    this.logger.debug({
-      message: "Trying to insert user",
+export default class CachingUserModel extends UserModel {
+  public async create(args: Omit<User, "id" | "isFrozen" | "tags" | "verified">): Promise<number> {
+    this.logger.log({
+      level: "trying",
+      message: "To create user",
       path: module.filename,
-      context: { email, username, displayName }
+      context: args
     });
-    await this.db<TUser>("user").insert({ username, displayName, email, password: hash });
+
+    const user = await this.db<User>("user").insert(
+      args,
+      ["id", "username", "displayName", "email", "isFrozen", "tags", "verified"]
+    );
+
+    await this.redisClient.set(`user:${args.email}`, JSON.stringify(user[0]), {
+      EX: this.config.get("USER_EX").required().asIntPositive(),
+      NX: true
+    });
+
+    return user[0].id;
   }
 
-  public async getSafeUser(email: string): Promise<SafeUserObject | undefined> {
-    this.logger.debug({ message: "Getting safe user from cache", path: module.filename, context: { email } });
-    const cachedUserString = await this.redisClient.get(email);
-    const cachedUser: SafeUserObject = JSON.parse(cachedUserString||"null");
+  public async read<SelectType extends keyof User>(
+    identifier: string,
+    //? (keyof User)[] is used instead of SelectType[] because TypeScript
+    //? does not recognize the presence of User keys in SelectType for some reason
+    select?: (keyof User)[] | "*"
+  ): Promise<User | Pick<User, SelectType> | undefined> {
+    this.logger.log({
+      level: "trying",
+      message: "To read user",
+      path: module.filename,
+      context: { identifier, select }
+    });
+
+    if (select?.includes("password")) {
+      const user = await this.db<User>("user")
+                           .where({ email: identifier })
+                           .select(select)
+                           .first();
+      return user as Pick<User, SelectType>;
+    }
+
+    const cachedUserString = await this.redisClient.get(`user:${identifier}`),
+          cachedUser = JSON.parse(cachedUserString||"null") as Omit<User, "password"> | null;
 
     if (cachedUser) {
-      this.logger.debug({ message: "Returning user from cache", path: module.filename, context: { email } });
-      return cachedUser;
-    }
-  
-    this.logger.debug({ message: "Getting user from DB", path: module.filename, context: { email } });
-    const user = await this._getSafeUser(email);
-    if (user) {
-      this.logger.debug({ message: "Caching user", path: module.filename, context: { email } });
-      await this.redisClient.set(email, JSON.stringify(user), {
-        EX: this.config.get("USER_EX").required().asIntPositive(),
-        NX: true
-      });
+      return pick(
+        cachedUser,
+        ...select||["id", "email", "isFrozen", "username", "displayName"]
+      ) as Pick<User, SelectType>;
     }
 
-    return user;
-  }
+    const user = await this.db<User>("user").where({ email: identifier }).select().first();
 
-  public async getUnsafeUser(email: string): Promise<TUser | undefined> {
-    this.logger.debug({ message: "Getting unsafe user from DB", path: module.filename, context: { email } });
-    
-    const user = await this.db<TUser>("user").where({ email }).select().first();
-
-    return user;
-  }
-
-  public async changePassword(email: string, newHash: string): Promise<void> {
-    this.logger.debug({ message: "Changing user's password", path: module.filename, context: { email } });
-
-    await this.db<TUser>("user").where({ email: email }).update({ password: newHash });
-  }
-
-  public async isFrozen(email: string): Promise<DBBool> {
-    this.logger.debug({ message: "Is the user frozen", path: module.filename, context: { email } });
-    this.logger.debug({ message: "Getting safe user from cache", path: module.filename, context: { email } });
-    const cachedUserString = await this.redisClient.get(email);
-    const cachedUser: SafeUserObject = JSON.parse(cachedUserString||"null");
-
-    if (cachedUser) {
-      this.logger.debug({ message: "Using user from cache", path: module.filename, context: { email } });
-      return cachedUser.isFrozen;
+    if (!user) {
+      return user;
     }
 
-    this.logger.debug({ message: "Using user from DB", path: module.filename, context: { email } });
-    const record = await this.db<TUser>("user").where({ email }).select("isFrozen").first();
-    const result = record || { isFrozen: DBBool.No };
-    return result.isFrozen;
+    await this.redisClient.set(`user:${identifier}`, JSON.stringify(user), {
+      EX: this.config.get("USER_EX").required().asIntPositive(),
+      NX: true
+    });
+
+    return pick(
+      user,
+      ...select||["id", "email", "isFrozen", "username", "displayName"]
+    ) as Pick<User, SelectType>;
   }
 
-  public async frozeUser(email: string, froze: DBBool): Promise<void> {
-    this.logger.debug({ message: `Freezing ${email}`, path: module.filename, context: { froze } });
+  public async update(identifier: string, args: Partial<User>): Promise<void> {
+    this.logger.log({
+      level: "trying",
+      message: "To update user",
+      path: module.filename,
+      context: { identifier, args }
+    });
 
-    await this.db<TUser>("user").where({ email }).update({ isFrozen: froze });
+    const user = await this.db<User>("user").where({ email: identifier }).update(
+      args,
+      ["id", "username", "displayName", "email", "isFrozen", "tags", "verified"]
+    );
+
+    await this.redisClient.del(`user:${identifier}`);
+    await this.redisClient.set(`user:${identifier}`, JSON.stringify(user[0]), {
+      EX: this.config.get("USER_EX").required().asIntPositive(),
+      NX: true
+    });
   }
 
-  private async _getSafeUser(email: string): Promise<SafeUserObject | undefined> {
-    this.logger.debug({ message: "Getting safe user", path: module.filename, context: { email } });
+  public async delete(identifier: string): Promise<void> {
+    this.logger.log({
+      level: "trying",
+      message: "To delete user",
+      path: module.filename,
+      context: { identifier }
+    });
 
-    const user = (await this.db<TUser>("user")
-                            .where({ email })
-                            .select("id", "email", "isFrozen", "username", "displayName")
-                            .first()) as SafeUserObject | undefined;
-
-    return user;
-  }
-
-  public async editTags(email: string, newTags: string): Promise<void> {
-    this.logger.debug({ message: "Editing tags", path: module.filename, context: { email, newTags } });
-    await this.db<TUser>("user").where({ email }).update({ tags: newTags });
-    await this.redisClient.del(email);
-  }
-
-  public async verifyUser(email: string, verify: DBBool): Promise<void> {
-    this.logger.debug({ message: `Verification ${email}`, path: module.filename, context: { verify } });
-
-    await this.db<TUser>("user").where({ email }).update({ verified: verify });
-  }
+    await this.db<User>("user").where({ email: identifier }).del();
+    await this.redisClient.del(`user:${identifier}`);
+  } 
 }

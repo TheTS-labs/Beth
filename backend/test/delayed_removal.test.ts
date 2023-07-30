@@ -1,7 +1,7 @@
 import knex from "knex";
 import CronJob from "node-cron";
 
-import { TPost } from "../db/models/post";
+import { Post } from "../db/models/post";
 import knexfile from "../knexfile";
 import Logger from "../logger";
 import getJob from "../scheduledJobs/delayed_removal";
@@ -17,7 +17,7 @@ beforeEach(async () => { await db("post").del(); });
 
 describe("General tests", () => {
   it("should delete post", async () => {
-    const id = (await db<TPost>("post").insert({
+    const id = (await db<Post>("post").insert({
       author: "dont@matter.com",
       text: "112",
       //                              Days
@@ -28,12 +28,12 @@ describe("General tests", () => {
     getJob(db, logger);
     expect(CronJob.schedule).toBeCalledWith("0 0 * * */1", expect.any(Function));
 
-    const post = await db<TPost>("post").where({ id }).first();
+    const post = await db<Post>("post").where({ id }).first();
     expect(post).toBeUndefined();
   });
 
   it("shouldn't delete post", async () => {
-    const id = (await db<TPost>("post").insert({
+    const id = (await db<Post>("post").insert({
       author: "dont@matter.com",
       text: "112",
       //                              Days
@@ -44,7 +44,7 @@ describe("General tests", () => {
     getJob(db, logger);
     expect(CronJob.schedule).toBeCalledWith("0 0 * * */1", expect.any(Function));
 
-    const post = await db<TPost>("post").where({ id }).first();
+    const post = await db<Post>("post").where({ id }).first();
     expect(post).not.toBeUndefined();
   });
 });

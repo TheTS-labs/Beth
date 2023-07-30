@@ -12,6 +12,7 @@ export default class ScheduledTasks {
   ) { }
 
   start(): void {
+    // Default job
     this.cronJobs.push(delayedRemoval(this.db, this.logger));
 
     this.cronJobs.forEach(async job => {

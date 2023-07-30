@@ -1,4 +1,6 @@
-export default {
+import { Permissions } from "../db/models/permission";
+
+const shorthands: { [key: string]: (keyof Permissions)[] } = {
   login: [
     "UserView",
     "UserEditPassword",
@@ -18,3 +20,5 @@ export default {
     "RecommendationRecommend",
   ]
 };
+
+export default shorthands;

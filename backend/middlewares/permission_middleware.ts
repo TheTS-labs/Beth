@@ -28,8 +28,13 @@ export default class PermissionMiddleware {
       next: NextFunction
     ): Promise<void> => {
       if (!req.auth?.token) {
-        this.logger.debug({ message: "Excluded path. Skip", path: module.filename });
+        this.logger.log({
+          level: "middleware",
+          message: "Excluded path in IdentityMiddleware, skipping it",
+          path: module.filename
+        });
         next(); 
+        // TODO: Get rid of this return
         return;
       }
 
@@ -39,7 +44,11 @@ export default class PermissionMiddleware {
 
       const requiredScope = domain + endpoint;
 
-      this.logger.debug({ message: `Checking for ${requiredScope} scope`, path: module.filename });
+      this.logger.log({
+        level: "middleware",
+        message: `Looking for ${requiredScope} scope in token...`,
+        path: module.filename
+      });
   
       if (!req.auth?.scope.includes(requiredScope)) {
         throw new RequestError("PermissionDenied", requiredScope);

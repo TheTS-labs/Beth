@@ -2,8 +2,8 @@ import request from "supertest";
 
 import App from "../../app";
 import { disableAuthFor, endpoints } from "../../common/endpoints";
-import { PermissionStatus,TPermissions } from "../../db/models/permission";
-import { TPost } from "../../db/models/post";
+import { Permissions,PermissionStatus } from "../../db/models/permission";
+import { Post } from "../../db/models/post";
 import userData, { credentials } from "../data/user_data";
 import auth from "../helpers/auth";
 
@@ -37,7 +37,7 @@ describe("POST /post/create", () => {
     expect(res.statusCode).toBe(200);
     expect(typeof res.body.id).toBe("number");
 
-    const post = await server.db<TPost>("post").where({ id: res.body.id }).first();
+    const post = await server.db<Post>("post").where({ id: res.body.id }).first();
     expect(post).not.toBeUndefined();
     expect(post?.text).toBe("Example");
   });
@@ -49,7 +49,7 @@ describe("POST /post/create", () => {
       password: credentials.hash,
       scope: ["PostCreate"]
     });
-    const replyTo = (await server.db<TPost>("post").insert({
+    const replyTo = (await server.db<Post>("post").insert({
       text: "Example 1",
       author: userData.email
     }, "id"))[0].id;
@@ -64,7 +64,7 @@ describe("POST /post/create", () => {
     expect(res.statusCode).toBe(200);
     expect(typeof res.body.id).toBe("number");
 
-    const post = await server.db<TPost>("post").where({ id: res.body.id }).first();
+    const post = await server.db<Post>("post").where({ id: res.body.id }).first();
     expect(post).not.toBeUndefined();
     expect(post?.text).toBe("Example");
     expect(post?.repliesTo).toBe(replyTo);
@@ -78,11 +78,11 @@ describe("POST /post/create", () => {
       password: credentials.hash,
       scope: ["PostCreate"]
     });
-    const parent = (await server.db<TPost>("post").insert({
+    const parent = (await server.db<Post>("post").insert({
       text: "Example 1",
       author: userData.email
     }, "id"))[0].id;
-    const replyTo = (await server.db<TPost>("post").insert({
+    const replyTo = (await server.db<Post>("post").insert({
       text: "Example 2",
       author: userData.email,
       repliesTo: parent,
@@ -99,7 +99,7 @@ describe("POST /post/create", () => {
     expect(res.statusCode).toBe(200);
     expect(typeof res.body.id).toBe("number");
 
-    const post = await server.db<TPost>("post").where({ id: res.body.id }).first();
+    const post = await server.db<Post>("post").where({ id: res.body.id }).first();
     expect(post).not.toBeUndefined();
     expect(post?.text).toBe("Example");
     expect(post?.repliesTo).toBe(replyTo);
@@ -115,7 +115,7 @@ describe("POST /post/view", () => {
       password: credentials.hash,
       scope: ["PostView"]
     });
-    const id = (await server.db<TPost>("post").insert({
+    const id = (await server.db<Post>("post").insert({
       text: "Example",
       author: userData.email
     }, "id"))[0].id;
@@ -126,7 +126,7 @@ describe("POST /post/view", () => {
     expect(res.body.errorMessage).toBeUndefined();
     expect(res.statusCode).toBe(200);
 
-    const post = await server.db<TPost>("post").where({ id }).first();
+    const post = await server.db<Post>("post").where({ id }).first();
     expect(JSON.stringify(res.body)).toBe(JSON.stringify(post));
   });
 
@@ -153,7 +153,7 @@ describe("POST /post/view", () => {
       password: credentials.hash,
       scope: ["PostView"]
     });
-    const id = (await server.db<TPost>("post").insert({
+    const id = (await server.db<Post>("post").insert({
       text: "Example",
       author: userData.email,
       frozenAt: new Date(Date.now())
@@ -176,7 +176,7 @@ describe("POST /post/edit", () => {
       password: credentials.hash,
       scope: ["PostEdit"]
     });
-    const id = (await server.db<TPost>("post").insert({
+    const id = (await server.db<Post>("post").insert({
       text: "Example",
       author: userData.email
     }, "id"))[0].id;
@@ -188,7 +188,7 @@ describe("POST /post/edit", () => {
     expect(res.statusCode).toBe(200);
     expect(res.body.success).toBeTruthy();
 
-    const post = await server.db<TPost>("post").where({ id }).first();
+    const post = await server.db<Post>("post").where({ id }).first();
     expect(post?.text).toBe("123");
   });
 
@@ -216,11 +216,11 @@ describe("POST /post/edit", () => {
       password: credentials.hash,
       scope: ["PostEdit"]
     });
-    const id = (await server.db<TPost>("post").insert({
+    const id = (await server.db<Post>("post").insert({
       text: "Example",
       author: "another@user.com"
     }, "id"))[0].id;
-    await server.db<TPermissions>("permission").insert({
+    await server.db<Permissions>("permission").insert({
       email: userData.email,
       PostSuperEdit: PermissionStatus.Hasnt
     });
@@ -241,11 +241,11 @@ describe("POST /post/edit", () => {
       password: credentials.hash,
       scope: ["PostEdit"]
     });
-    const id = (await server.db<TPost>("post").insert({
+    const id = (await server.db<Post>("post").insert({
       text: "Example",
       author: "another@user.com"
     }, "id"))[0].id;
-    await server.db<TPermissions>("permission").insert({
+    await server.db<Permissions>("permission").insert({
       email: userData.email,
       PostSuperEdit: PermissionStatus.Has
     });
@@ -259,7 +259,7 @@ describe("POST /post/edit", () => {
     expect(res.statusCode).toBe(200);
     expect(res.body.success).toBeTruthy();
 
-    const post = await server.db<TPost>("post").where({ id }).first();
+    const post = await server.db<Post>("post").where({ id }).first();
     expect(post?.text).toBe("123");
   });
 });
@@ -272,7 +272,7 @@ describe("POST /post/delete", () => {
       password: credentials.hash,
       scope: ["PostDelete"]
     });
-    const id = (await server.db<TPost>("post").insert({
+    const id = (await server.db<Post>("post").insert({
       text: "Example",
       author: userData.email
     }, "id"))[0].id;
@@ -284,7 +284,7 @@ describe("POST /post/delete", () => {
     expect(res.statusCode).toBe(200);
     expect(res.body.success).toBeTruthy();
 
-    const post = await server.db<TPost>("post").where({ id }).first();
+    const post = await server.db<Post>("post").where({ id }).first();
     expect(post?.frozenAt).not.toBeUndefined();
   });
 
@@ -312,11 +312,11 @@ describe("POST /post/delete", () => {
       password: credentials.hash,
       scope: ["PostDelete"]
     });
-    const id = (await server.db<TPost>("post").insert({
+    const id = (await server.db<Post>("post").insert({
       text: "Example",
       author: "another@user.com"
     }, "id"))[0].id;
-    await server.db<TPermissions>("permission").insert({
+    await server.db<Permissions>("permission").insert({
       email: userData.email,
       PostSuperDelete: PermissionStatus.Hasnt
     });
@@ -337,11 +337,11 @@ describe("POST /post/delete", () => {
       password: credentials.hash,
       scope: ["PostDelete"]
     });
-    const id = (await server.db<TPost>("post").insert({
+    const id = (await server.db<Post>("post").insert({
       text: "Example",
       author: "another@user.com"
     }, "id"))[0].id;
-    await server.db<TPermissions>("permission").insert({
+    await server.db<Permissions>("permission").insert({
       email: userData.email,
       PostSuperDelete: PermissionStatus.Has
     });
@@ -355,7 +355,7 @@ describe("POST /post/delete", () => {
     expect(res.statusCode).toBe(200);
     expect(res.body.success).toBeTruthy();
 
-    const post = await server.db<TPost>("post").where({ id }).first();
+    const post = await server.db<Post>("post").where({ id }).first();
     expect(post?.frozenAt).not.toBeUndefined();
   });
 });
@@ -368,9 +368,9 @@ describe("POST /post/getList", () => {
       password: credentials.hash,
       scope: ["PostGetList"]
     });
-    await server.db<TPost>("post").insert({ text: "Example", author: userData.email });
-    await server.db<TPost>("post").insert({ text: "Example", author: userData.email });
-    await server.db<TPost>("post").insert({ text: "Example", author: userData.email });
+    await server.db<Post>("post").insert({ text: "Example", author: userData.email });
+    await server.db<Post>("post").insert({ text: "Example", author: userData.email });
+    await server.db<Post>("post").insert({ text: "Example", author: userData.email });
     // Preparing
 
     const res = await req.post("/post/getList").send().set({ "Authorization": "Bearer " + token });
@@ -388,9 +388,9 @@ describe("POST /post/getList", () => {
       password: credentials.hash,
       scope: ["PostGetList"]
     });
-    await server.db<TPost>("post").insert({ text: "Example", author: userData.email });
-    await server.db<TPost>("post").insert({ text: "Example", author: userData.email });
-    await server.db<TPost>("post").insert({ text: "Example", author: userData.email });
+    await server.db<Post>("post").insert({ text: "Example", author: userData.email });
+    await server.db<Post>("post").insert({ text: "Example", author: userData.email });
+    await server.db<Post>("post").insert({ text: "Example", author: userData.email });
     // Preparing
 
     const res = await req.post("/post/getList").send({ numberRecords: 1 }).set({ "Authorization": "Bearer " + token });
@@ -426,7 +426,7 @@ describe("POST /post/forceDelete", () => {
       password: credentials.hash,
       scope: ["PostForceDelete"]
     });
-    const id = (await server.db<TPost>("post").insert({
+    const id = (await server.db<Post>("post").insert({
       text: "Example",
       author: userData.email
     }, "id"))[0].id;
@@ -438,7 +438,7 @@ describe("POST /post/forceDelete", () => {
     expect(res.statusCode).toBe(200);
     expect(res.body.success).toBeTruthy();
 
-    const post = await server.db<TPost>("post").where({ id }).first();
+    const post = await server.db<Post>("post").where({ id }).first();
     expect(post).toBeUndefined();
   });
 
@@ -468,13 +468,13 @@ describe("POST /post/viewReplies", () => {
       password: credentials.hash,
       scope: ["PostViewReplies"]
     });
-    const parent = (await server.db<TPost>("post").insert({
+    const parent = (await server.db<Post>("post").insert({
       text: "Example",
       author: userData.email
     }, "id"))[0].id;
-    await server.db<TPost>("post").insert({ text: "Example 1", author: userData.email, repliesTo: parent, parent });
-    await server.db<TPost>("post").insert({ text: "Example 2", author: userData.email, repliesTo: parent, parent });
-    await server.db<TPost>("post").insert({ text: "Example 3", author: userData.email, repliesTo: parent, parent });
+    await server.db<Post>("post").insert({ text: "Example 1", author: userData.email, repliesTo: parent, parent });
+    await server.db<Post>("post").insert({ text: "Example 2", author: userData.email, repliesTo: parent, parent });
+    await server.db<Post>("post").insert({ text: "Example 3", author: userData.email, repliesTo: parent, parent });
     // Preparing
 
     const res = await req.post("/post/viewReplies").send({ parent }).set({ "Authorization": "Bearer " + token });
@@ -495,7 +495,7 @@ describe("POST /post/editTags", () => {
       password: credentials.hash,
       scope: ["PostEditTags"]
     });
-    const id = (await server.db<TPost>("post").insert({
+    const id = (await server.db<Post>("post").insert({
       text: "Example",
       author: userData.email
     }, "id"))[0].id;
@@ -509,7 +509,7 @@ describe("POST /post/editTags", () => {
     expect(res.statusCode).toBe(200);
     expect(res.body.success).toBeTruthy();
 
-    const post = await server.db<TPost>("post").where({ id }).first();
+    const post = await server.db<Post>("post").where({ id }).first();
     expect(post?.tags).toBe("123,456");
   });
 
@@ -537,11 +537,11 @@ describe("POST /post/editTags", () => {
       password: credentials.hash,
       scope: ["PostEditTags"]
     });
-    const id = (await server.db<TPost>("post").insert({
+    const id = (await server.db<Post>("post").insert({
       text: "Example",
       author: "another@author.com"
     }, "id"))[0].id;
-    await server.db<TPermissions>("permission").insert({
+    await server.db<Permissions>("permission").insert({
       email: userData.email,
       PostSuperTagsEdit: PermissionStatus.Hasnt
     });
@@ -562,11 +562,11 @@ describe("POST /post/editTags", () => {
       password: credentials.hash,
       scope: ["PostEditTags"]
     });
-    const id = (await server.db<TPost>("post").insert({
+    const id = (await server.db<Post>("post").insert({
       text: "Example",
       author: "another@author.com"
     }, "id"))[0].id;
-    await server.db<TPermissions>("permission").insert({
+    await server.db<Permissions>("permission").insert({
       email: userData.email,
       PostSuperTagsEdit: PermissionStatus.Has
     });
@@ -580,7 +580,7 @@ describe("POST /post/editTags", () => {
     expect(res.statusCode).toBe(200);
     expect(res.body.success).toBeTruthy();
 
-    const post = await server.db<TPost>("post").where({ id }).first();
+    const post = await server.db<Post>("post").where({ id }).first();
     expect(post?.tags).toBe("123,456");
   });
 });

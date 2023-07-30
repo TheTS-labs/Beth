@@ -2,6 +2,7 @@ import Joi from "joi";
 
 import scopes from "../../common/scopes";
 import { DBBool } from "../../common/types";
+import { Permissions } from "../../db/models/permission";
 
 // >>> Create >>>
 export interface CreateArgs {
@@ -86,12 +87,13 @@ export type IssueTokenArgs = {
   email: string
   password: string
   expiresIn: string
-  scope: string[]
+  scope: (keyof Permissions)[]
   shorthand: undefined
 } | {
   email: string
   password: string
   expiresIn: undefined
+  scope: undefined
   shorthand: keyof typeof scopes
 };
 

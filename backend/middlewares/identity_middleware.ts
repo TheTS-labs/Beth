@@ -30,31 +30,48 @@ export default class IdentityMiddleware {
   public middleware(): MiddlewareFunction {
     return async (req: JWTRequest, _res: Response, next: NextFunction): Promise<void> => {
       if (req.auth === undefined) {
-        this.logger.debug({ message: "Excluded path. Skip", path: module.filename });
+        this.logger.log({
+          level: "middleware",
+          message: "Missing Bearer Authorization header, skipping it",
+          path: module.filename
+        });
         next();
+        // TODO: Get rid of this return
         return;
       }
 
-      const token = await this.tokenModel.getToken(req.auth.tokenId);
+      this.logger.log({
+        level: "middleware",
+        message: "Checking the authority of the Bearer Authorization token...",
+        path: module.filename
+      });
+      const token = await this.tokenModel.read(req.auth.tokenId);
       if (!token) {
-        // throw new RequestError("AuthError", "This token doesn't exist, even if it signed", 403);
         throw new RequestError("AuthError", "", 2);
       }
       if (token.revoked) {
         throw new RequestError("AuthError", "", 1);
       }
-      const user = await this.userModel.getUnsafeUser(token.owner);
+
+      this.logger.log({
+        level: "middleware",
+        message: "Resolving user from the database...",
+        path: module.filename
+      });
+      const user = await this.userModel.read(token.owner, "*");
       if (!user) {
         throw new RequestError("DatabaseError", "", 3);
-      }
-      if (!user) {
-        throw new RequestError("AuthError", "User doesn't exist", 403);
       }
 
       req.auth.token = token;
       req.auth.user = user;
 
-      this.logger.debug({ message: "User is authorized", path: module.filename });
+      this.logger.log({
+        level: "middleware",
+        message: "User is authorized",
+        path: module.filename,
+        context: { user, token }
+      });
   
       next();
     };

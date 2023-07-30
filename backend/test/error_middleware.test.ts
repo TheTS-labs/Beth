@@ -2,7 +2,7 @@ import request from "supertest";
 
 import App from "../app";
 import { disableAuthFor, endpoints } from "../common/endpoints";
-import { TPost } from "../db/models/post";
+import { Post } from "../db/models/post";
 import userData, { credentials } from "./data/user_data";
 import auth from "./helpers/auth";
 
@@ -38,7 +38,7 @@ describe("General tests", () => {
       password: credentials.hash,
       scope: ["PostEdit"]
     });
-    const id = (await server.db<TPost>("post").insert({
+    const id = (await server.db<Post>("post").insert({
       text: "Example",
       author: "another@user.com"
     }, "id"))[0].id;

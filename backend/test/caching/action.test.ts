@@ -2,7 +2,7 @@ import request from "supertest";
 
 import App from "../../app";
 import { disableAuthFor, endpoints } from "../../common/endpoints";
-import { TAction } from "../../db/models/action";
+import { Action } from "../../db/models/action";
 import userData, { credentials } from "../data/user_data";
 import auth from "../helpers/auth";
 
@@ -27,7 +27,7 @@ describe("POST /action/simpleSearch", () => {
       password: credentials.hash,
       scope: ["ActionSimpleSearch"]
     });
-    await server.db<TAction>("action").insert({
+    await server.db<Action>("action").insert({
       userId: 8,
       actionType: "UserView",
       context: '{"id": "8"}'
@@ -53,7 +53,7 @@ describe("POST /action/simpleSearch", () => {
       password: credentials.hash,
       scope: ["ActionSimpleSearch"]
     });
-    await server.db<TAction>("action").insert({
+    await server.db<Action>("action").insert({
       userId: 8,
       actionType: "UserView",
       context: '{"id": "8"}'
@@ -82,7 +82,7 @@ describe("POST /action/chainWhereSearch", () => {
       password: credentials.hash,
       scope: ["ActionChainWhereSearch"]
     });
-    await server.db<TAction>("action").insert({
+    await server.db<Action>("action").insert({
       userId: 8,
       actionType: "UserView",
       context: '{"id": "8"}'
@@ -111,7 +111,7 @@ describe("POST /action/chainWhereSearch", () => {
       password: credentials.hash,
       scope: ["ActionChainWhereSearch"]
     });
-    await server.db<TAction>("action").insert({
+    await server.db<Action>("action").insert({
       userId: 8,
       actionType: "UserView",
       context: '{"id": "8"}'
@@ -141,12 +141,12 @@ describe("POST /action/chainWhereSearch", () => {
       password: credentials.hash,
       scope: ["ActionChainWhereSearch"]
     });
-    await server.db<TAction>("action").insert({
+    await server.db<Action>("action").insert({
       userId: 9,
       actionType: "UserView",
       context: '{"id": "9"}'
     });
-    await server.db<TAction>("action").insert({
+    await server.db<Action>("action").insert({
       userId: 8,
       actionType: "UserView",
       context: '{"id": "8"}'
@@ -184,12 +184,12 @@ describe("POST /action/chainWhereSearch", () => {
       password: credentials.hash,
       scope: ["ActionChainWhereSearch"]
     });
-    await server.db<TAction>("action").insert({
+    await server.db<Action>("action").insert({
       userId: 9,
       actionType: "UserView",
       context: '{"id": "9"}'
     });
-    await server.db<TAction>("action").insert({
+    await server.db<Action>("action").insert({
       userId: 8,
       actionType: "UserView",
       context: '{"id": "8"}'

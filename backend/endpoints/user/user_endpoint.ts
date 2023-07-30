@@ -8,16 +8,14 @@ import { ENV } from "../../app";
 import BaseEndpoint from "../../common/base_endpoint_class";
 import RequestError from "../../common/request_error";
 import scopes from "../../common/scopes";
-import { Auth,SafeUserObject } from "../../common/types";
-import CachingPermissionModel from "../../db/models/caching/caching_permission";
+import { Auth, SafeUserObject } from "../../common/types";
 import CachingUserModel from "../../db/models/caching/caching_user";
-import PermissionModel, { PermissionStatus, TPermissions } from "../../db/models/permission";
+import PermissionModel, { Permissions, PermissionStatus } from "../../db/models/permission";
 import TokenModel from "../../db/models/token";
 import UserModel from "../../db/models/user";
 import * as type from "./types";
 
 type CallEndpointReturnType = { success: true } | {} | SafeUserObject | { token: string };
-type TPermissionsWithKey = TPermissions & { [key: string]: PermissionStatus | undefined };
 
 export default class UserEndpoint extends BaseEndpoint<type.UserRequestArgs, CallEndpointReturnType> {
   allowNames: Array<string> = [
@@ -26,22 +24,21 @@ export default class UserEndpoint extends BaseEndpoint<type.UserRequestArgs, Cal
     "issueToken"
   ];
   userModel: UserModel | CachingUserModel;
-  permissionModel: PermissionModel | CachingPermissionModel;
+  permissionModel: PermissionModel;
   tokenModel: TokenModel;
 
   constructor(
     public db: Knex,
     public redisClient: RedisClientType,
-    public logger: winston.Logger,
+    public logger: winston.Logger, 
     public config: ENV
   ) {
     super(db, redisClient, logger, config, "user");
     const REDIS_REQUIRED = this.config.get("REDIS_REQUIRED").required().asBool();
     const UserModelType = REDIS_REQUIRED ? CachingUserModel : UserModel;
-    const PermissionModelType = REDIS_REQUIRED ? CachingPermissionModel : PermissionModel;
 
     this.userModel = new UserModelType(this.db, this.logger, this.redisClient, this.config);
-    this.permissionModel = new PermissionModelType(this.db, this.logger, this.redisClient, this.config);
+    this.permissionModel = new PermissionModel(this.db, this.logger, this.redisClient, this.config);
     this.tokenModel = new TokenModel(this.db, this.logger, this.redisClient, this.config);
   }
 
@@ -50,11 +47,16 @@ export default class UserEndpoint extends BaseEndpoint<type.UserRequestArgs, Cal
 
     const hash = await bcrypt.hash(args.password, 3);
 
-    await this.userModel.insertUser(args.username, args.displayName, args.email, hash).catch((err: Error) => {
+    await this.userModel.create({
+      username: args.username,
+      displayName: args.displayName,
+      email: args.email,
+      password: hash
+    }).catch((err: Error) => {
       throw new RequestError("DatabaseError", err.message);
     });
 
-    await this.permissionModel.insertPermissions(args.email).catch((err: Error) => {
+    await this.permissionModel.create({ email: args.email }).catch((err: Error) => {
       throw new RequestError("DatabaseError", err.message);
     });
 
@@ -64,7 +66,7 @@ export default class UserEndpoint extends BaseEndpoint<type.UserRequestArgs, Cal
   async view(args: type.ViewArgs, _auth: Auth): Promise<CallEndpointReturnType> {
     args = await this.validate(type.ViewArgsSchema, args);
 
-    const requestedUser = await this.userModel.getSafeUser(args.email);
+    const requestedUser = await this.userModel.read(args.email);
 
     return requestedUser || {};
   }
@@ -74,11 +76,7 @@ export default class UserEndpoint extends BaseEndpoint<type.UserRequestArgs, Cal
 
     const newHash = await bcrypt.hash(args.newPassword, 3);
 
-    await this.userModel.changePassword(auth.user.email, newHash);
-    const REDIS_REQUIRED = this.config.get("REDIS_REQUIRED").required().asBool();
-    if (REDIS_REQUIRED) {
-      await this.redisClient.del(auth.user.email);
-    }
+    await this.userModel.update(auth.user.email, { password: newHash });
 
     return { success: true };
   }
@@ -86,13 +84,13 @@ export default class UserEndpoint extends BaseEndpoint<type.UserRequestArgs, Cal
   async froze(args: type.FrozeArgs, auth: Auth): Promise<CallEndpointReturnType> {
     args = await this.validate(type.FrozeArgsSchema, args);
 
-    const permissions = await this.permissionModel.getPermissions(auth.user.email) as TPermissions;
+    const permissions = await this.permissionModel.read(auth.user.email) as Permissions;
 
     if (args.email != auth.user.email && permissions["UserSuperFroze"] == PermissionStatus.Hasnt) {
       throw new RequestError("PermissionError", "", 3);
     }
 
-    await this.userModel.frozeUser(args.email, args.froze).catch((err: { message: string }) => {
+    await this.userModel.update(args.email, { isFrozen: args.froze }).catch((err: { message: string }) => {
       throw new RequestError("DatabaseError", err.message);
     });
 
@@ -102,12 +100,12 @@ export default class UserEndpoint extends BaseEndpoint<type.UserRequestArgs, Cal
   async editTags(args: type.EditTagsArgs, _auth: Auth): Promise<CallEndpointReturnType> {
     args = await this.validate(type.EditTagsArgsSchema, args);
 
-    const requestedUser = await this.userModel.getSafeUser(args.email);
+    const requestedUser = await this.userModel.read(args.email);
     if (!requestedUser) {
       throw new RequestError("DatabaseError", "", 3);
     }
 
-    await this.userModel.editTags(args.email, args.newTags).catch((err: { message: string }) => {
+    await this.userModel.update(args.email, { tags: args.newTags }).catch((err: { message: string }) => {
       throw new RequestError("DatabaseError", err.message);
     });
 
@@ -117,12 +115,12 @@ export default class UserEndpoint extends BaseEndpoint<type.UserRequestArgs, Cal
   async verify(args: type.VerifyArgs, _auth: Auth): Promise<CallEndpointReturnType> {
     args = await this.validate(type.VerifyArgsSchema, args);
 
-    const requestedUser = await this.userModel.getSafeUser(args.email);
+    const requestedUser = await this.userModel.read(args.email);
     if (!requestedUser) {
       throw new RequestError("DatabaseError", "", 3);
     }
 
-    await this.userModel.verifyUser(args.email, args.verify).catch((err: { message: string }) => {
+    await this.userModel.update(args.email, { verified: args.verify }).catch((err: { message: string }) => {
       throw new RequestError("DatabaseError", err.message);
     });
 
@@ -131,9 +129,7 @@ export default class UserEndpoint extends BaseEndpoint<type.UserRequestArgs, Cal
 
   async issueToken(args: type.IssueTokenArgs, _auth: undefined): Promise<CallEndpointReturnType> {
     args = await this.validate(type.IssueTokenArgsSchema, args);
-    const user = await this.userModel.getUnsafeUser(args.email);
-
-    // TODO: Scope shorthands
+    const user = await this.userModel.read(args.email, "*");
 
     if (!user) {
       throw new RequestError("DatabaseError", "", 3);
@@ -148,24 +144,19 @@ export default class UserEndpoint extends BaseEndpoint<type.UserRequestArgs, Cal
       throw new RequestError("AuthError");
     }
 
-    const permission = await this.permissionModel.getPermissions(user.email) as TPermissionsWithKey;
+    const permission = await this.permissionModel.read(user.email) ;
     if (!permission) {
       throw new RequestError("DatabaseError", user.email, 1);
     }
 
-    let scope: string[] = [];
-
-    if (args.shorthand) {
-      scope = scopes[args.shorthand];
-    }
-
+    const scope = args.scope || scopes[args.shorthand];
     scope.forEach(exactScope => {
       if (!permission[exactScope]) {
         throw new RequestError("PermissionError", exactScope, 4);
       }
     });
 
-    const tokenId = await this.tokenModel.issue(user.email, JSON.stringify(scope))
+    const tokenId = await this.tokenModel.create({ owner: user.email, scope: JSON.stringify(scope) })
                                          .catch((err: { message: string }) => {
       throw new RequestError("DatabaseError", err.message);
     });

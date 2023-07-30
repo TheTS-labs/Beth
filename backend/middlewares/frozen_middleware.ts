@@ -20,7 +20,11 @@ export default class FrozenMiddleware {
   public middleware(): MiddlewareFunction {
     return async (req: JWTRequest, res: Response, next: NextFunction): Promise<void> => {
       if (!req.auth) {
-        this.logger.debug({ message: "Excluded path. Skip", path: module.filename });
+        this.logger.log({
+          level: "middleware",
+          message: "Excluded path in IdentityMiddleware, skipping it",
+          path: module.filename
+        });
         next();
       }
 

@@ -6,13 +6,13 @@ import { ENV } from "../../app";
 import BaseEndpoint from "../../common/base_endpoint_class";
 import RequestError from "../../common/request_error";
 import { Auth } from "../../common/types";
-import CachingPermissionModel from "../../db/models/caching/caching_permission";
 import CachingPostModel from "../../db/models/caching/caching_post";
 import CachingUserModel from "../../db/models/caching/caching_user";
+import CachingVoteModel from "../../db/models/caching/caching_vote";
 import PermissionModel from "../../db/models/permission";
 import PostModel from "../../db/models/post";
 import UserModel from "../../db/models/user";
-import VoteModel, { Vote } from "../../db/models/vote";
+import VoteModel, { VoteType } from "../../db/models/vote";
 import * as type from "./types";
 
 type CallEndpointReturnType = { success: true } | { goodCount: number, badCount: number, total: number };
@@ -22,9 +22,9 @@ export default class VoteEndpoint extends BaseEndpoint<type.VoteRequestArgs, Cal
     "vote", "voteCount"
   ];
   userModel: UserModel | CachingUserModel;
-  permissionModel: PermissionModel | CachingPermissionModel;
+  permissionModel: PermissionModel;
   postModel: PostModel | CachingPostModel;
-  voteModel: VoteModel;
+  voteModel: VoteModel | CachingVoteModel;
 
   constructor(
     public db: Knex,
@@ -35,34 +35,41 @@ export default class VoteEndpoint extends BaseEndpoint<type.VoteRequestArgs, Cal
     super(db, redisClient, logger, config, "voting");
     const REDIS_REQUIRED = this.config.get("REDIS_REQUIRED").required().asBool();
     const UserModelType = REDIS_REQUIRED ? CachingUserModel : UserModel;
-    const PermissionModelType = REDIS_REQUIRED ? CachingPermissionModel : PermissionModel;
     const PostModelType = REDIS_REQUIRED ? CachingPostModel : PostModel;
+    const VoteModelType = REDIS_REQUIRED ? CachingVoteModel : VoteModel;
 
-    this.permissionModel = new PermissionModelType(this.db, this.logger, this.redisClient, this.config);
+    this.permissionModel = new PermissionModel(this.db, this.logger, this.redisClient, this.config);
     this.userModel = new UserModelType(this.db, this.logger, this.redisClient, this.config);
     this.postModel = new PostModelType(this.db, this.logger, this.redisClient, this.config);
-    this.voteModel = new VoteModel(this.db, this.logger, this.redisClient, this.config);
+    this.voteModel = new VoteModelType(this.db, this.logger, this.redisClient, this.config);
   }
  
   async vote(args: type.VoteArgs, auth: Auth): Promise<CallEndpointReturnType>{
     args = await this.validate(type.VoteArgsSchema, args);
 
-    const post = await this.postModel.getPost(args.postId);
+    const post = await this.postModel.read(args.postId);
     if (!post) {
       throw new RequestError("DatabaseError", "", 2);
     }
 
-    const vote = await this.voteModel.getVote(args.postId, auth.user.email);
+    const vote = await this.voteModel.readByIds(args.postId, auth.user.email);
     if (vote && !args.unvote) {
       throw new RequestError("DatabaseError", "", 4);
     }
 
-    await this.voteModel.vote(
-      args.postId,
-      auth.user.email,
-      args.unvote,
-      args.voteType
-    ).catch((err: { message: string }) => {
+    if (args.unvote) {
+      await this.voteModel.delete(vote?.id||-1).catch((err: { message: string }) => {
+        throw new RequestError("DatabaseError", err.message);
+      });
+
+      return { success: true };
+    }
+
+    await this.voteModel.create({
+      postId: args.postId,
+      userEmail: auth.user.email,
+      voteType: args.voteType
+    }).catch((err: { message: string }) => {
       throw new RequestError("DatabaseError", err.message);
     });
 
@@ -72,13 +79,13 @@ export default class VoteEndpoint extends BaseEndpoint<type.VoteRequestArgs, Cal
   async voteCount(args: type.VoteCountArgs, _auth: Auth): Promise<CallEndpointReturnType>{
     args = await this.validate(type.VoteCountArgsSchema, args);
 
-    const post = await this.postModel.getPost(args.postId);
+    const post = await this.postModel.read(args.postId);
     if (!post) {
       throw new RequestError("DatabaseError", "", 2);
     }
 
-    const goodCount = await this.voteModel.getVoteCount(args.postId, Vote.Up);
-    const badCount = await this.voteModel.getVoteCount(args.postId, Vote.Down);
+    const goodCount = await this.voteModel.readVoteCount(args.postId, VoteType.Up);
+    const badCount = await this.voteModel.readVoteCount(args.postId, VoteType.Down);
     const total = goodCount - badCount;
 
     return { goodCount, badCount, total };

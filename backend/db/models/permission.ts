@@ -3,13 +3,14 @@ import { RedisClientType } from "redis";
 import winston from "winston";
 
 import { ENV } from "../../app";
+import ICRUDModel from "../../common/types/crud_model";
 
 export enum PermissionStatus {
   Hasnt = 0,
   Has = 1
 }
 
-export interface TPermissions {
+export interface Permissions {
   id: number
   email: string
   UserView: PermissionStatus
@@ -41,7 +42,10 @@ export interface TPermissions {
   RecommendationRecommend: PermissionStatus
 }
 
-export default class PermissionsModel {
+export default class PermissionModel implements ICRUDModel<
+  Partial<Omit<Permissions, "id" | "email">> & Permissions["email"],
+  Permissions
+> {
   constructor(
     public db: Knex,
     public logger: winston.Logger,
@@ -49,25 +53,60 @@ export default class PermissionsModel {
     public config: ENV
   ) {}
 
-  public async insertPermissions(email: string): Promise<void> {
-    this.logger.debug({ message: "Instering permission", path: module.filename, context: { email } });
-    await this.db<TPermissions>("permission").insert({ email });
+  // TODO: Property 'create' in type 'PermissionModel' is not assignable to the same property in base type
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  //@ts-ignore
+  public async create(args: Partial<Omit<Permissions, "email">> & { email: string }): Promise<number> {
+    this.logger.log({
+      level: "trying",
+      message: "To create permission for the user",
+      path: module.filename,
+      context: args
+    });
+
+    const permission = await this.db<Permissions>("permission").insert(args, ["id"]);
+
+    return permission[0].id;
   }
 
-  public async getPermissions(email: string): Promise<TPermissions | undefined> {
-    this.logger.debug({ message: "Getting permissions", path: module.filename, context: { email } });
-    const permissions = await this.db<TPermissions>("permission").where({ email }).first();
+  public async read<SelectType extends keyof Permissions>(
+    identifier: string,
+    select?: "*" | SelectType[] | undefined
+  ): Promise<Permissions | Pick<Permissions, SelectType> | undefined> {
+    this.logger.log({
+      level: "trying",
+      message: "To read permission of the user",
+      path: module.filename,
+      context: { identifier, select }
+    });
 
-    return permissions;
+    const permission = await this.db<Permissions>("permission")
+                           .where({ email: identifier })
+                           .select(select||["*"])
+                           .first();
+    
+    return  permission as Pick<Permissions, SelectType>;
   }
 
-  public async grantPermission(email: string, permission: string): Promise<void> {
-    this.logger.debug({ message: "Granting permission", path: module.filename, context: { email, permission } });
-    await this.db<TPermissions>("permission").where({ email: email }).update({ [permission]: PermissionStatus.Has });
+  public async update(identifier: string, args: Partial<Omit<Permissions, "id">>): Promise<void> {
+    this.logger.log({
+      level: "trying",
+      message: "To update permission of the user",
+      path: module.filename,
+      context: { identifier, args }
+    });
+
+    await this.db<Permissions>("permission").where({ email: identifier }).update(args);
   }
 
-  public async rescindPermission(email: string, permission: string): Promise<void> {
-    this.logger.debug({ message: "Rescinding permission", path: module.filename, context: { email, permission } });
-    await this.db<TPermissions>("permission").where({ email: email }).update({ [permission]: PermissionStatus.Hasnt });
+  public async delete(identifier: string): Promise<void> {
+    this.logger.log({
+      level: "trying",
+      message: "To delete permission of the user",
+      path: module.filename,
+      context: { identifier }
+    });
+
+    await this.db<Permissions>("permission").where({ email: identifier }).del();
   }
 }

@@ -3,9 +3,10 @@ import { RedisClientType } from "redis";
 import winston from "winston";
 
 import { ENV } from "../../app";
+import ICRUDModel from "../../common/types/crud_model";
 import { ChainWhereSearchArgs, Where } from "../../endpoints/action/types";
 
-export interface TAction {
+export interface Action {
   id: number
   userId: number
   actionType: string
@@ -13,7 +14,7 @@ export interface TAction {
   context: string
 }
 
-export default class ActionModel {
+export default class ActionModel implements ICRUDModel<Omit<Action, "id" | "createdAt">, Action> {
   constructor(
     public db: Knex,
     public logger: winston.Logger,
@@ -21,43 +22,86 @@ export default class ActionModel {
     public config: ENV
   ) {}
 
-  public async insertAction(userId: number, actionType: string, context: object): Promise<void> {
-    this.logger.debug({
-      message: "Trying to insert action",
+  public async create(args: Omit<Action, "id" | "createdAt">): Promise<number> {
+    this.logger.log({
+      level: "trying",
+      message: "To create action",
       path: module.filename,
-      context: { userId, actionType, context }
+      context: args
     });
 
-    await this.db<TAction>("action").insert({
-      userId,
-      actionType,
-      context: JSON.stringify(context),
-    });
+    const action = await this.db<Action>("action").insert(args, ["id"]);
+
+    return action[0].id;
   }
 
+  public async read<SelectType extends keyof Action>(
+    identifier: number,
+    select?: "*" | SelectType[] | undefined
+  ): Promise<Action | Pick<Action, SelectType> | undefined> {
+    this.logger.log({
+      level: "trying",
+      message: "To read action",
+      path: module.filename,
+      context: { identifier, select }
+    });
+
+    const action = await this.db<Action>("action")
+                           .where({ id: identifier })
+                           .select(select||["*"])
+                           .first();
+    
+    return action as Pick<Action, SelectType>;
+  }
+
+  public async update(identifier: number, args: Partial<Action>): Promise<void> {
+    this.logger.log({
+      level: "trying",
+      message: "To update action",
+      path: module.filename,
+      context: { identifier, args }
+    });
+
+    await this.db<Action>("action").where({ id: identifier }).update(args);
+  }
+
+  public async delete(identifier: number): Promise<void> {
+    this.logger.log({
+      level: "trying",
+      message: "To delete action",
+      path: module.filename,
+      context: { identifier }
+    });
+
+    await this.db<Action>("action").where({ id: identifier }).del();
+  }
+
+  // TODO: Change return type with select, as in `this.read`
   public async simpleSearch(
     key: string,
     operator: string,
     value: string,
     select: string[] | string
-  ): Promise<TAction[]> {
-    this.logger.debug({
-      message: "Trying to simple search",
+  ): Promise<Action[]> {
+    this.logger.log({
+      level: "trying",
+      message: "To preform a simple action(s) search",
       path: module.filename,
-      context: { key, operator, value }
+      context: { key, operator, value, select }
     });
 
-    const where = this.db<TAction>("action").where(key, operator, value);
-    const result: TAction[] =  Array.isArray(select) ? await where.select(...select) : await where.select(select);
+    const where = this.db<Action>("action").where(key, operator, value);
+    const result: Action[] =  Array.isArray(select) ? await where.select(...select) : await where.select(select);
 
     return result;
   }
 
-  public async chainWhereSearch(chain: ChainWhereSearchArgs): Promise<TAction[]> {
-    this.logger.debug({
-      message: "Trying to chain where search",
+  public async chainWhereSearch(chain: ChainWhereSearchArgs): Promise<Action[]> {
+    this.logger.log({
+      level: "trying",
+      message: "To preform a chained action(s) search",
       path: module.filename,
-      context: { chain }
+      context: chain
     });
 
     const wheres = chain.chain.map((value) => {
@@ -67,15 +111,16 @@ export default class ActionModel {
       return { ...value, method: type + clause };
     }) as (Where & { method: string })[];
 
-    const query = this.db<TAction>("action");
+    const query = this.db<Action>("action");
 
     wheres.forEach((value) => {
+      // TODO: Get rid of @ts-ignore
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       //@ts-ignore
       query[value.method](value.key, value.operator, value.value);
     });
 
-    const result: TAction[] =  Array.isArray(chain.select) ? await query.select(...chain.select)
+    const result: Action[] =  Array.isArray(chain.select) ? await query.select(...chain.select)
                                                            : await query.select(chain.select);
 
     return result;

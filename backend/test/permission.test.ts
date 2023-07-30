@@ -2,7 +2,7 @@ import request from "supertest";
 
 import App from "../app";
 import { disableAuthFor, endpoints } from "../common/endpoints";
-import { PermissionStatus, TPermissions } from "../db/models/permission";
+import { Permissions,PermissionStatus } from "../db/models/permission";
 import userData, { credentials } from "./data/user_data";
 import auth from "./helpers/auth";
 
@@ -25,7 +25,7 @@ describe("POST /permission/view", () => {
       password: credentials.hash,
       scope: ["PermissionView"]
     });
-    await server.db<TPermissions>("permission").insert({
+    await server.db<Permissions>("permission").insert({
       email: userData.email,
       UserSuperFroze: PermissionStatus.Has,
       UserEditTags: PermissionStatus.Hasnt
@@ -68,7 +68,7 @@ describe("POST /permission/grant", () => {
       password: credentials.hash,
       scope: ["PermissionGrant"]
     });
-    const id = (await server.db<TPermissions>("permission").insert({
+    const id = (await server.db<Permissions>("permission").insert({
       email: userData.email,
       PermissionGrand: PermissionStatus.Has,
       VotingVote: PermissionStatus.Hasnt
@@ -82,7 +82,7 @@ describe("POST /permission/grant", () => {
     expect(res.body.errorMessage).toBeUndefined();
     expect(res.statusCode).toBe(200);
     
-    const permissions = await server.db<TPermissions>("permission").where({ id }).first();
+    const permissions = await server.db<Permissions>("permission").where({ id }).first();
     expect(permissions?.VotingVote).toBeTruthy();
   });
 });
@@ -95,7 +95,7 @@ describe("POST /permission/rescind", () => {
       password: credentials.hash,
       scope: ["PermissionRescind"]
     });
-    const id = (await server.db<TPermissions>("permission").insert({
+    const id = (await server.db<Permissions>("permission").insert({
       email: userData.email,
       PermissionRescind: PermissionStatus.Has,
       VotingVote: PermissionStatus.Has
@@ -109,7 +109,7 @@ describe("POST /permission/rescind", () => {
     expect(res.body.errorMessage).toBeUndefined();
     expect(res.statusCode).toBe(200);
     
-    const permissions = await server.db<TPermissions>("permission").where({ id }).first();
+    const permissions = await server.db<Permissions>("permission").where({ id }).first();
     expect(permissions?.VotingVote).toBeFalsy();
   });
 });

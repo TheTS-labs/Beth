@@ -4,10 +4,12 @@
         "creds",
         "downvotes",
         "Hasnt",
+        "ICRUD",
         "knexfile",
         "middlewares",
         "unnest",
         "Unvote",
         "upvotes"
-    ]
+    ],
+    "jest.rootPath": "./backend"
 }

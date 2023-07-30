@@ -5,7 +5,7 @@ export default {
 };
 
 export const credentials = {
-  password: "12345678",
-  newPassword: "anotherPassword",
-  hash: "$2b$04$nYbKivKTN4593hXpkJC.s.WcJ8lecwMiPcdXsWTUDs7BNN1JxVWl2" // 12345678
+  password: "Pa$$w0rd!",
+  newPassword: "Pa$$w0rd!2",
+  hash: "$2b$04$M5vzanWHUdGXCT/OOWA8iuXI3BrSCmNxYdfl3RHIMvSf4eoIFdjae" // Pa$$w0rd!
 };

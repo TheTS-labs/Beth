@@ -2,7 +2,7 @@ import { faker } from "@faker-js/faker";
 import { Knex } from "knex";
 
 import { DBBool } from "../../common/types";
-import { TUser } from "../models/user";
+import { User } from "../models/user";
 
 const seedUsers = 10;
 export async function seed(knex: Knex): Promise<void> {
@@ -11,7 +11,7 @@ export async function seed(knex: Knex): Promise<void> {
   // Deletes ALL existing entries
   await knex("user").del();
   await knex("permission").del();
-  const users: Omit<TUser, "id">[] = [];
+  const users: Omit<User, "id">[] = [];
 
   [...Array(seedUsers).keys()].map(async () => {
     const firstName = faker.person.firstName();

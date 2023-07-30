@@ -3,9 +3,9 @@ import request from "supertest";
 import App from "../app";
 import { disableAuthFor, endpoints } from "../common/endpoints";
 import { DBBool } from "../common/types";
-import { PermissionStatus, TPermissions } from "../db/models/permission";
-import { TToken } from "../db/models/token";
-import { TUser } from "../db/models/user";
+import { Permissions, PermissionStatus } from "../db/models/permission";
+import { Token } from "../db/models/token";
+import { User } from "../db/models/user";
 import userData, { credentials } from "./data/user_data";
 import auth from "./helpers/auth";
 
@@ -32,15 +32,15 @@ describe("POST /user/create", () => {
     expect(res.statusCode).toBe(200);
     expect(res.body.success).toBe(true);
 
-    const record = await server.db<TUser>("user").where({ email: "beth@gmail.com" }).first();
+    const record = await server.db<User>("user").where({ email: "beth@gmail.com" }).first();
     expect(record).toBeTruthy();
-    const permissionRecord = await server.db<TPermissions>("permission").where({ email: "beth@gmail.com" }).first();
+    const permissionRecord = await server.db<Permissions>("permission").where({ email: "beth@gmail.com" }).first();
     expect(permissionRecord).toBeTruthy();
   });
 
   it("should throw DatabaseError at insertUser", async () => {
     // Preparing
-    await server.db<TUser>("user").insert({ ...userData, password: credentials.hash });
+    await server.db<User>("user").insert({ ...userData, password: credentials.hash });
     // Preparing
 
     const res = await req.post("/user/create").send({
@@ -56,7 +56,7 @@ describe("POST /user/create", () => {
 
   it("should throw DatabaseError at insertPermissions", async () => {
     // Preparing
-    await server.db<TPermissions>("permission").insert({ email: userData.email });
+    await server.db<Permissions>("permission").insert({ email: userData.email });
     // Preparing
 
     const res = await req.post("/user/create").send({
@@ -119,7 +119,7 @@ describe("POST /user/editPassword", () => {
                          .send({ newPassword: credentials.newPassword })
                          .set({ "Authorization": "Bearer " + token });
 
-    const newHash = await server.db<TUser>("user").select("password").where({ email }).first();
+    const newHash = await server.db<User>("user").select("password").where({ email }).first();
 
     expect(res.body.errorMessage).toBeUndefined();
     expect(res.statusCode).toBe(200);
@@ -146,7 +146,7 @@ describe("POST /user/froze", () => {
     expect(res.statusCode).toBe(200);
     expect(res.body.success).toBe(true);
 
-    const user = await server.db<TUser>("user").where({ email }).first();
+    const user = await server.db<User>("user").where({ email }).first();
     expect(user?.isFrozen).toBeTruthy();
   });
 
@@ -157,7 +157,7 @@ describe("POST /user/froze", () => {
       password: credentials.hash,
       scope: ["UserFroze"]
     });
-    await server.db<TUser>("user").where({ email }).update({ isFrozen: DBBool.Yes });
+    await server.db<User>("user").where({ email }).update({ isFrozen: DBBool.Yes });
     const { token } = await auth(server, {
       userData: {
         email: "beth_admin@gmail.com",
@@ -167,7 +167,7 @@ describe("POST /user/froze", () => {
       password: credentials.hash,
       scope: ["UserFroze"]
     });
-    await server.db<TPermissions>("permission").insert({
+    await server.db<Permissions>("permission").insert({
       email: "beth_admin@gmail.com",
       UserSuperFroze: PermissionStatus.Has
     });
@@ -181,7 +181,7 @@ describe("POST /user/froze", () => {
     expect(res.statusCode).toBe(200);
     expect(res.body.success).toBe(true);
 
-    const user = await server.db<TUser>("user").where({ email }).first();
+    const user = await server.db<User>("user").where({ email }).first();
     expect(user?.isFrozen).toBeFalsy();
   });
 
@@ -192,7 +192,7 @@ describe("POST /user/froze", () => {
       password: credentials.hash,
       scope: ["UserFroze"]
     });
-    await server.db<TPermissions>("permission").insert({ email: userData.email });
+    await server.db<Permissions>("permission").insert({ email: userData.email });
     // Preparing
 
     const res = await req.post("/user/froze")
@@ -212,7 +212,7 @@ describe("POST /user/editTags", () => {
       password: credentials.hash,
       scope: ["UserEditTags"]
     });
-    await server.db<TPermissions>("permission").insert({
+    await server.db<Permissions>("permission").insert({
       email: userData.email,
       UserEditTags: PermissionStatus.Has
     });
@@ -226,7 +226,7 @@ describe("POST /user/editTags", () => {
     expect(res.statusCode).toBe(200);
     expect(res.body.success).toBe(true);
 
-    const user = await server.db<TUser>("user").where({ email }).first();
+    const user = await server.db<User>("user").where({ email }).first();
     expect(user?.tags).toBe("tag");
   });
 
@@ -237,7 +237,7 @@ describe("POST /user/editTags", () => {
       password: credentials.hash,
       scope: ["UserEditTags"]
     });
-    await server.db<TPermissions>("permission").insert({
+    await server.db<Permissions>("permission").insert({
       email: userData.email,
       UserEditTags: PermissionStatus.Has
     });
@@ -260,7 +260,7 @@ describe("POST /user/verify", () => {
       password: credentials.hash,
       scope: ["UserVerify"]
     });
-    await server.db<TPermissions>("permission").insert({
+    await server.db<Permissions>("permission").insert({
       email: userData.email,
       UserVerify: PermissionStatus.Has
     });
@@ -274,7 +274,7 @@ describe("POST /user/verify", () => {
     expect(res.statusCode).toBe(200);
     expect(res.body.success).toBe(true);
 
-    const user = await server.db<TUser>("user").where({ email }).first();
+    const user = await server.db<User>("user").where({ email }).first();
     expect(user?.verified).toBeTruthy();
   });
 
@@ -285,8 +285,8 @@ describe("POST /user/verify", () => {
       password: credentials.hash,
       scope: ["UserVerify"]
     });
-    await server.db<TUser>("user").where({ email }).update({ verified: DBBool.Yes });
-    await server.db<TPermissions>("permission").insert({
+    await server.db<User>("user").where({ email }).update({ verified: DBBool.Yes });
+    await server.db<Permissions>("permission").insert({
       email: userData.email,
       UserVerify: PermissionStatus.Has
     });
@@ -300,7 +300,7 @@ describe("POST /user/verify", () => {
     expect(res.statusCode).toBe(200);
     expect(res.body.success).toBe(true);
 
-    const user = await server.db<TUser>("user").where({ email }).first();
+    const user = await server.db<User>("user").where({ email }).first();
     expect(user?.verified).toBeFalsy();
   });
 
@@ -311,7 +311,7 @@ describe("POST /user/verify", () => {
       password: credentials.hash,
       scope: ["UserVerify"]
     });
-    await server.db<TPermissions>("permission").insert({
+    await server.db<Permissions>("permission").insert({
       email: userData.email,
       UserVerify: PermissionStatus.Has
     });
@@ -329,11 +329,11 @@ describe("POST /user/verify", () => {
 describe("POST /user/issueToken", () => {
   it("should issue new token", async () => {
     // Preparing
-    await server.db<TUser>("user").insert({
+    await server.db<User>("user").insert({
       ...userData,
       password: credentials.hash
     });
-    await server.db<TPermissions>("permission").insert({ email: userData.email });
+    await server.db<Permissions>("permission").insert({ email: userData.email });
     // Preparing
 
     const res = await req.post("/user/issueToken")
@@ -348,7 +348,7 @@ describe("POST /user/issueToken", () => {
     expect(res.body.token).not.toBeUndefined();
     expect(res.body.tokenId).not.toBeUndefined();
 
-    const token = await server.db<TToken>("token").where({ id: res.body.tokenId }).first();
+    const token = await server.db<Token>("token").where({ id: res.body.tokenId }).first();
     expect(token).not.toBeUndefined();
   });
 
@@ -366,17 +366,17 @@ describe("POST /user/issueToken", () => {
 
   it("should throw AuthError", async () => {
     // Preparing
-    await server.db<TUser>("user").insert({
+    await server.db<User>("user").insert({
       ...userData,
       password: credentials.hash
     });
-    await server.db<TPermissions>("permission").insert({ email: userData.email });
+    await server.db<Permissions>("permission").insert({ email: userData.email });
     // Preparing
 
     const res = await req.post("/user/issueToken")
                          .send({
                             email: userData.email,
-                            password: "WrongPassword123",
+                            password: credentials.newPassword,
                             scope: ["UserView"]
                           });
 
@@ -386,7 +386,7 @@ describe("POST /user/issueToken", () => {
 
   it("should throw DatabaseError: Permissions doesn't exist", async () => {
     // Preparing
-    await server.db<TUser>("user").insert({
+    await server.db<User>("user").insert({
       ...userData,
       password: credentials.hash
     });
@@ -405,11 +405,11 @@ describe("POST /user/issueToken", () => {
 
   it("should throw PermissionError", async () => {
     // Preparing
-    await server.db<TUser>("user").insert({
+    await server.db<User>("user").insert({
       ...userData,
       password: credentials.hash
     });
-    await server.db<TPermissions>("permission").insert({
+    await server.db<Permissions>("permission").insert({
       email: userData.email,
       UserView: PermissionStatus.Hasnt
     });

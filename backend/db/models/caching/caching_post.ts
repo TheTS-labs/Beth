@@ -1,163 +1,104 @@
-import { Knex } from "knex";
-import { getCursor, knexCursorPagination } from "knex-cursor-pagination";
-import { RedisClientType } from "redis";
-import winston from "winston";
+import pick from "../../../common/pick";
+import PostModel, { Post } from "../post";
 
-import { ENV } from "../../../app";
-import PostModel, { GetListReturnType, GetPostsReturnType, HotTags, TPost } from "../post";
-import { TVote, Vote } from "../vote";
-
-export default class CachingPostModel implements PostModel {
-  constructor(
-    public db: Knex,
-    public logger: winston.Logger,
-    public redisClient: RedisClientType, 
-    public config: ENV
-  ) {}
-
-  public async insertPost(
-    author: string,
-    text: string,
-    repliesTo: number | undefined=undefined,
-    parent: number | undefined=undefined
-  ): Promise<Pick<TPost, "id"> | undefined | void> {
-    this.logger.debug({
-      message: "Trying to insert post",
+export default class CachingPostModel extends PostModel {
+  public async create(
+    args: Omit<Post, "id" | "tags" | "createdAt" | "frozenAt">
+  ): Promise<number> {
+    this.logger.log({
+      level: "trying",
+      message: "To create post",
       path: module.filename,
-      context: { author, text: "[SKIP]", repliesTo, parent }
+      context: args
     });
-    const id = await this.db<TPost>("post").insert({
-      author: author,
-      text: text,
-      repliesTo: repliesTo,
-      parent: parent
-    }, "id");
 
-    return id[0];
+    const post = await this.db<Post>("post").insert(args, "*");
+
+    await this.redisClient.set(`post:${post[0].id}`, JSON.stringify(post[0]), {
+      EX: this.config.get("POST_EX").required().asIntPositive(),
+      NX: true
+    });
+
+    return post[0].id;
   }
 
-  public async getPost(id: number): Promise<TPost | undefined> {
-    this.logger.debug({ message: "Trying to get post", path: module.filename, context: { id } });
-
-    const cachedPostString = await this.redisClient.get(`post_${id}`);
-    const cachedPost: TPost = JSON.parse(cachedPostString||"null");
+  public async read<SelectType extends keyof Post>(
+    identifier: number,
+    select?: "*" | (keyof Post)[]
+  ): Promise<Post | Pick<Post, SelectType> | undefined> {
+    const cachedPostString = await this.redisClient.get(`user:${identifier}`),
+          cachedPost = JSON.parse(cachedPostString||"null") as Post | null;
 
     if (cachedPost) {
-      return cachedPost;
+      if (!select || select == "*") {
+        return cachedPost;
+      }
+
+      return pick(
+        cachedPost,
+        ...select
+      ) as Pick<Post, SelectType>;
     }
 
-    const post = await this.db<TPost>("post")
-                           .where({ id })
+    const post = await this.db<Post>("post")
+                           .where({ id: identifier })
+                           .select()
                            .first();
 
-    if (post) {
-      await this.redisClient.set(`post_${id}`, JSON.stringify(post), {
-        EX: this.config.get("POST_EX").required().asIntPositive(),
-        NX: true
-      });
+    if (!post) {
+      return post;
     }
 
-    return post;
-  }
-
-  public async editPost(id: number, newText: string): Promise<void> {
-    this.logger.debug({ message: "Trying to edit post", path: module.filename, context: { id } });
-    await this.db<TPost>("post").where({ id: id }).update({ text: newText });
-  }
-
-  public async deletePost(id: number): Promise<void> {
-    this.logger.debug({ message: "Trying to delete post", path: module.filename, context: { id } });
-    await this.db<TPost>("post").where({ id: id }).del();
-  }
-
-  public async frozePost(id: number): Promise<void> {
-    this.logger.debug({ message: "Trying to froze post", path: module.filename, context: { id } });
-    await this.db<TPost>("post").where({ id: id }).update({
-      frozenAt: new Date(Date.now())
+    await this.redisClient.set(`post:${identifier}`, JSON.stringify(post), {
+      EX: this.config.get("POST_EX").required().asIntPositive(),
+      NX: true
     });
+
+    if (!select || select == "*") {
+      return post;
+    }
+
+    return pick(post, ...select) as Pick<Post, SelectType>;
   }
 
-  public async getList(afterCursor: string | null, numberRecords: number): Promise<GetListReturnType> {
-    this.logger.debug({
-      message: "Trying to get list",
+  public async update(identifier: number, args: Partial<Post>): Promise<void> {
+    this.logger.log({
+      level: "trying",
+      message: "To update post",
       path: module.filename,
-      context: { afterCursor, numberRecords }
+      context: { identifier, args }
     });
-    let query = this.db.queryBuilder()
-                    .select("p.text", "u.displayName", "u.username", "p.score", "u.verified")
-                    .fromRaw(`(
-                      SELECT post.id, post.author, post.text, post."repliesTo", post."frozenAt", 
-                            SUM(CASE WHEN "vote"."voteType" = true THEN 1 ELSE -1 END) AS score
-                      FROM "post"
-                      JOIN "vote" ON post.id = "vote"."postId"
-                      GROUP BY post.id 
-                    ) AS p`)
-                    .join("user as u", "p.author", "=", "u.email")
-                    .whereNull("p.repliesTo")
-                    .whereNull("p.frozenAt")
-                    .where("u.isFrozen", false)
-                    .orderBy("p.id", "desc");
 
-    query = knexCursorPagination(query, { after: afterCursor, first: numberRecords });
+    const post = await this.db<Post>("post").where({ id: identifier }).update(args, "*");
 
-    const results = await query;
-    const endCursor = getCursor(results[results.length - 1]);
-
-    return {
-      results: results,
-      endCursor: endCursor
-    };
+    await this.redisClient.del(`post:${identifier}`);
+    await this.redisClient.set(`post:${identifier}`, JSON.stringify(post[0]), {
+      EX: this.config.get("USER_EX").required().asIntPositive(),
+      NX: true
+    });
   }
 
-  public async getReplies(parent: number): Promise<TPost[]> {
-    this.logger.debug({ message: "Trying to get replies", path: module.filename, context: { parent } });
+  public async delete(identifier: number): Promise<void> {
+    this.logger.log({
+      level: "trying",
+      message: "To delete post",
+      path: module.filename,
+      context: { identifier }
+    });
 
-    const result = await this.db<TPost>("post").where("frozenAt", null)
-                                               .andWhere("parent", parent)
-                                               .select()
-                                               .orderBy("createdAt", "DESC");
-
-    return result;
+    await this.db<Post>("post").where({ id: identifier }).del();
+    await this.redisClient.del(`post:${identifier}`);
   }
 
-  public async findParent(id: number): Promise<number | undefined> {
-    this.logger.debug({ message: "Finding parent", path: module.filename, context: { id } });
-  
-    const comment = await this.getPost(id);
-    if (!comment) {
-      this.logger.debug({ message: `${id} is the parent`, path: module.filename });
-      return;
-    }
+  public async readHotTags(): Promise<{ tag: string, post_count: string }[]> {
+    this.logger.log({
+      level: "trying",
+      message: "To read hot tags",
+      path: module.filename
+    });
 
-    let parent: number = comment.repliesTo || comment.id;
-    let commentOfParent = await this.getPost(parent) as TPost;
-
-    while (commentOfParent) {
-      this.logger.debug({ message: `Probably ${parent}, checking`, path: module.filename });
-      commentOfParent = await this.getPost(parent) as TPost;
-
-      if (commentOfParent.repliesTo === null) {
-        this.logger.debug({ message: `Yeah, ${commentOfParent.id} is the parent`, path: module.filename });
-        return commentOfParent.id;
-      }
-  
-      this.logger.debug({ message: `Nah, ${commentOfParent.id} is not a parent`, path: module.filename });
-      parent = commentOfParent.repliesTo;
-    }
-
-    this.logger.debug({ message: `Done, ${parent} is the parent`, path: module.filename });
-    return parent;
-  }
-
-  public async editTags(id: number, newTags: string): Promise<void> {
-    this.logger.debug({ message: "Editing tags", path: module.filename, context: { id, newTags } });
-    await this.db<TPost>("post").where({ id }).update({ tags: newTags });
-    await this.redisClient.del(`post_${id}`);
-  }
-  
-  public async getHotTags(): Promise<HotTags> {
-    const cachedHotTagsString = await this.redisClient.get("hot_tags");
-    const cachedHotTags: HotTags = JSON.parse(cachedHotTagsString||"null");
+    const cachedHotTagsString = await this.redisClient.get("post:hotTags");
+    const cachedHotTags: { tag: string, post_count: string }[] | null = JSON.parse(cachedHotTagsString||"null");
 
     if (cachedHotTags) {
       return cachedHotTags;
@@ -174,54 +115,11 @@ export default class CachingPostModel implements PostModel {
       LIMIT 8
     `);
 
-    await this.redisClient.set("hot_tags", JSON.stringify(hotTags.rows), {
+    await this.redisClient.set("post:hotTags", JSON.stringify(hotTags.rows), {
       EX: this.config.get("HOT_TAGS_EX").required().asIntPositive(),
       NX: true
     });
-    
+
     return hotTags.rows;
-  }
-
-  public async getPosts(afterCursor: string, numberRecords: number, email?: string): Promise<GetPostsReturnType> {
-    const results = await knexCursorPagination(this.db.queryBuilder()
-      .select(
-        "post.id", "post.author", "post.frozenAt",
-        "user.isFrozen", "post.text", "post.repliesTo",
-        "user.displayName", "user.username", "user.email",
-        "user.verified"
-      )
-      .from("post")
-      .join("user", "post.author", "=", "user.email")
-      .whereNull("post.repliesTo")
-      .whereNull("post.frozenAt")
-      .where("user.isFrozen", false)
-      .orderBy("post.id", "desc"), { after: afterCursor, first: numberRecords });
-    const endCursor = getCursor(results[results.length - 1]);
-
-    const votes = (await this.db.transaction(async trx => {
-      return Promise.all(results.map(result => 
-        trx<TVote>("vote").select().where("vote.postId", result.id)
-      ));
-    })).flat();
-
-    const additionalInfo: { [key: number]: { score: number, userVote: null | boolean | Vote } } = {};
-
-    votes.forEach(vote => {
-      if (!additionalInfo.hasOwnProperty(vote.postId)) {
-        additionalInfo[vote.postId] = {
-          score: 0,
-          userVote: null
-        };
-      }
-      if (email && vote.userEmail == email) {
-        additionalInfo[vote.postId].userVote = vote.voteType;
-      }
-      additionalInfo[vote.postId].score += vote.voteType ? 1 : -1;
-    });
-
-    return {
-      results: results.map(result => ({ ...result, ...additionalInfo[result.id] })),
-      endCursor: endCursor
-    };
   }
 }

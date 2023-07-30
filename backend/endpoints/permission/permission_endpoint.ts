@@ -6,17 +6,16 @@ import { ENV } from "../../app";
 import BaseEndpoint from "../../common/base_endpoint_class";
 import RequestError from "../../common/request_error";
 import { Auth } from "../../common/types";
-import CachingPermissionModel from "../../db/models/caching/caching_permission";
 import CachingUserModel from "../../db/models/caching/caching_user";
-import PermissionModel, { TPermissions } from "../../db/models/permission";
+import PermissionModel, { Permissions,PermissionStatus } from "../../db/models/permission";
 import UserModel from "../../db/models/user";
 import * as type from "./types";
 
-type CallEndpointReturnType = {} | TPermissions | {success: true};
+type CallEndpointReturnType = {} | Permissions | {success: true};
 
 export default class PermissionEndpoint extends BaseEndpoint<type.PermissionRequestArgs, CallEndpointReturnType> {
   allowNames: Array<string> = ["view", "grant", "rescind"];
-  permissionModel: PermissionModel | CachingPermissionModel;
+  permissionModel: PermissionModel;
   userModel: UserModel | CachingUserModel;
 
   constructor(
@@ -28,16 +27,15 @@ export default class PermissionEndpoint extends BaseEndpoint<type.PermissionRequ
     super(db, redisClient, logger, config, "permission");
     const REDIS_REQUIRED = this.config.get("REDIS_REQUIRED").required().asBool();
     const UserModelType = REDIS_REQUIRED ? CachingUserModel : UserModel;
-    const PermissionModelType = REDIS_REQUIRED ? CachingPermissionModel : PermissionModel;
 
     this.userModel = new UserModelType(this.db, this.logger, this.redisClient, this.config);
-    this.permissionModel = new PermissionModelType(this.db, this.logger, this.redisClient, this.config);
+    this.permissionModel = new PermissionModel(this.db, this.logger, this.redisClient, this.config);
   }
 
-  async view(args: type.ViewArgs, _auth: Auth): Promise<TPermissions> {
+  async view(args: type.ViewArgs, _auth: Auth): Promise<Permissions> {
     args = await this.validate(type.ViewArgsSchema, args);
 
-    const permissions = await this.permissionModel.getPermissions(args.email);
+    const permissions = await this.permissionModel.read(args.email);
     if (!permissions) {
       throw new RequestError("DatabaseError", args.email, 1);
     }
@@ -48,7 +46,9 @@ export default class PermissionEndpoint extends BaseEndpoint<type.PermissionRequ
   async grant(args: type.GrantArgs, _auth: Auth): Promise<{success: true}|never> {
     args = await this.validate(type.GrantArgsSchema, args);
 
-    await this.permissionModel.grantPermission(args.grantTo, args.grantPermission).catch((err: Error) => {
+    await this.permissionModel.update(args.grantTo, {
+      [args.grantPermission]: PermissionStatus.Has
+    }).catch((err: Error) => {
       throw new RequestError("DatabaseError", err.message);
     });
 
@@ -58,7 +58,9 @@ export default class PermissionEndpoint extends BaseEndpoint<type.PermissionRequ
   async rescind(args: type.RescindArgs, _auth: Auth): Promise<{success: true}|never> {
     args = await this.validate(type.RescindArgsSchema, args);
 
-    await this.permissionModel.rescindPermission(args.rescindFrom, args.rescindPermission).catch((err: Error) => {
+    await this.permissionModel.update(args.rescindFrom, {
+      [args.rescindPermission]: PermissionStatus.Hasnt
+    }).catch((err: Error) => {
       throw new RequestError("DatabaseError", err.message);
     });
 

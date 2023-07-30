@@ -1,8 +1,8 @@
 import { faker } from "@faker-js/faker";
 import { Knex } from "knex";
 
-import { TPost } from "../models/post";
-import { TUser } from "../models/user";
+import { Post } from "../models/post";
+import { User } from "../models/user";
 
 const seedPosts = 10;
 
@@ -10,8 +10,8 @@ export async function seed(knex: Knex): Promise<void> {
   // Deletes ALL existing entries
   await knex("post").del();
 
-  const emails = await knex<TUser>("user").select("email");
-  const posts: Pick<TPost, "author" | "text" | "tags">[] = [];
+  const emails = await knex<User>("user").select("email");
+  const posts: Pick<Post, "author" | "text" | "tags">[] = [];
 
   [...Array(seedPosts).keys()].map(async () => {
     const author = emails[Math.floor(Math.random()*emails.length)].email;

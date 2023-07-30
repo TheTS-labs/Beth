@@ -4,31 +4,11 @@ import { RedisClientType } from "redis";
 import winston from "winston";
 
 import { ENV } from "../../app";
-import { TUser } from "./user";
-import { TVote, Vote } from "./vote";
+import ICRUDModel from "../../common/types/crud_model";
+import { User } from "./user";
+import { Vote, VoteType } from "./vote";
 
-export type NestedTPost = (TPost & { comments: NestedTPost[] });
-export type HotTags = { tag: string, post_count: string }[];
-
-export interface GetListReturnType {
-  results: TPost[]
-  endCursor: string
-}
-
-export interface GetPostsReturnType {
-  results: (
-    Omit<TPost, "id"> &
-    Omit<TUser, "password" | "id" | "tags"> &
-    { 
-      _cursor_0: number
-      score: number
-      userVote: null | boolean | Vote
-    }
-  )[]
-  endCursor: string
-}
-
-export interface TPost {
+export interface Post {
   id: number
   author: string
   createdAt: Date
@@ -39,136 +19,92 @@ export interface TPost {
   tags: string
 }
 
-export default class PostModel {
+export interface DetailedPosts {
+  results: (
+    Omit<Post, "id"> &
+    Omit<User, "password" | "id" | "tags"> &
+    { 
+      _cursor_0: number
+      score: number
+      userVote: null | boolean | VoteType
+    }
+  )[]
+  endCursor: string
+}
+
+export type NestedPost = (Post & { replies: NestedPost[] });
+
+export default class PostModel implements ICRUDModel<
+  Omit<Post, "id" | "createdAt" | "frozenAt" | "tags">,
+  Post
+> {
   constructor(
     public db: Knex,
     public logger: winston.Logger,
-    public redisClient: RedisClientType, 
+    public redisClient: RedisClientType,
     public config: ENV
   ) {}
 
-  public async insertPost(
-    author: string,
-    text: string,
-    repliesTo: number | undefined=undefined,
-    parent: number | undefined=undefined
-  ): Promise<Pick<TPost, "id"> | undefined | void> {
-    this.logger.debug({ message: "Trying to insert post", path: module.filename });
-    const id = await this.db<TPost>("post").insert({
-      author: author,
-      text: text,
-      repliesTo: repliesTo,
-      parent: parent
-    }, "id");
+  public async create(
+    args: Omit<Post, "id" | "createdAt" | "frozenAt" | "tags">
+  ): Promise<number> {
+    this.logger.log({
+      level: "trying",
+      message: "To create post",
+      path: module.filename,
+      context: args
+    });
 
-    return id[0];
+    const post = await this.db<Post>("post").insert(args, "id");
+
+    return post[0].id;
   }
 
-  public async getPost(id: number): Promise<TPost | undefined> {
-    this.logger.debug({ message: "Trying to get post", path: module.filename, context: { id } });
-    const post = await this.db<TPost>("post")
-                           .where({ id })
+  public async read<SelectType extends keyof Post>(
+    identifier: number,
+    select?: "*" | SelectType[] | undefined
+  ): Promise<Post | Pick<Post, SelectType> | undefined> {
+    const post = await this.db<Post>("post")
+                           .where({ id: identifier })
+                           .select(select||"*")
                            .first();
 
     return post;
   }
 
-  public async editPost(id: number, newText: string): Promise<void> {
-    this.logger.debug({ message: "Trying to edit post", path: module.filename, context: { id } });
-    await this.db<TPost>("post").where({ id: id }).update({ text: newText });
-  }
-
-  public async deletePost(id: number): Promise<void> {
-    this.logger.debug({ message: "Trying to delete post", path: module.filename, context: { id } });
-    await this.db<TPost>("post").where({ id: id }).del();
-  }
-
-  public async frozePost(id: number): Promise<void> {
-    this.logger.debug({ message: "Trying to froze post", path: module.filename, context: { id } });
-    await this.db<TPost>("post").where({ id: id }).update({
-      frozenAt: new Date(Date.now())
-    });
-  }
-
-  public async getList(afterCursor: string | null, numberRecords: number): Promise<GetListReturnType> {
-    // TODO: Make the same thingy as in getPosts for this function, please
-    this.logger.debug({
-      message: "Trying to get list",
+  public async update(identifier: number, args: Partial<Post>): Promise<void> {
+    this.logger.log({
+      level: "trying",
+      message: "To update post",
       path: module.filename,
-      context: { afterCursor, numberRecords }
+      context: { identifier, args }
     });
-    let query = this.db.queryBuilder()
-                        .select("p.text", "u.displayName", "u.username", "p.score", "u.verified")
-                        .fromRaw(`(
-                          SELECT post.id, post.author, post.text, post."repliesTo", post."frozenAt", 
-                                SUM(CASE WHEN "vote"."voteType" = true THEN 1 ELSE -1 END) AS score
-                          FROM "post"
-                          JOIN "vote" ON post.id = "vote"."postId"
-                          GROUP BY post.id 
-                        ) AS p`)
-                        .join("user as u", "p.author", "=", "u.email")
-                        .whereNull("p.repliesTo")
-                        .whereNull("p.frozenAt")
-                        .where("u.isFrozen", false)
-                        .orderBy("p.id", "desc");
 
-    query = knexCursorPagination(query, { after: afterCursor, first: numberRecords });
-
-    const results = await query;
-    const endCursor = getCursor(results[results.length - 1]);
-
-    return {
-      results: results,
-      endCursor: endCursor
-    };
+    await this.db<Post>("post").where({ id: identifier }).update(args);
   }
 
-  public async getReplies(parent: number): Promise<TPost[]> {
-    this.logger.debug({ message: "Trying to get replies", path: module.filename, context: { parent } });
+  public async delete(identifier: number): Promise<void> {
+    this.logger.log({
+      level: "trying",
+      message: "To delete post",
+      path: module.filename,
+      context: { identifier }
+    });
 
-    const result = await this.db<TPost>("post").where("frozenAt", null)
-                                               .andWhere("parent", parent)
-                                               .select()
-                                               .orderBy("createdAt", "DESC");
-
-    return result;
+    await this.db<Post>("post").where({ id: identifier }).del();
   }
 
-  public async findParent(id: number): Promise<number | undefined> {
-    this.logger.debug({ message: "Finding parent", path: module.filename, context: { id } });
-  
-    const comment = await this.getPost(id);
-    if (!comment) {
-      this.logger.debug({ message: `${id} is the parent`, path: module.filename });
-      return;
-    }
+  public async readHotTags(): Promise<{ tag: string, post_count: string }[]> {
+    this.logger.log({
+      level: "trying",
+      message: "To read hot tags",
+      path: module.filename
+    });
 
-    let parent: number = comment.repliesTo || comment.id;
-    let commentOfParent = await this.getPost(parent) as TPost;
+    //? I can't do this without raw also because Knex turns .select("tag", "COUNT(*) as post_count") into
+    //? select "tag", "COUNT(*)" as "post_count"
+    // TODO: https://knexjs.org/guide/ref.html#alias
 
-    while (commentOfParent) {
-      this.logger.debug({ message: `Probably ${parent}, checking`, path: module.filename });
-      commentOfParent = await this.getPost(parent) as TPost;
-
-      if (commentOfParent.repliesTo === null) {
-        this.logger.debug({ message: `Yeah, ${commentOfParent.id} is the parent`, path: module.filename });
-        return commentOfParent.id;
-      }
-  
-      this.logger.debug({ message: `Nah, ${commentOfParent.id} is not a parent`, path: module.filename });
-      parent = commentOfParent.repliesTo;
-    }
-
-    this.logger.debug({ message: `Done, ${parent} is the parent`, path: module.filename });
-    return parent;
-  }
-
-  public async editTags(id: number, newTags: string): Promise<void> {
-    this.logger.debug({ message: "Editing tags", path: module.filename, context: { id, newTags } });
-    await this.db<TPost>("post").where({ id }).update({ tags: newTags });
-  }
-
-  public async getHotTags(): Promise<HotTags> {
     const hotTags = await this.db.raw(`
       SELECT tag, COUNT(*) as post_count
       FROM (
@@ -179,11 +115,100 @@ export default class PostModel {
       ORDER BY post_count DESC
       LIMIT 8
     `);
-    
+
     return hotTags.rows;
   }
 
-  public async getPosts(afterCursor: string, numberRecords: number, email?: string): Promise<GetPostsReturnType> {
+  public async readList(afterCursor?: string, numberRecords?: number): Promise<{ results: Post[], endCursor: string }> {
+    this.logger.log({
+      level: "trying",
+      message: "To read a list of posts",
+      path: module.filename,
+      context: { afterCursor, numberRecords }
+    });
+
+    const results = await knexCursorPagination(
+      this.db.queryBuilder()
+             .select("*")
+             .from("post")
+             .whereNull("post.frozenAt"),
+      { after: afterCursor, first: numberRecords }
+    );
+    const endCursor = getCursor(results[results.length - 1]);
+
+    return {
+      results: results,
+      endCursor: endCursor
+    };
+  }
+
+  public async readReplies(parent: number): Promise<Post[]> {
+    this.logger.log({
+      level: "trying",
+      message: "To read replies of the posts",
+      path: module.filename,
+      context: { parent }
+    });
+
+    const result = await this.db<Post>("post").where("frozenAt", null)
+                                              .andWhere("parent", parent)
+                                              .select()
+                                              .orderBy("createdAt", "DESC");
+
+    return result;
+  }
+
+  public async findParent(identifier: number): Promise<number | undefined> {
+    this.logger.log({
+      level: "trying",
+      message: "To find the parent of the post",
+      path: module.filename,
+      context: { identifier }
+    });
+  
+    const comment = await this.read(identifier);
+    if (!comment) {
+      // TODO: Do we sure this is `trying` level???
+      this.logger.log({ level: "trying",  message: `${identifier} is the parent`, path: module.filename });
+      return;
+    }
+
+    let parent: number = comment.repliesTo || comment.id;
+    let commentOfParent = await this.read(parent) as Post;
+
+    while (commentOfParent) {
+      this.logger.log({ level: "trying",  message: `Probably ${parent}, checking...`, path: module.filename });
+      commentOfParent = await this.read(parent) as Post;
+
+      if (commentOfParent.repliesTo === null) {
+        this.logger.log({
+          level: "trying",
+          message: `Yeah, ${commentOfParent.id} is the parent`,
+          path: module.filename
+        });
+        return commentOfParent.id;
+      }
+  
+      this.logger.log({
+        level: "trying",
+        message: `Nah, ${commentOfParent.id} is not a parent`,
+        path: module.filename
+      });
+      parent = commentOfParent.repliesTo;
+    }
+
+    this.logger.log({ level: "trying",  message: `Done, ${parent} is the parent`, path: module.filename });
+    return parent;
+  }
+
+  public async readDetailedPosts(afterCursor: string, numberRecords: number, email?: string): Promise<DetailedPosts> {
+    this.logger.log({
+      level: "trying",
+      message: "To read posts with more detailed info",
+      path: module.filename,
+      context: { afterCursor, numberRecords, email }
+    });
+
     const results = await knexCursorPagination(this.db.queryBuilder()
       .select(
         "post.*",
@@ -199,15 +224,16 @@ export default class PostModel {
       .whereNull("post.frozenAt")
       .where("user.isFrozen", false)
       .orderBy("post.id", "desc"), { after: afterCursor, first: numberRecords });
+    // TODO: Throw error if results are empty
     const endCursor = getCursor(results[results.length - 1]);
 
     const votes = (await this.db.transaction(async trx => {
       return Promise.all(results.map(result => 
-        trx<TVote>("vote").select().where("vote.postId", result.id)
+        trx<Vote>("vote").select().where("vote.postId", result.id)
       ));
     })).flat();
 
-    const additionalInfo: { [key: number]: { score: number, userVote: null | boolean | Vote } } = {};
+    const additionalInfo: { [key: number]: { score: number, userVote: null | boolean | VoteType } } = {};
 
     votes.forEach(vote => {
       if (!additionalInfo.hasOwnProperty(vote.postId)) {
@@ -224,7 +250,7 @@ export default class PostModel {
 
     return {
       results: results.map(result => ({ ...result, ...additionalInfo[result.id] })),
-      endCursor: endCursor
+      endCursor
     };
   }
 }

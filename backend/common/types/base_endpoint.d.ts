@@ -3,8 +3,10 @@ import { Knex } from "knex";
 import { RedisClientType } from "redis";
 import winston from "winston";
 
-import { ENV } from "../app";
-import { EndpointThisType, JWTRequest } from "./types";
+import { ENV } from "../../app";
+import { EndpointThisType, JWTRequest } from "../types";
+
+export = IBaseEndpoint;
 
 declare class IBaseEndpoint {
   public allowNames: Array<string>;

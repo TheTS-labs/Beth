@@ -28,6 +28,7 @@ export default class ErrorMiddleware {
     res.status(500).json({
       errorStatus: 500,
       errorType: "UnknownError",
+      // TODO: Reveal error if DEBUG=true
       errorMessage: "Sorry, something went wrong"
     });
     return;

@@ -17,7 +17,7 @@ export const requestErrors = {
     templates: [
       "Wrong email or password",
       "This token revoked",
-      "This token doesn't exist"
+      "The authenticity of the token cannot be verified"
     ],
     statusCodes: [403, 403, 403],
   },
@@ -62,11 +62,12 @@ export default class RequestError {
   constructor(
     public errorType: keyof typeof requestErrors,
     public errorArgs: string | string[]="",
-    public template = 0,
+    public template=0,
     status?: number | undefined
   ) {
     this.errorMessage = format(
       requestErrors[errorType].templates[template],
+      // TODO: Require string[] all the time to simplify it
       ...typeof status === "string" ? errorArgs : [errorArgs]
     );
     this.status = status || requestErrors[errorType].statusCodes[template];

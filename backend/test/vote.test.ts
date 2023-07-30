@@ -2,8 +2,8 @@ import request from "supertest";
 
 import App from "../app";
 import { disableAuthFor, endpoints } from "../common/endpoints";
-import { TPost } from "../db/models/post";
-import { TVote, Vote } from "../db/models/vote";
+import { Post } from "../db/models/post";
+import { Vote, VoteType } from "../db/models/vote";
 import userData, { credentials } from "./data/user_data";
 import auth from "./helpers/auth";
 
@@ -27,7 +27,7 @@ describe("POST /voting/vote", () => {
       password: credentials.hash,
       scope: ["VotingVote"]
     });
-    const postId = (await server.db<TPost>("post").insert({
+    const postId = (await server.db<Post>("post").insert({
       author: userData.email,
       text: "text",
       tags: "tag"
@@ -67,12 +67,12 @@ describe("POST /voting/vote", () => {
       password: credentials.hash,
       scope: ["VotingVote"]
     });
-    const postId = (await server.db<TPost>("post").insert({
+    const postId = (await server.db<Post>("post").insert({
       author: userData.email,
       text: "text",
       tags: "tag"
     }, "id"))[0].id;
-    await server.db<TVote>("vote").insert({ userEmail: email, postId, voteType: Vote.Up });
+    await server.db<Vote>("vote").insert({ userEmail: email, postId, voteType: VoteType.Up });
     // Preparing
 
     const res = await req.post("/voting/vote")
@@ -90,12 +90,16 @@ describe("POST /voting/vote", () => {
       password: credentials.hash,
       scope: ["VotingVote"]
     });
-    const postId = (await server.db<TPost>("post").insert({
+    const postId = (await server.db<Post>("post").insert({
       author: userData.email,
       text: "text",
       tags: "tag"
     }, "id"))[0].id;
-    const voteId = (await server.db<TVote>("vote").insert({ userEmail: email, postId, voteType: Vote.Up }, "id"))[0].id;
+    const voteId = (await server.db<Vote>("vote").insert({
+      userEmail: email,
+      postId,
+      voteType: VoteType.Up
+    }, "id"))[0].id;
     // Preparing
 
     const res = await req.post("/voting/vote")
@@ -106,7 +110,7 @@ describe("POST /voting/vote", () => {
     expect(res.statusCode).toBe(200);
     expect(res.body.success).toBe(true);
 
-    const vote = await server.db<TVote>("vote").where({ id: voteId }).first();
+    const vote = await server.db<Vote>("vote").where({ id: voteId }).first();
     expect(vote).toBeUndefined();
   });
 });
@@ -119,25 +123,27 @@ describe("POST /voting/voteCount", () => {
       password: credentials.hash,
       scope: ["VotingVoteCount"]
     });
-    const postId = (await server.db<TPost>("post").insert({
+    const postId = (await server.db<Post>("post").insert({
       author: userData.email,
       text: "text",
       tags: "tag"
     }, "id"))[0].id;
 
-    await server.db<TVote>("vote").insert({ userEmail: email, postId, voteType: Vote.Up });
-    await server.db<TVote>("vote").insert({ userEmail: email, postId, voteType: Vote.Up });
-    await server.db<TVote>("vote").insert({ userEmail: email, postId, voteType: Vote.Up });
-    await server.db<TVote>("vote").insert({ userEmail: email, postId, voteType: Vote.Up });
+    await server.db<Vote>("vote").insert({ userEmail: email, postId, voteType: VoteType.Up });
+    await server.db<Vote>("vote").insert({ userEmail: email, postId, voteType: VoteType.Up });
+    await server.db<Vote>("vote").insert({ userEmail: email, postId, voteType: VoteType.Up });
+    await server.db<Vote>("vote").insert({ userEmail: email, postId, voteType: VoteType.Up });
     // Preparing
 
     const res = await req.post("/voting/voteCount")
-                         .send({ postId, voteType: 1 })
+                         .send({ postId })
                          .set({ "Authorization": "Bearer " + token });
 
     expect(res.body.errorMessage).toBeUndefined();
     expect(res.statusCode).toBe(200);
-    expect(res.body.count).toBe(4);
+    expect(res.body.goodCount).toBe(4);
+    expect(res.body.total).toBe(4);
+    expect(res.body.badCount).toBe(0);
   });
 
   it("should return: 4 Down votes", async () => {
@@ -147,25 +153,27 @@ describe("POST /voting/voteCount", () => {
       password: credentials.hash,
       scope: ["VotingVoteCount"]
     });
-    const postId = (await server.db<TPost>("post").insert({
+    const postId = (await server.db<Post>("post").insert({
       author: userData.email,
       text: "text",
       tags: "tag"
     }, "id"))[0].id;
 
-    await server.db<TVote>("vote").insert({ userEmail: email, postId, voteType: Vote.Down });
-    await server.db<TVote>("vote").insert({ userEmail: email, postId, voteType: Vote.Down });
-    await server.db<TVote>("vote").insert({ userEmail: email, postId, voteType: Vote.Down });
-    await server.db<TVote>("vote").insert({ userEmail: email, postId, voteType: Vote.Down });
+    await server.db<Vote>("vote").insert({ userEmail: email, postId, voteType: VoteType.Down });
+    await server.db<Vote>("vote").insert({ userEmail: email, postId, voteType: VoteType.Down });
+    await server.db<Vote>("vote").insert({ userEmail: email, postId, voteType: VoteType.Down });
+    await server.db<Vote>("vote").insert({ userEmail: email, postId, voteType: VoteType.Down });
     // Preparing
 
     const res = await req.post("/voting/voteCount")
-                         .send({ postId, voteType: 0 })
+                         .send({ postId })
                          .set({ "Authorization": "Bearer " + token });
 
     expect(res.body.errorMessage).toBeUndefined();
     expect(res.statusCode).toBe(200);
-    expect(res.body.count).toBe(4);
+    expect(res.body.goodCount).toBe(0);
+    expect(res.body.total).toBe(-4);
+    expect(res.body.badCount).toBe(4);
   });
 
   it("should return: 2 Up votes and 2 Down votes", async () => {
@@ -175,33 +183,27 @@ describe("POST /voting/voteCount", () => {
       password: credentials.hash,
       scope: ["VotingVoteCount"]
     });
-    const postId = (await server.db<TPost>("post").insert({
+    const postId = (await server.db<Post>("post").insert({
       author: userData.email,
       text: "text",
       tags: "tag"
     }, "id"))[0].id;
 
-    await server.db<TVote>("vote").insert({ userEmail: email, postId, voteType: Vote.Up });
-    await server.db<TVote>("vote").insert({ userEmail: email, postId, voteType: Vote.Up });
-    await server.db<TVote>("vote").insert({ userEmail: email, postId, voteType: Vote.Down });
-    await server.db<TVote>("vote").insert({ userEmail: email, postId, voteType: Vote.Down });
+    await server.db<Vote>("vote").insert({ userEmail: email, postId, voteType: VoteType.Up });
+    await server.db<Vote>("vote").insert({ userEmail: email, postId, voteType: VoteType.Up });
+    await server.db<Vote>("vote").insert({ userEmail: email, postId, voteType: VoteType.Down });
+    await server.db<Vote>("vote").insert({ userEmail: email, postId, voteType: VoteType.Down });
     // Preparing
 
-    const upvotes = await req.post("/voting/voteCount")
-                         .send({ postId, voteType: 1 })
+    const res = await req.post("/voting/voteCount")
+                         .send({ postId })
                          .set({ "Authorization": "Bearer " + token });
 
-    expect(upvotes.body.errorMessage).toBeUndefined();
-    expect(upvotes.statusCode).toBe(200);
-    expect(upvotes.body.count).toBe(2);
-
-    const downvotes = await req.post("/voting/voteCount")
-                         .send({ postId, voteType: 0 })
-                         .set({ "Authorization": "Bearer " + token });
-
-    expect(downvotes.body.errorMessage).toBeUndefined();
-    expect(downvotes.statusCode).toBe(200);
-    expect(downvotes.body.count).toBe(2);
+    expect(res.body.errorMessage).toBeUndefined();
+    expect(res.statusCode).toBe(200);
+    expect(res.body.goodCount).toBe(2);
+    expect(res.body.total).toBe(0);
+    expect(res.body.badCount).toBe(2);
   });
 
   it("should throw DatabaseError", async () => {
@@ -214,7 +216,7 @@ describe("POST /voting/voteCount", () => {
     // Preparing
 
     const res = await req.post("/voting/voteCount")
-                         .send({ postId: 1, voteType: 1 })
+                         .send({ postId: 1 })
                          .set({ "Authorization": "Bearer " + token });
 
     expect(res.body.errorMessage).not.toBeUndefined();

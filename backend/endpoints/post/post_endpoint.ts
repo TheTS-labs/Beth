@@ -6,15 +6,14 @@ import { ENV } from "../../app";
 import BaseEndpoint from "../../common/base_endpoint_class";
 import RequestError from "../../common/request_error";
 import { Auth } from "../../common/types";
-import CachingPermissionModel from "../../db/models/caching/caching_permission";
 import CachingPostModel from "../../db/models/caching/caching_post";
 import CachingUserModel from "../../db/models/caching/caching_user";
-import PermissionModel, { PermissionStatus, TPermissions } from "../../db/models/permission";
-import PostModel, { GetListReturnType, NestedTPost, TPost } from "../../db/models/post";
+import PermissionModel, { Permissions,PermissionStatus } from "../../db/models/permission";
+import PostModel, { NestedPost, Post } from "../../db/models/post";
 import UserModel from "../../db/models/user";
 import * as type from "./types";
 
-type CallEndpointReturnType = { success: true, id: number } | { success: true } | NestedTPost[] | {};
+type CallEndpointReturnType = { success: true, id: number } | { success: true } | NestedPost[] | {};
 
 export default class PostEndpoint extends BaseEndpoint<type.PostRequestArgs, CallEndpointReturnType> {
   public allowNames: string[] = [
@@ -24,7 +23,7 @@ export default class PostEndpoint extends BaseEndpoint<type.PostRequestArgs, Cal
     "editTags"
   ];
   userModel: UserModel | CachingUserModel;
-  permissionModel: PermissionModel | CachingPermissionModel;
+  permissionModel: PermissionModel;
   postModel: PostModel | CachingPostModel;
 
   constructor(
@@ -36,10 +35,9 @@ export default class PostEndpoint extends BaseEndpoint<type.PostRequestArgs, Cal
     super(db, redisClient, logger, config, "post");
     const REDIS_REQUIRED = this.config.get("REDIS_REQUIRED").required().asBool();
     const UserModelType = REDIS_REQUIRED ? CachingUserModel : UserModel;
-    const PermissionModelType = REDIS_REQUIRED ? CachingPermissionModel : PermissionModel;
     const PostModelType = REDIS_REQUIRED ? CachingPostModel : PostModel;
 
-    this.permissionModel = new PermissionModelType(this.db, this.logger, this.redisClient, this.config);
+    this.permissionModel = new PermissionModel(this.db, this.logger, this.redisClient, this.config);
     this.userModel = new UserModelType(this.db, this.logger, this.redisClient, this.config);
     this.postModel = new PostModelType(this.db, this.logger, this.redisClient, this.config);
   }
@@ -49,34 +47,35 @@ export default class PostEndpoint extends BaseEndpoint<type.PostRequestArgs, Cal
 
     const parent = args.replyTo ? await this.postModel.findParent(args.replyTo) : undefined;
 
-    const { id } = await this.postModel.insertPost(
-      auth.user.email,
-      args.text,
-      args.replyTo, parent
-    ).catch((err: Error) => {
+    const id = await this.postModel.create({
+      author: auth.user.email,
+      text: args.text,
+      repliesTo: args.replyTo||null,
+      parent: parent||null
+    }).catch((err: Error) => {
       throw new RequestError("DatabaseError", err.message);
-    }) as Pick<TPost, "id">;
+    });
 
-    return { success: true, id: id };
+    return { success: true, id };
   }
 
   async view(args: type.ViewArgs, _auth: Auth): Promise<CallEndpointReturnType> {
     args = await this.validate(type.ViewArgsSchema, args);
 
-    const post = await this.postModel.getPost(args.id);
+    const post = await this.postModel.read(args.id);
 
-    if (post?.frozenAt) {
+    if (!post || post?.frozenAt) {
       return {};
     }
 
-    return post||{};
+    return post;
   }
 
   async edit(args: type.EditArgs, auth: Auth): Promise<CallEndpointReturnType> {
     args = await this.validate(type.EditArgsSchema, args);
 
-    const post = await this.postModel.getPost(args.id);
-    const permissions = await this.permissionModel.getPermissions(auth.user.email) as TPermissions;
+    const post = await this.postModel.read(args.id);
+    const permissions = await this.permissionModel.read(auth.user.email) as Permissions;
   
     if (!post) {
       throw new RequestError("DatabaseError", "", 2);
@@ -86,7 +85,7 @@ export default class PostEndpoint extends BaseEndpoint<type.PostRequestArgs, Cal
       throw new RequestError("PermissionError");
     }
 
-    await this.postModel.editPost(args.id, args.newText);
+    await this.postModel.update(args.id, { text: args.newText });
 
     return { success: true };
   }
@@ -94,8 +93,8 @@ export default class PostEndpoint extends BaseEndpoint<type.PostRequestArgs, Cal
   async delete(args: type.DeleteArgs, auth: Auth): Promise<CallEndpointReturnType> {
     args = await this.validate(type.DeleteArgsSchema, args);
 
-    const post = await this.postModel.getPost(args.id);
-    const permissions = await this.permissionModel.getPermissions(auth.user.email) as TPermissions;
+    const post = await this.postModel.read(args.id);
+    const permissions = await this.permissionModel.read(auth.user.email) as Permissions;
 
     if (!post) {
       throw new RequestError("DatabaseError", "", 2);
@@ -105,15 +104,17 @@ export default class PostEndpoint extends BaseEndpoint<type.PostRequestArgs, Cal
       throw new RequestError("PermissionError", "", 1);
     }
 
-    await this.postModel.frozePost(args.id);
+    await this.postModel.update(args.id, { frozenAt: new Date(Date.now()) });
 
     return { success: true };
   }
 
-  async getList(args: type.GetListArgs, _auth: Auth): Promise<GetListReturnType> {
+  async getList(args: type.GetListArgs, _auth: Auth): Promise<{ results: Post[], endCursor: string }> {
     args = await this.validate(type.GetListArgsSchema, args);
 
-    const result = await this.postModel.getList(args.afterCursor, args.numberRecords||3)
+    // TODO: Change `GetListArgs.afterCursor: string | null` to `GetListArgs.afterCursor: string | undefined`
+
+    const result = await this.postModel.readList(args.afterCursor||undefined, args.numberRecords)
                                        .catch((err: { message: string }) => {
       throw new RequestError("DatabaseError", err.message);
     });
@@ -124,13 +125,13 @@ export default class PostEndpoint extends BaseEndpoint<type.PostRequestArgs, Cal
   async forceDelete(args: type.ForceDeleteArgs, _auth: Auth): Promise<CallEndpointReturnType> {
     args = await this.validate(type.ForceDeleteArgsSchema, args);
 
-    const post = await this.postModel.getPost(args.id);
+    const post = await this.postModel.read(args.id);
 
     if (!post) {
       throw new RequestError("DatabaseError", "", 2);
     }
 
-    await this.postModel.deletePost(args.id);
+    await this.postModel.delete(args.id);
 
     return { success: true };
   }
@@ -138,7 +139,7 @@ export default class PostEndpoint extends BaseEndpoint<type.PostRequestArgs, Cal
   async viewReplies(args: type.ViewRepliesArgs, _auth: Auth): Promise<CallEndpointReturnType> {
     args = await this.validate(type.ViewRepliesArgsSchema, args);
 
-    const results = await this.postModel.getReplies(args.parent).catch((err: { message: string }) => {
+    const results = await this.postModel.readReplies(args.parent).catch((err: { message: string }) => {
       throw new RequestError("DatabaseError", err.message);
     });
 
@@ -153,8 +154,8 @@ export default class PostEndpoint extends BaseEndpoint<type.PostRequestArgs, Cal
   async editTags(args: type.EditTagsArgs, auth: Auth): Promise<CallEndpointReturnType> {
     args = await this.validate(type.EditTagsArgsSchema, args);
 
-    const post = await this.postModel.getPost(args.id);
-    const permissions = await this.permissionModel.getPermissions(auth.user.email) as TPermissions;
+    const post = await this.postModel.read(args.id);
+    const permissions = await this.permissionModel.read(auth.user.email) as Permissions;
 
     if (!post) {
       throw new RequestError("DatabaseError", "", 2);
@@ -164,33 +165,33 @@ export default class PostEndpoint extends BaseEndpoint<type.PostRequestArgs, Cal
       throw new RequestError("PermissionError", "", 2);
     }
 
-    await this.postModel.editTags(args.id, args.newTags).catch((err: { message: string }) => {
+    await this.postModel.update(args.id, { tags: args.newTags }).catch((err: { message: string }) => {
       throw new RequestError("DatabaseError", err.message);
     });
 
     return { success: true };
   }
 
-  async getNestedChildren(arr: TPost[], repliesTo: number): Promise<NestedTPost[]> {
-    const doesKeyExist = await this.redisClient.exists(`post_comments_${repliesTo}`);
+  async getNestedChildren(arr: Post[], repliesTo: number): Promise<NestedPost[]> {
+    const doesKeyExist = await this.redisClient.exists(`post:replies:${repliesTo}`);
     if (doesKeyExist) {
-      const result = await this.redisClient.get(`post_comments_${repliesTo}`) as string;
-      return JSON.parse(result) as NestedTPost[];
+      const result = await this.redisClient.get(`post:replies:${repliesTo}`) as string;
+      return JSON.parse(result) as NestedPost[];
     }
 
-    const stack: TPost[] = [];
-    const map = new Map<number, NestedTPost>();
+    const stack: Post[] = [];
+    const map = new Map<number, NestedPost>();
 
     for (const post of arr) {
-      const nestedPost = post as NestedTPost;
+      const nestedPost = post as NestedPost;
 
       if (post.repliesTo == repliesTo) {
-        const doesNestedKeyExist = await this.redisClient.exists(`post_comments_${post.id}`);
+        const doesNestedKeyExist = await this.redisClient.exists(`post:replies:${post.id}`);
         if (doesNestedKeyExist) {
-          const nestedResult = await this.redisClient.get(`post_comments_${post.id}`) as string;
-          nestedPost.comments = JSON.parse(nestedResult) as NestedTPost[];
+          const nestedResult = await this.redisClient.get(`post:replies:${post.id}`) as string;
+          nestedPost.replies = JSON.parse(nestedResult) as NestedPost[];
         } else {
-          nestedPost.comments = [];
+          nestedPost.replies = [];
           stack.push(post);
         }
       }
@@ -198,68 +199,68 @@ export default class PostEndpoint extends BaseEndpoint<type.PostRequestArgs, Cal
     }
 
     while (stack.length) {
-      const post = stack.pop() as TPost;
-      const nestedPost = map.get(post.id) as NestedTPost;
-      const grandChildrenCache = await this.redisClient.get(`post_comments_${post.id}`) as string;
+      const post = stack.pop() as Post;
+      const nestedPost = map.get(post.id) as NestedPost;
+      const grandChildrenCache = await this.redisClient.get(`post:replies:${post.id}`) as string;
 
-      const grandChildren = nestedPost.comments = nestedPost.comments.concat(
+      const grandChildren = nestedPost.replies = nestedPost.replies.concat(
         JSON.parse(grandChildrenCache) ?? [],
-        arr.filter((tpost) => tpost.repliesTo == post.id)
-           .map((tpost) => {
-              if (!map.get(tpost.id)?.comments) {
-                stack.push(tpost);
-                map.set(tpost.id, { ...tpost, comments: [] });
+        arr.filter(post => post.repliesTo == post.id)
+           .map(post => {
+              if (!map.get(post.id)?.replies) {
+                stack.push(post);
+                map.set(post.id, { ...post, replies: [] });
               }
               
-              return map.get(tpost.id) as NestedTPost;
+              return map.get(post.id) as NestedPost;
             }),
       );
 
-      await this.redisClient.set(`post_comments_${post.id}`, JSON.stringify(grandChildren), {
+      await this.redisClient.set(`post:replies:${post.id}`, JSON.stringify(grandChildren), {
         NX: true,
-        EX: this.config.get("POST_COMMENTS_EX").required().asIntPositive()
+        EX: this.config.get("POST_REPLIES_EX").required().asIntPositive()
       });
     }
 
-    const result = arr.filter((post) => post.repliesTo == repliesTo)
-                      .map((post) => map.get(post.id) as NestedTPost);
+    const result = arr.filter(post => post.repliesTo == repliesTo)
+                      .map(post => map.get(post.id) as NestedPost);
 
-    await this.redisClient.set(`post_comments_${repliesTo}`, JSON.stringify(result), {
+    await this.redisClient.set(`post:replies:${repliesTo}`, JSON.stringify(result), {
       NX: true,
-      EX: this.config.get("POST_COMMENTS_EX").required().asIntPositive()
+      EX: this.config.get("POST_REPLIES_EX").required().asIntPositive()
     });
 
     return result;
   }
 
-  async getNestedChildrenWithoutRedis(arr: TPost[], repliesTo: number): Promise<NestedTPost[]> {
-    const stack: TPost[] = [];
-    const map = new Map<number, NestedTPost>();
+  async getNestedChildrenWithoutRedis(arr: Post[], repliesTo: number): Promise<NestedPost[]> {
+    const stack: Post[] = [];
+    const map = new Map<number, NestedPost>();
 
     for (const post of arr) {
-      const nestedPost = post as NestedTPost;
+      const nestedPost = post as NestedPost;
 
       if (post.repliesTo == repliesTo) {
-        nestedPost.comments = [];
+        nestedPost.replies = [];
         stack.push(post);
       }
       map.set(post.id, nestedPost);
     }
 
     while (stack.length) {
-      const post = stack.pop() as TPost;
-      const nestedPost = map.get(post.id) as NestedTPost;
+      const post = stack.pop() as Post;
+      const nestedPost = map.get(post.id) as NestedPost;
 
-      nestedPost.comments = arr.filter((tpost) => tpost.repliesTo == post.id).map((tpost) => {
-        stack.push(tpost);
-        map.set(tpost.id, { ...tpost, comments: [] });
+      nestedPost.replies = arr.filter(post => post.repliesTo == post.id).map(post => {
+        stack.push(post);
+        map.set(post.id, { ...post, replies: [] });
         
-        return map.get(tpost.id) as NestedTPost;
+        return map.get(post.id) as NestedPost;
       });
     }
 
-    const result = arr.filter((post) => post.repliesTo == repliesTo)
-                      .map((post) => map.get(post.id) as NestedTPost);
+    const result = arr.filter(post => post.repliesTo == repliesTo)
+                      .map(post => map.get(post.id) as NestedPost);
 
     return result;
   }

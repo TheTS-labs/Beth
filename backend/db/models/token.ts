@@ -4,8 +4,9 @@ import winston from "winston";
 
 import { ENV } from "../../app";
 import { DBBool } from "../../common/types";
+import ICRUDModel from "../../common/types/crud_model";
 
-export interface TToken {
+export interface Token {
   id: number
   owner: string
   revoked: DBBool
@@ -13,7 +14,7 @@ export interface TToken {
   scope: string
 }
 
-export default class TokenModel {
+export default class TokenModel implements ICRUDModel<Omit<Token, "id" | "iat" | "revoked">, Token> {
   constructor(
     public db: Knex,
     public logger: winston.Logger,
@@ -21,22 +22,57 @@ export default class TokenModel {
     public config: ENV
   ) {}
 
-  public async issue(owner: string, scope: string): Promise<number> {
-    this.logger.debug({ message: "Issued", path: module.filename, context: { owner, scope } });
-    const id = await this.db<TToken>("token").insert({ owner, scope }, ["id"]);
+  public async create(args: Omit<Token, "id" | "iat" | "revoked">): Promise<number> {
+    this.logger.log({
+      level: "trying",
+      message: "To create token",
+      path: module.filename,
+      context: args
+    });
 
-    return id[0].id;
+    const token = await this.db<Token>("token").insert(args, ["id"]);
+
+    return token[0].id;
   }
 
-  public async revoke(id: number): Promise<void> {
-    this.logger.debug({ message: "Revoked", path: module.filename, context: { id } });
-    await this.db<TToken>("token").where({ id }).update({ revoked: DBBool.Yes });
+  public async read<SelectType extends keyof Token>(
+    identifier: number,
+    select?: "*" | SelectType[] | undefined
+  ): Promise<Token | Pick<Token, SelectType> | undefined> {
+    this.logger.log({
+      level: "trying",
+      message: "To read token",
+      path: module.filename,
+      context: { identifier, select }
+    });
+
+    const token = await this.db<Token>("token")
+                           .where({ id: identifier })
+                           .select(select||["*"])
+                           .first();
+    
+    return token as Pick<Token, SelectType>;
   }
 
-  public async getToken(id: number): Promise<TToken | undefined> {
-    this.logger.debug({ message: "Get token", path: module.filename, context: { id } });
-    const token = await this.db<TToken>("token").where({ id }).first();
+  public async update(identifier: number, args: Partial<Token>): Promise<void> {
+    this.logger.log({
+      level: "trying",
+      message: "To update token",
+      path: module.filename,
+      context: { identifier, args }
+    });
 
-    return token;
+    await this.db<Token>("token").where({ id: identifier }).update(args);
+  }
+
+  public async delete(identifier: number): Promise<void> {
+    this.logger.log({
+      level: "trying",
+      message: "To delete token",
+      path: module.filename,
+      context: { identifier }
+    });
+
+    await this.db<Token>("token").where({ id: identifier }).del();
   }
 }

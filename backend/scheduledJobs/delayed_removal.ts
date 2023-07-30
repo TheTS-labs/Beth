@@ -9,10 +9,11 @@ export default function getJob(
   return CronJob.schedule("0 0 * * */1", async () => {
     const sevenDaysAgo: number = Date.now() - 7 * 24 * 60 * 60 * 1000;
 
-    logger.info({
-      message: "Deleting posts",
+    logger.log({
+      level: "system",
+      message: "Deleting posts...",
       path: module.filename,
-      context: {"frozenAt": ["<=", sevenDaysAgo]}
+      context: { frozenAt: ["<=", sevenDaysAgo]}
     });
 
     await db.raw('delete from "post" where "frozenAt" <= to_timestamp(?)', [ sevenDaysAgo ]);

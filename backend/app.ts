@@ -9,8 +9,8 @@ import asyncMiddleware from "middleware-async";
 import { RedisClientType } from "redis";
 import winston from "winston";
 
-import { IBaseEndpoint } from "./common/base_endpoint";
 import { JWTRequest } from "./common/types";
+import IBaseEndpoint from "./common/types/base_endpoint";
 import knexfile from "./knexfile";
 import Logger from "./logger";
 import ErrorMiddleware from "./middlewares/error_middleware";
@@ -18,15 +18,17 @@ import FrozenMiddleware from "./middlewares/frozen_middleware";
 import IdentityMiddleware from "./middlewares/identity_middleware";
 import PermissionMiddleware from "./middlewares/permission_middleware";
 import Redis from "./redis";
-import ScheduledTasks from "./scheduledJobs/init_scheduled_jobs";
+import ScheduledTasks from "./scheduledJobs/scheduled_tasks";
 
 // TODO: Simplify it
 
 dotenv.config();
 
-export interface TEndpointTypes {
+export interface Domains {
   [key: string]: typeof IBaseEndpoint
 }
+
+// TODO: Rename interface to match Domain-Endpoints naming convention
 export interface TEndpointObjects {
   [key: string]: IBaseEndpoint
 }
@@ -37,7 +39,7 @@ export default class App {
   app: Express = express();
   db: Knex;
   redisClient: RedisClientType;
-  endpoints: TEndpointObjects = {};
+  domains: TEndpointObjects = {};
   logger: winston.Logger;
   config: ENV;
   scheduledTasks: ScheduledTasks;
@@ -50,9 +52,10 @@ export default class App {
   server!: Server<typeof IncomingMessage, typeof ServerResponse>;
 
   //! Disabling auth you also disabling permission check
-  constructor(endpoints: TEndpointTypes, disableAuthFor:string[]=[]) {
+  constructor(endpoints: Domains, disableAuthFor:string[]=[]) {
     this.config = from(process.env, {}, (varname: string, str: string): void => this.envLoggerFn(varname, str));
     const env = this.config.get("NODE_ENV").required().asEnum([
+      // TODO: Remove developmentSQLite
       "development", "production", "developmentSQLite", "test"
     ]);
     this.logger = new Logger().get(env === "test" ? "quiet" : this.config.get("LOG_LEVEL").required().asString());
@@ -67,18 +70,20 @@ export default class App {
   
     this.scheduledTasks.start();
     this.setMiddlewares(disableAuthFor);
-    this.registerEndpoints(endpoints);
-    this.registerRouters();
+    this.createInstancesOfDomains(endpoints);
+    this.registerDomains();
   }
 
   private setMiddlewares(disableAuthFor: string[]): void {
-    this.logger.info({
+    this.logger.log({
+      level: "system",
       message: "Configure the application settings and enable the middlewares",
       path: module.filename
     });
     this.app.use(express.json());
     this.app.use(express.urlencoded({ extended: true }));
     this.app.use(expressjwt({
+      // TODO: Move to another file
       secret: this.config.get("JWT_TOKEN_SECRET").required().asString(),
       algorithms: ["HS256"],
       getToken: (req) => {
@@ -93,6 +98,7 @@ export default class App {
     this.app.use(asyncMiddleware(this.permissionMiddleware.middleware()));
     this.app.use(asyncMiddleware(this.frozenMiddleware.middleware()));
     this.app.use((_req: JWTRequest, res: Response, next: NextFunction) => {
+      // TODO: Move to another file
       res.setHeader(
         "Access-Control-Allow-Origin",
         this.config.get("ACCESS_CONTROL_ALLOW_ORIGIN_HEADER").required().asString()
@@ -105,41 +111,69 @@ export default class App {
     });
   }
 
-  private registerEndpoints(endpoints: TEndpointTypes): void {
-    this.logger.info({ message: "Create endpoint objects", path: module.filename });
-    Object.keys(endpoints).map((routerName: string) => {
-      this.endpoints[routerName] = new endpoints[routerName](
+  private createInstancesOfDomains(domains: Domains): void {
+    this.logger.log({
+      level: "system",
+      message: "Create instances of the domains",
+      path: module.filename
+    });
+    Object.keys(domains).map((domainName: string) => {
+      this.domains[domainName] = new domains[domainName](
         this.db,
         this.redisClient,
         this.logger,
         this.config
       );
 
-      this.logger.debug({message: `The ${routerName} endpoint object is created`, path: module.filename });
+      this.logger.log({
+        level: "system",
+        message: `${domainName} domain instance is created`,
+        path: module.filename
+      });
     });
   }
 
-  private registerRouters(): void {
-    this.logger.info({ message: "Registering endpoint objects", path: module.filename });
-    Object.keys(this.endpoints).map((routerName: string) => {
-      this.app.post(`${routerName}/:endPoint`, asyncHandler(async (req: JWTRequest, res: Response) => {
-        this.logger.debug({
-          message: `Incoming request to ${routerName}/${req.params.endPoint}: ${JSON.stringify(req.body)}`,
+  private registerDomains(): void {
+    this.logger.log({
+      level: "system",
+      message: "Registration of domains...",
+      path: module.filename
+    });
+
+    Object.keys(this.domains).map((domainName: string) => {
+      this.app.post(`${domainName}/:endPoint`, asyncHandler(async (req: JWTRequest, res: Response) => {
+        this.logger.log({
+          level: "request",
+          message: `To ${domainName}/${req.params.endPoint}`,
+          context: { body: req.body },
           path: module.filename 
         });
 
-        const result = await this.endpoints[routerName].callEndpoint(req.params.endPoint, req.body, req.auth);
+        const response = await this.domains[domainName].callEndpoint(req.params.endPoint, req.body, req.auth);
 
-        this.logger.debug({ message: `Request result: ${JSON.stringify(result)}`, path: module.filename });
+        this.logger.log({
+          level: "response",
+          message: "Done",
+          context: { response },
+          path: module.filename
+        });
 
-        res.json(result);
+        res.json(response);
       })
     );
 
-    this.logger.debug({ message: `The ${routerName} endpoint object is registered`, path: module.filename });
+    this.logger.log({
+      level: "system",
+      message: `${domainName} domain has been registered`,
+      path: module.filename
+    });
     });
 
-    this.logger.debug({ message: "Enabling the error-catching middleware", path: module.filename });
+    this.logger.log({
+      level: "system",
+      message: "Enabling error-catching middleware...",
+      path: module.filename
+    });
     this.app.use(this.errorMiddleware.middleware.bind(this.errorMiddleware));
   }
 
@@ -147,13 +181,21 @@ export default class App {
     const port = this.config.get("APP_PORT").required().asPortNumber();
 
     this.server = this.app.listen(port, () => {
-      this.logger.info({ message: `Server is running at https://localhost:${port}`, path: module.filename });
+      this.logger.log({
+        level: "system",
+        message: `Server is running at http://localhost:${port}`,
+        path: module.filename
+      });
     });
   }
 
   private envLoggerFn(varname: string, str: string): void {
     if (this.logger) {
-      this.logger.debug({ message: `${varname}: ${str}`, path: module.filename });
+      this.logger.log({
+        level: "env",
+        message: `${varname}: ${str}`,
+        path: module.filename
+      });
     }
   }
 }

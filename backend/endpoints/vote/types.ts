@@ -1,11 +1,11 @@
 import Joi from "joi";
 
-import { Vote } from "../../db/models/vote";
+import { VoteType } from "../../db/models/vote";
 
 // >>> Base >>>
 interface Base {
   postId: number
-  voteType: Vote
+  voteType: VoteType
 }
 
 const base = Joi.object().keys({

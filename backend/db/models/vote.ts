@@ -3,21 +3,22 @@ import { RedisClientType } from "redis";
 import winston from "winston";
 
 import { ENV } from "../../app";
+import ICRUDModel from "../../common/types/crud_model";
 
-export interface TVote {
+export interface Vote {
   id: number
   userEmail: string
   postId: number
   createdAt: Date
-  voteType: Vote
+  voteType: VoteType
 }
 
-export enum Vote {
+export enum VoteType {
   Up = 1,
   Down = 0
 }
 
-export default class VoteModel {
+export default class VoteModel implements ICRUDModel<Omit<Vote, "id" | "createdAt">, Vote> {
   constructor(
     public db: Knex,
     public logger: winston.Logger,
@@ -25,35 +26,103 @@ export default class VoteModel {
     public config: ENV
   ) {}
 
-  public async vote(postId: number, userEmail: string, unvote=false, voteType=Vote.Up): Promise<void> {
-    if (unvote) {
-      this.logger.debug({ message: "Unvoted", path: module.filename, context: { userEmail, postId } });
-      await this.db<TVote>("vote").where({ postId, userEmail }).del();
+  public async create(args: Omit<Vote, "id" | "createdAt">): Promise<number> {
+    this.logger.log({
+      level: "trying",
+      message: "To create vote",
+      path: module.filename,
+      context: args
+    });
 
-      return;
-    }
+    const vote = await this.db<Vote>("vote").insert(args, ["id"]);
 
-    this.logger.debug({ message: "Voted", path: module.filename, context: { userEmail, postId } });
-    await this.db<TVote>("vote").insert({ userEmail, postId, voteType });
+    return vote[0].id;
   }
 
-  public async getVote(postId: number, userEmail: string): Promise<TVote | undefined> {
-    this.logger.debug({ message: "Getting a vote", path: module.filename, context: { userEmail, postId } });
-    const vote = await this.db<TVote>("vote").where({ postId, userEmail }).first();
-    return vote;
+  public async read<SelectType extends keyof Vote>(
+    identifier: number,
+    select?: "*" | SelectType[] | undefined
+  ): Promise<Vote | Pick<Vote, SelectType> | undefined> {
+    this.logger.log({
+      level: "trying",
+      message: "To read vote",
+      path: module.filename,
+      context: { identifier, select }
+    });
+
+    const vote = await this.db<Vote>("vote")
+                           .where({ id: identifier })
+                           .select(select||["*"])
+                           .first();
+    
+    return vote as Pick<Vote, SelectType>;
   }
 
-  public async getVoteCount(postId: number, voteType: Vote): Promise<number> {
-    this.logger.debug({ message: "Getting a vote count", path: module.filename, context: { voteType, postId } });
-    const count = await this.db<TVote>("vote").count("*")
-                                              .where({ postId, voteType }) as unknown as [{ "count": number }];
+  public async update(identifier: number, args: Partial<Vote>): Promise<void> {
+    this.logger.log({
+      level: "trying",
+      message: "To update vote",
+      path: module.filename,
+      context: { identifier, args }
+    });
+
+    await this.db<Vote>("vote").where({ id: identifier }).update(args);
+  }
+  
+  public async delete(identifier: number): Promise<void> {
+    this.logger.log({
+      level: "trying",
+      message: "To delete vote",
+      path: module.filename,
+      context: { identifier }
+    });
+
+    await this.db<Vote>("vote").where({ id: identifier }).del();
+  }
+
+  public async readByIds<SelectType extends keyof Vote>(
+    postId: number,
+    userEmail: string,
+    select?: "*" | SelectType[] | undefined
+  ): Promise<Vote | Pick<Vote, SelectType> | undefined> {
+    this.logger.log({
+      level: "trying",
+      message: "To read vote by postId and userEmail",
+      path: module.filename,
+      context: { postId, userEmail, select }
+    });
+
+    const vote = await this.db<Vote>("vote")
+                           .where({ postId, userEmail })
+                           .select(select||["*"])
+                           .first();
+    
+    return vote as Pick<Vote, SelectType>;
+  }
+
+  public async readVoteCount(postId: number, voteType: VoteType): Promise<number> {
+    this.logger.log({
+      level: "trying",
+      message: "To read vote count of the post",
+      path: module.filename,
+      context: { postId, voteType }
+    });
+  
+    const count = await this.db<Vote>("vote").count("*")
+                                             .where({ postId, voteType }) as unknown as [{ "count": number }];
 
     return Number(count[0]["count"]);
   }
 
-  public async getVotes(userEmail: string): Promise<TVote[]> {
-    this.logger.debug({ message: "Getting all votes", path: module.filename, context: { userEmail } });
-    const votes = await this.db<TVote>("vote").where({ userEmail });
+  public async readVotesOfUser(userEmail: string): Promise<Vote[]> {
+    this.logger.log({
+      level: "trying",
+      message: "To read all the votes of the user",
+      path: module.filename,
+      context: { userEmail }
+    });
+
+    const votes = await this.db<Vote>("vote").where({ userEmail });
     return votes;
   }
 }

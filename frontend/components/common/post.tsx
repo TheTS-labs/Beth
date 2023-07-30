@@ -3,15 +3,15 @@
 
 import { MouseEvent } from "react";
 import importedStyles from "../../public/styles/common/post.module.sass";
-import { TPost } from "../../../backend/db/models/post";
-import { TUser } from "../../../backend/db/models/user";
+import { Post } from "../../../backend/db/models/post";
+import { User } from "../../../backend/db/models/user";
 import { Vote } from "../../../backend/db/models/vote";
 
 interface Props {
   key: number
   post: (
-    Omit<TPost, "id"> &
-    Omit<TUser, "password" | "id" | "tags"> &
+    Omit<Post, "id"> &
+    Omit<User, "password" | "id" | "tags"> &
     { 
       _cursor_0: number
       score: number

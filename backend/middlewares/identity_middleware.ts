@@ -35,9 +35,8 @@ export default class IdentityMiddleware {
           message: "Missing Bearer Authorization header, skipping it",
           path: module.filename
         });
+
         next();
-        // TODO: Get rid of this return
-        return;
       }
 
       this.logger.log({
@@ -45,12 +44,12 @@ export default class IdentityMiddleware {
         message: "Checking the authority of the Bearer Authorization token...",
         path: module.filename
       });
-      const token = await this.tokenModel.read(req.auth.tokenId);
+      const token = await this.tokenModel.read(req?.auth?.tokenId||-1);
       if (!token) {
-        throw new RequestError("AuthError", "", 2);
+        throw new RequestError("AuthError", [""], 2);
       }
       if (token.revoked) {
-        throw new RequestError("AuthError", "", 1);
+        throw new RequestError("AuthError", [""], 1);
       }
 
       this.logger.log({
@@ -60,7 +59,7 @@ export default class IdentityMiddleware {
       });
       const user = await this.userModel.read(token.owner, "*");
       if (!user) {
-        throw new RequestError("DatabaseError", "", 3);
+        throw new RequestError("DatabaseError", [""], 3);
       }
 
       req.auth.token = token;

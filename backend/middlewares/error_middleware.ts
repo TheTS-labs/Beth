@@ -2,10 +2,14 @@ import { NextFunction, Request, Response } from "express";
 import { UnauthorizedError } from "express-jwt";
 import winston from "winston";
 
+import { ENV } from "../app";
 import RequestError from "../common/request_error";
 
 export default class ErrorMiddleware {
-  constructor(private logger: winston.Logger) {}
+  constructor(
+    private logger: winston.Logger,
+    private config: ENV
+  ) {}
 
   public middleware = (err: Error, _req: Request, res: Response, _next: NextFunction): void => {
     if (err instanceof RequestError) {
@@ -24,12 +28,13 @@ export default class ErrorMiddleware {
       return;
     }
 
-    this.logger.error({ message: err.stack, path: module.filename });
+    const debug = this.config.get("DEBUG").required().asBool();
+
+    this.logger.error({ message: err.stack, path: module.filename, context: { debug } });
     res.status(500).json({
       errorStatus: 500,
       errorType: "UnknownError",
-      // TODO: Reveal error if DEBUG=true
-      errorMessage: "Sorry, something went wrong"
+      errorMessage: debug ? err.stack : "Sorry, something went wrong"
     });
     return;
   };

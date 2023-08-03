@@ -47,7 +47,7 @@ export default class BaseEndpoint<RequestArgsType extends object,
   async validate<EType>(schema: Joi.ObjectSchema, args: EType): Promise<EType> {
     const { error, value } = schema.validate(args);
     if (error) {
-      throw new RequestError("ValidationError", error.message);
+      throw new RequestError("ValidationError", [error.message]);
     }
 
     return value as EType;

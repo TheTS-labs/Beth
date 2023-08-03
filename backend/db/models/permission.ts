@@ -43,7 +43,7 @@ export interface Permissions {
 }
 
 export default class PermissionModel implements ICRUDModel<
-  Partial<Omit<Permissions, "id" | "email">> & Permissions["email"],
+  Partial<Omit<Permissions, "id" | "email">> & { email: string },
   Permissions
 > {
   constructor(
@@ -53,9 +53,6 @@ export default class PermissionModel implements ICRUDModel<
     public config: ENV
   ) {}
 
-  // TODO: Property 'create' in type 'PermissionModel' is not assignable to the same property in base type
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  //@ts-ignore
   public async create(args: Partial<Omit<Permissions, "email">> & { email: string }): Promise<number> {
     this.logger.log({
       level: "trying",

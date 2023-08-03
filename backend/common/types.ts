@@ -3,8 +3,7 @@ import { Request } from "express";
 import { Token } from "../db/models/token";
 import { User } from "../db/models/user";
 
-// TODO: SafeUserObject type is out-dated
-export type SafeUserObject = Pick<User, "email" | "id" | "isFrozen">;
+export type SafeUserObject = Omit<User, "password">;
 export type RequestErrorObject = {
   errorType: string
   errorMessage: string
@@ -33,4 +32,4 @@ export interface Auth {
   token: Token
 }
 
-export type JWTRequest = Request & { auth?: Auth };
+export type JWTRequest = Request & { auth: Auth };

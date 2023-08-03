@@ -39,9 +39,10 @@ export const requestErrors = {
       "User permissions with email {} not found",
       "Post doesn't exist",
       "User doesn't exist",
-      "You already voted"
+      "You already voted",
+      "There aren't enough posts to show"
     ],
-    statusCodes: [500, 500, 404, 404, 403],
+    statusCodes: [500, 500, 404, 404, 403, 500],
   },
   PermissionError: {
     templates: [
@@ -61,14 +62,13 @@ export default class RequestError {
 
   constructor(
     public errorType: keyof typeof requestErrors,
-    public errorArgs: string | string[]="",
+    public errorArgs=[""],
     public template=0,
     status?: number | undefined
   ) {
     this.errorMessage = format(
       requestErrors[errorType].templates[template],
-      // TODO: Require string[] all the time to simplify it
-      ...typeof status === "string" ? errorArgs : [errorArgs]
+      ...errorArgs
     );
     this.status = status || requestErrors[errorType].statusCodes[template];
   }

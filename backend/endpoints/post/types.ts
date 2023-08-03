@@ -46,12 +46,12 @@ export const DeleteArgsSchema = base;
 
 // >>> Get List >>>
 export interface GetListArgs {
-  afterCursor: string | null
+  afterCursor: string | undefined
   numberRecords: number
 }
   
 export const GetListArgsSchema = Joi.object({
-  afterCursor: Joi.string().default(null),
+  afterCursor: Joi.string().default(() => undefined),
   numberRecords: Joi.number().positive().default(3)
 });
 // <<< Get List <<<

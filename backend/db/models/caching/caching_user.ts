@@ -50,7 +50,7 @@ export default class CachingUserModel extends UserModel {
     if (cachedUser) {
       return pick(
         cachedUser,
-        ...select||["id", "email", "isFrozen", "username", "displayName"]
+        select||["id", "email", "isFrozen", "username", "displayName"]
       ) as Pick<User, SelectType>;
     }
 
@@ -67,7 +67,7 @@ export default class CachingUserModel extends UserModel {
 
     return pick(
       user,
-      ...select||["id", "email", "isFrozen", "username", "displayName"]
+      select||["id", "email", "isFrozen", "username", "displayName"]
     ) as Pick<User, SelectType>;
   }
 

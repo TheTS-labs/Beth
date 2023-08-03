@@ -4,6 +4,7 @@ import winston from "winston";
 
 import { ENV } from "../../app";
 import BaseEndpoint from "../../common/base_endpoint_class";
+import RequestError from "../../common/request_error";
 import { Auth, UserScore } from "../../common/types";
 import CachingPostModel from "../../db/models/caching/caching_post";
 import CachingUserModel from "../../db/models/caching/caching_user";
@@ -24,7 +25,7 @@ interface RecommendationRequirements {
   dislikedTags: string[]
   likedUsers: string[]
   dislikedUsers: string[]
-  posts: DetailedPosts
+  posts: DetailedPosts | undefined
 }
 
 export default class RecommendationEndpoint extends BaseEndpoint<type.RecommendationRequestArgs,
@@ -59,6 +60,10 @@ export default class RecommendationEndpoint extends BaseEndpoint<type.Recommenda
     args = await this.validate(type.GetPostsArgsSchema, args);
 
     const posts = await this.postModel.readDetailedPosts(args.afterCursor, args.numberRecords);
+
+    if (!posts) {
+      throw new RequestError("DatabaseError", [""], 5);
+    }
 
     posts.results.sort((a, b) => b.score - a.score);
 
@@ -95,6 +100,10 @@ export default class RecommendationEndpoint extends BaseEndpoint<type.Recommenda
     })) as PostWithVote[];
 
     const requirements = await this.getRecommendationRequirements(args, postsWithVoteType, auth.user.email);
+
+    if (!requirements.posts) {
+      throw new RequestError("DatabaseError", [""], 5);
+    }
 
     const recommendations = requirements.posts.results.map(recommendPost => {
       const tags = recommendPost.tags ? recommendPost.tags.split(",") : [];

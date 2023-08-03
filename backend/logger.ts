@@ -34,24 +34,20 @@ export default class Logger {
     return winston.createLogger({
       levels: customLevels.levels,
       format: format.combine(
-        format.colorize(/*{ level: true }*/),
-        format.printf(({ level, message, path, context/*, subtext*/ }) => {
+        format.colorize(),
+        format.printf(({ level, message, path, context}) => {
           const now = new Date().toISOString();
-          // const startsWith = subtext ? "  -->" : "==>";
 
           if (path) {
             path = path.split("/").slice(-1).join("/");
           }
 
           if (context) {
-            // TODO: Use pretty JSON
-            context = JSON.stringify(context);
+            context = JSON.stringify(context, null, 0);
 
-            // return `==> [ ${level} ] ${message} | ${path} \n  --> Context: ${context}`;
             return `┌${level} at ${now} by [${path}]: ${message} \n└Context: ${context}`;
           }
 
-          // return `${startsWith} [ ${level} ] ${message} | ${path}`;
           return `${level} at ${now} by [${path}]: ${message}`;
         })
       ),

@@ -4,12 +4,11 @@ import { RedisClientType } from "redis";
 import winston from "winston";
 
 import { ENV } from "../app";
-import RequestError from "../common/request_error";
 import { JWTRequest } from "../common/types";
 
 type MiddlewareFunction = (req: JWTRequest, res: Response, next: NextFunction) => Promise<void>;
 
-export default class FrozenMiddleware {
+export default class HeadersMiddleware {
   constructor(
     private logger: winston.Logger,
     private db: Knex,
@@ -18,20 +17,17 @@ export default class FrozenMiddleware {
   ) { }
 
   public middleware(): MiddlewareFunction {
-    return async (req: JWTRequest, res: Response, next: NextFunction): Promise<void> => {
-      if (!req.auth) {
-        this.logger.log({
-          level: "middleware",
-          message: "Excluded path in IdentityMiddleware, skipping it",
-          path: module.filename
-        });
-        next();
-      }
+    return async (_req: JWTRequest, res: Response, next: NextFunction): Promise<void> => {
+      res.setHeader(
+        "Access-Control-Allow-Origin",
+        this.config.get("ACCESS_CONTROL_ALLOW_ORIGIN_HEADER").required().asString()
+      );
 
-      if (req.auth?.user?.isFrozen) {
-        throw new RequestError("UserIsFrozen", [req.auth.user.email]);
-      }
-  
+      res.setHeader(
+        "Access-Control-Allow-Headers",
+        "Authorization"
+      );
+
       next();
     };
   }

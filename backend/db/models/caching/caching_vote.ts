@@ -35,12 +35,7 @@ export default class CachingVoteModel extends VoteModel {
           cachedVote = JSON.parse(cachedVoteString||"null");
 
     if (cachedVote) {
-      // TODO: Remove select == "*" because it is in pick function 
-      if (!select || select == "*") {
-        return cachedVote;
-      }
-
-      return pick(cachedVote, ...select) as Pick<Vote, SelectType>;
+      return pick(cachedVote, select) as Pick<Vote, SelectType>;
     }
 
     const vote = await this.db<Vote>("vote").where({ id: identifier }).select().first();
@@ -54,11 +49,7 @@ export default class CachingVoteModel extends VoteModel {
       NX: true
     });
 
-    if (!select || select == "*") {
-      return vote;
-    }
-
-    return pick(vote, ...select) as Pick<Vote, SelectType>;
+    return pick(vote, select) as Pick<Vote, SelectType>;
   }
 
   public async update(identifier: number, args: Partial<Vote>): Promise<void> {
@@ -107,11 +98,7 @@ export default class CachingVoteModel extends VoteModel {
           cachedVote = JSON.parse(cachedVoteString||"null");
 
     if (cachedVote) {
-      if (!select || select == "*") {
-        return cachedVote;
-      }
-
-      return pick(cachedVote, ...select) as Pick<Vote, SelectType>;
+      return pick(cachedVote, select) as Pick<Vote, SelectType>;
     }
 
     const vote = await this.db<Vote>("vote").where({ postId, userEmail }).select().first();
@@ -125,10 +112,6 @@ export default class CachingVoteModel extends VoteModel {
       NX: true
     });
 
-    if (!select || select == "*") {
-      return vote;
-    }
-
-    return pick(vote, ...select) as Pick<Vote, SelectType>;
+    return pick(vote, select) as Pick<Vote, SelectType>;
   }
 }

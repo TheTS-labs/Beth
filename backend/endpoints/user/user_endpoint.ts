@@ -53,11 +53,11 @@ export default class UserEndpoint extends BaseEndpoint<type.UserRequestArgs, Cal
       email: args.email,
       password: hash
     }).catch((err: Error) => {
-      throw new RequestError("DatabaseError", err.message);
+      throw new RequestError("DatabaseError",[ err.message]);
     });
 
     await this.permissionModel.create({ email: args.email }).catch((err: Error) => {
-      throw new RequestError("DatabaseError", err.message);
+      throw new RequestError("DatabaseError",[ err.message]);
     });
 
     return { success: true };
@@ -87,11 +87,11 @@ export default class UserEndpoint extends BaseEndpoint<type.UserRequestArgs, Cal
     const permissions = await this.permissionModel.read(auth.user.email) as Permissions;
 
     if (args.email != auth.user.email && permissions["UserSuperFroze"] == PermissionStatus.Hasnt) {
-      throw new RequestError("PermissionError", "", 3);
+      throw new RequestError("PermissionError", [""], 3);
     }
 
     await this.userModel.update(args.email, { isFrozen: args.froze }).catch((err: { message: string }) => {
-      throw new RequestError("DatabaseError", err.message);
+      throw new RequestError("DatabaseError",[ err.message]);
     });
 
     return { success: true };
@@ -102,11 +102,11 @@ export default class UserEndpoint extends BaseEndpoint<type.UserRequestArgs, Cal
 
     const requestedUser = await this.userModel.read(args.email);
     if (!requestedUser) {
-      throw new RequestError("DatabaseError", "", 3);
+      throw new RequestError("DatabaseError", [""], 3);
     }
 
     await this.userModel.update(args.email, { tags: args.newTags }).catch((err: { message: string }) => {
-      throw new RequestError("DatabaseError", err.message);
+      throw new RequestError("DatabaseError",[ err.message]);
     });
 
     return { success: true };
@@ -117,11 +117,11 @@ export default class UserEndpoint extends BaseEndpoint<type.UserRequestArgs, Cal
 
     const requestedUser = await this.userModel.read(args.email);
     if (!requestedUser) {
-      throw new RequestError("DatabaseError", "", 3);
+      throw new RequestError("DatabaseError", [""], 3);
     }
 
     await this.userModel.update(args.email, { verified: args.verify }).catch((err: { message: string }) => {
-      throw new RequestError("DatabaseError", err.message);
+      throw new RequestError("DatabaseError",[ err.message]);
     });
 
     return { success: true };
@@ -132,11 +132,11 @@ export default class UserEndpoint extends BaseEndpoint<type.UserRequestArgs, Cal
     const user = await this.userModel.read(args.email, "*");
 
     if (!user) {
-      throw new RequestError("DatabaseError", "", 3);
+      throw new RequestError("DatabaseError", [""], 3);
     }
 
     if (user.isFrozen) {
-      throw new RequestError("UserIsFrozen", user.email);
+      throw new RequestError("UserIsFrozen", [user.email]);
     }
 
     const hash = await bcrypt.compare(args.password, user.password);
@@ -146,19 +146,19 @@ export default class UserEndpoint extends BaseEndpoint<type.UserRequestArgs, Cal
 
     const permission = await this.permissionModel.read(user.email) ;
     if (!permission) {
-      throw new RequestError("DatabaseError", user.email, 1);
+      throw new RequestError("DatabaseError", [user.email], 1);
     }
 
     const scope = args.scope || scopes[args.shorthand];
     scope.forEach(exactScope => {
       if (!permission[exactScope]) {
-        throw new RequestError("PermissionError", exactScope, 4);
+        throw new RequestError("PermissionError", [exactScope], 4);
       }
     });
 
     const tokenId = await this.tokenModel.create({ owner: user.email, scope: JSON.stringify(scope) })
                                          .catch((err: { message: string }) => {
-      throw new RequestError("DatabaseError", err.message);
+      throw new RequestError("DatabaseError",[ err.message]);
     });
 
     const token = jwt.sign({

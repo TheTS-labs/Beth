@@ -37,7 +37,7 @@ export default class PermissionEndpoint extends BaseEndpoint<type.PermissionRequ
 
     const permissions = await this.permissionModel.read(args.email);
     if (!permissions) {
-      throw new RequestError("DatabaseError", args.email, 1);
+      throw new RequestError("DatabaseError", [args.email], 1);
     }
 
     return permissions;
@@ -49,7 +49,7 @@ export default class PermissionEndpoint extends BaseEndpoint<type.PermissionRequ
     await this.permissionModel.update(args.grantTo, {
       [args.grantPermission]: PermissionStatus.Has
     }).catch((err: Error) => {
-      throw new RequestError("DatabaseError", err.message);
+      throw new RequestError("DatabaseError",[ err.message]);
     });
 
     return { success: true };
@@ -61,7 +61,7 @@ export default class PermissionEndpoint extends BaseEndpoint<type.PermissionRequ
     await this.permissionModel.update(args.rescindFrom, {
       [args.rescindPermission]: PermissionStatus.Hasnt
     }).catch((err: Error) => {
-      throw new RequestError("DatabaseError", err.message);
+      throw new RequestError("DatabaseError",[ err.message]);
     });
 
     return { success: true };

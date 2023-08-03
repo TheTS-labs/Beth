@@ -1,8 +1,7 @@
 import dotenv from "dotenv";
 import { ExtenderTypeOptional, from, IEnv, IOptionalVariable } from "env-var";
-import express, { Express, NextFunction, Response } from "express";
+import express, { Express, Response } from "express";
 import asyncHandler from "express-async-handler";
-import { expressjwt } from "express-jwt";
 import { IncomingMessage, Server, ServerResponse } from "http";
 import knex, { Knex } from "knex";
 import asyncMiddleware from "middleware-async";
@@ -15,12 +14,12 @@ import knexfile from "./knexfile";
 import Logger from "./logger";
 import ErrorMiddleware from "./middlewares/error_middleware";
 import FrozenMiddleware from "./middlewares/frozen_middleware";
+import HeadersMiddleware from "./middlewares/headers_middleware";
 import IdentityMiddleware from "./middlewares/identity_middleware";
+import JWTMiddleware from "./middlewares/jwt_middleware";
 import PermissionMiddleware from "./middlewares/permission_middleware";
 import Redis from "./redis";
 import ScheduledTasks from "./scheduledJobs/scheduled_tasks";
-
-// TODO: Simplify it
 
 dotenv.config();
 
@@ -28,8 +27,7 @@ export interface Domains {
   [key: string]: typeof IBaseEndpoint
 }
 
-// TODO: Rename interface to match Domain-Endpoints naming convention
-export interface TEndpointObjects {
+export interface DomainInstances {
   [key: string]: IBaseEndpoint
 }
 
@@ -39,14 +37,16 @@ export default class App {
   app: Express = express();
   db: Knex;
   redisClient: RedisClientType;
-  domains: TEndpointObjects = {};
+  domains: DomainInstances = {};
   logger: winston.Logger;
   config: ENV;
   scheduledTasks: ScheduledTasks;
 
+  JWTMiddleware: JWTMiddleware;
   identityMiddleware: IdentityMiddleware;
   permissionMiddleware: PermissionMiddleware;
   frozenMiddleware: FrozenMiddleware;
+  headersMiddleware: HeadersMiddleware;
   errorMiddleware: ErrorMiddleware;
 
   server!: Server<typeof IncomingMessage, typeof ServerResponse>;
@@ -54,19 +54,18 @@ export default class App {
   //! Disabling auth you also disabling permission check
   constructor(endpoints: Domains, disableAuthFor:string[]=[]) {
     this.config = from(process.env, {}, (varname: string, str: string): void => this.envLoggerFn(varname, str));
-    const env = this.config.get("NODE_ENV").required().asEnum([
-      // TODO: Remove developmentSQLite
-      "development", "production", "developmentSQLite", "test"
-    ]);
-    this.logger = new Logger().get(env === "test" ? "quiet" : this.config.get("LOG_LEVEL").required().asString());
+    const env = this.config.get("NODE_ENV").required().asEnum(["development", "production", "test"]);
+    this.logger = new Logger().get(this.config.get("LOG_LEVEL").required().asString());
     this.db = knex(knexfile[env]);
     this.redisClient = new Redis(this.logger, this.config).get();
     this.scheduledTasks = new ScheduledTasks(this.db, this.logger);
 
+    this.JWTMiddleware = new JWTMiddleware(this.logger, this.db, this.redisClient, this.config);
     this.identityMiddleware = new IdentityMiddleware(this.logger, this.db, this.redisClient, this.config);
     this.permissionMiddleware = new PermissionMiddleware(this.logger, this.db, this.redisClient, this.config);
     this.frozenMiddleware = new FrozenMiddleware(this.logger, this.db, this.redisClient, this.config);
-    this.errorMiddleware = new ErrorMiddleware(this.logger);
+    this.headersMiddleware = new HeadersMiddleware(this.logger, this.db, this.redisClient, this.config);
+    this.errorMiddleware = new ErrorMiddleware(this.logger, this.config);
   
     this.scheduledTasks.start();
     this.setMiddlewares(disableAuthFor);
@@ -82,33 +81,11 @@ export default class App {
     });
     this.app.use(express.json());
     this.app.use(express.urlencoded({ extended: true }));
-    this.app.use(expressjwt({
-      // TODO: Move to another file
-      secret: this.config.get("JWT_TOKEN_SECRET").required().asString(),
-      algorithms: ["HS256"],
-      getToken: (req) => {
-        if (req.headers.authorization && req.headers.authorization.split(" ")[0] === "Bearer") {
-          return req.headers.authorization.split(" ")[1];
-        }
-
-        return undefined;
-      },
-    }).unless({ path: disableAuthFor }));
+    this.app.use(this.JWTMiddleware.middleware(disableAuthFor));
     this.app.use(asyncMiddleware(this.identityMiddleware.middleware()));
     this.app.use(asyncMiddleware(this.permissionMiddleware.middleware()));
     this.app.use(asyncMiddleware(this.frozenMiddleware.middleware()));
-    this.app.use((_req: JWTRequest, res: Response, next: NextFunction) => {
-      // TODO: Move to another file
-      res.setHeader(
-        "Access-Control-Allow-Origin",
-        this.config.get("ACCESS_CONTROL_ALLOW_ORIGIN_HEADER").required().asString()
-      );
-      res.setHeader(
-        "Access-Control-Allow-Headers",
-        "Authorization"
-      );
-      next();
-    });
+    this.app.use(asyncMiddleware(this.headersMiddleware.middleware()));
   }
 
   private createInstancesOfDomains(domains: Domains): void {
@@ -141,6 +118,8 @@ export default class App {
     });
 
     Object.keys(this.domains).map((domainName: string) => {
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      //@ts-ignore
       this.app.post(`${domainName}/:endPoint`, asyncHandler(async (req: JWTRequest, res: Response) => {
         this.logger.log({
           level: "request",

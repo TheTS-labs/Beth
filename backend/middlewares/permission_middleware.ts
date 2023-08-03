@@ -33,9 +33,7 @@ export default class PermissionMiddleware {
           message: "Excluded path in IdentityMiddleware, skipping it",
           path: module.filename
         });
-        next(); 
-        // TODO: Get rid of this return
-        return;
+        next();
       }
 
       let [ domain, endpoint ] = req.originalUrl.replace("/", "").split("/");
@@ -51,7 +49,7 @@ export default class PermissionMiddleware {
       });
   
       if (!req.auth?.scope.includes(requiredScope)) {
-        throw new RequestError("PermissionDenied", requiredScope);
+        throw new RequestError("PermissionDenied", [requiredScope]);
       }
   
       next();

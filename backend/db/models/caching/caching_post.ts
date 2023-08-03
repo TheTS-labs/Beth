@@ -30,14 +30,7 @@ export default class CachingPostModel extends PostModel {
           cachedPost = JSON.parse(cachedPostString||"null") as Post | null;
 
     if (cachedPost) {
-      if (!select || select == "*") {
-        return cachedPost;
-      }
-
-      return pick(
-        cachedPost,
-        ...select
-      ) as Pick<Post, SelectType>;
+      return pick(cachedPost, select) as Pick<Post, SelectType>;
     }
 
     const post = await this.db<Post>("post")
@@ -54,11 +47,7 @@ export default class CachingPostModel extends PostModel {
       NX: true
     });
 
-    if (!select || select == "*") {
-      return post;
-    }
-
-    return pick(post, ...select) as Pick<Post, SelectType>;
+    return pick(post, select) as Pick<Post, SelectType>;
   }
 
   public async update(identifier: number, args: Partial<Post>): Promise<void> {

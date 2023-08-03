@@ -7,6 +7,7 @@ import { ENV } from "../../app";
 import ICRUDModel from "../../common/types/crud_model";
 import { User } from "./user";
 import { Vote, VoteType } from "./vote";
+import RequestError from "../../common/request_error";
 
 export interface Post {
   id: number
@@ -168,8 +169,7 @@ export default class PostModel implements ICRUDModel<
   
     const comment = await this.read(identifier);
     if (!comment) {
-      // TODO: Do we sure this is `trying` level???
-      this.logger.log({ level: "trying",  message: `${identifier} is the parent`, path: module.filename });
+      this.logger.log({ level: "database",  message: `${identifier} is the parent`, path: module.filename });
       return;
     }
 
@@ -177,12 +177,12 @@ export default class PostModel implements ICRUDModel<
     let commentOfParent = await this.read(parent) as Post;
 
     while (commentOfParent) {
-      this.logger.log({ level: "trying",  message: `Probably ${parent}, checking...`, path: module.filename });
+      this.logger.log({ level: "database",  message: `Probably ${parent}, checking...`, path: module.filename });
       commentOfParent = await this.read(parent) as Post;
 
       if (commentOfParent.repliesTo === null) {
         this.logger.log({
-          level: "trying",
+          level: "database",
           message: `Yeah, ${commentOfParent.id} is the parent`,
           path: module.filename
         });
@@ -190,18 +190,22 @@ export default class PostModel implements ICRUDModel<
       }
   
       this.logger.log({
-        level: "trying",
+        level: "database",
         message: `Nah, ${commentOfParent.id} is not a parent`,
         path: module.filename
       });
       parent = commentOfParent.repliesTo;
     }
 
-    this.logger.log({ level: "trying",  message: `Done, ${parent} is the parent`, path: module.filename });
+    this.logger.log({ level: "database",  message: `Done, ${parent} is the parent`, path: module.filename });
     return parent;
   }
 
-  public async readDetailedPosts(afterCursor: string, numberRecords: number, email?: string): Promise<DetailedPosts> {
+  public async readDetailedPosts(
+    afterCursor: string,
+    numberRecords: number,
+    email?: string
+  ): Promise<DetailedPosts | undefined> {
     this.logger.log({
       level: "trying",
       message: "To read posts with more detailed info",
@@ -224,7 +228,10 @@ export default class PostModel implements ICRUDModel<
       .whereNull("post.frozenAt")
       .where("user.isFrozen", false)
       .orderBy("post.id", "desc"), { after: afterCursor, first: numberRecords });
-    // TODO: Throw error if results are empty
+
+    if (results.length === 0) {
+      return undefined;
+    }
     const endCursor = getCursor(results[results.length - 1]);
 
     const votes = (await this.db.transaction(async trx => {

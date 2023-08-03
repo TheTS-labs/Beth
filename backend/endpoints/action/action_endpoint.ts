@@ -34,7 +34,7 @@ export default class ActionEndpoint extends BaseEndpoint<type.ActionRequestArgs,
       args.value,
       args.select
     ).catch((err: Error) => {
-      throw new RequestError("DatabaseError", err.message);
+      throw new RequestError("DatabaseError",[ err.message]);
     });
 
     return result;
@@ -44,7 +44,7 @@ export default class ActionEndpoint extends BaseEndpoint<type.ActionRequestArgs,
     args = await this.validate(type.ChainWhereSearchArgsSchema, args);
 
     const result = this.actionModel.chainWhereSearch(args).catch((err: Error) => {
-      throw new RequestError("DatabaseError", err.message);
+      throw new RequestError("DatabaseError",[ err.message]);
     });
 
     return result;

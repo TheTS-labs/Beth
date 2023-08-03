@@ -109,19 +109,16 @@ export default class ActionModel implements ICRUDModel<Omit<Action, "id" | "crea
       const clause = value.clause.charAt(0).toUpperCase() + value.clause.slice(1);
 
       return { ...value, method: type + clause };
-    }) as (Where & { method: string })[];
+    }) as (Where & { method: "where" | "whereNot" | "andWhere" | "andWhereNot" })[];
 
     const query = this.db<Action>("action");
 
     wheres.forEach((value) => {
-      // TODO: Get rid of @ts-ignore
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      //@ts-ignore
       query[value.method](value.key, value.operator, value.value);
     });
 
     const result: Action[] =  Array.isArray(chain.select) ? await query.select(...chain.select)
-                                                           : await query.select(chain.select);
+                                                          : await query.select(chain.select);
 
     return result;
   }

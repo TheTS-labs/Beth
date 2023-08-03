@@ -53,7 +53,7 @@ export default class PostEndpoint extends BaseEndpoint<type.PostRequestArgs, Cal
       repliesTo: args.replyTo||null,
       parent: parent||null
     }).catch((err: Error) => {
-      throw new RequestError("DatabaseError", err.message);
+      throw new RequestError("DatabaseError",[ err.message]);
     });
 
     return { success: true, id };
@@ -78,7 +78,7 @@ export default class PostEndpoint extends BaseEndpoint<type.PostRequestArgs, Cal
     const permissions = await this.permissionModel.read(auth.user.email) as Permissions;
   
     if (!post) {
-      throw new RequestError("DatabaseError", "", 2);
+      throw new RequestError("DatabaseError", [""], 2);
     }
 
     if (post.author != auth.user.email && permissions["PostSuperEdit"] == PermissionStatus.Hasnt) {
@@ -97,11 +97,11 @@ export default class PostEndpoint extends BaseEndpoint<type.PostRequestArgs, Cal
     const permissions = await this.permissionModel.read(auth.user.email) as Permissions;
 
     if (!post) {
-      throw new RequestError("DatabaseError", "", 2);
+      throw new RequestError("DatabaseError", [""], 2);
     }
 
     if (post.author != auth.user.email && permissions["PostSuperDelete"] == PermissionStatus.Hasnt) {
-      throw new RequestError("PermissionError", "", 1);
+      throw new RequestError("PermissionError", [""], 1);
     }
 
     await this.postModel.update(args.id, { frozenAt: new Date(Date.now()) });
@@ -112,11 +112,9 @@ export default class PostEndpoint extends BaseEndpoint<type.PostRequestArgs, Cal
   async getList(args: type.GetListArgs, _auth: Auth): Promise<{ results: Post[], endCursor: string }> {
     args = await this.validate(type.GetListArgsSchema, args);
 
-    // TODO: Change `GetListArgs.afterCursor: string | null` to `GetListArgs.afterCursor: string | undefined`
-
-    const result = await this.postModel.readList(args.afterCursor||undefined, args.numberRecords)
+    const result = await this.postModel.readList(args.afterCursor, args.numberRecords)
                                        .catch((err: { message: string }) => {
-      throw new RequestError("DatabaseError", err.message);
+      throw new RequestError("DatabaseError", [err.message]);
     });
 
     return result;
@@ -128,7 +126,7 @@ export default class PostEndpoint extends BaseEndpoint<type.PostRequestArgs, Cal
     const post = await this.postModel.read(args.id);
 
     if (!post) {
-      throw new RequestError("DatabaseError", "", 2);
+      throw new RequestError("DatabaseError", [""], 2);
     }
 
     await this.postModel.delete(args.id);
@@ -140,7 +138,7 @@ export default class PostEndpoint extends BaseEndpoint<type.PostRequestArgs, Cal
     args = await this.validate(type.ViewRepliesArgsSchema, args);
 
     const results = await this.postModel.readReplies(args.parent).catch((err: { message: string }) => {
-      throw new RequestError("DatabaseError", err.message);
+      throw new RequestError("DatabaseError",[ err.message]);
     });
 
     const REDIS_REQUIRED = this.config.get("REDIS_REQUIRED").required().asBool();
@@ -158,15 +156,15 @@ export default class PostEndpoint extends BaseEndpoint<type.PostRequestArgs, Cal
     const permissions = await this.permissionModel.read(auth.user.email) as Permissions;
 
     if (!post) {
-      throw new RequestError("DatabaseError", "", 2);
+      throw new RequestError("DatabaseError", [""], 2);
     }
 
     if (post.author != auth.user.email && permissions["PostSuperTagsEdit"] == PermissionStatus.Hasnt) {
-      throw new RequestError("PermissionError", "", 2);
+      throw new RequestError("PermissionError", [""], 2);
     }
 
     await this.postModel.update(args.id, { tags: args.newTags }).catch((err: { message: string }) => {
-      throw new RequestError("DatabaseError", err.message);
+      throw new RequestError("DatabaseError",[ err.message]);
     });
 
     return { success: true };

@@ -49,17 +49,17 @@ export default class VoteEndpoint extends BaseEndpoint<type.VoteRequestArgs, Cal
 
     const post = await this.postModel.read(args.postId);
     if (!post) {
-      throw new RequestError("DatabaseError", "", 2);
+      throw new RequestError("DatabaseError", [""], 2);
     }
 
     const vote = await this.voteModel.readByIds(args.postId, auth.user.email);
     if (vote && !args.unvote) {
-      throw new RequestError("DatabaseError", "", 4);
+      throw new RequestError("DatabaseError", [""], 4);
     }
 
     if (args.unvote) {
       await this.voteModel.delete(vote?.id||-1).catch((err: { message: string }) => {
-        throw new RequestError("DatabaseError", err.message);
+        throw new RequestError("DatabaseError",[ err.message]);
       });
 
       return { success: true };
@@ -70,7 +70,7 @@ export default class VoteEndpoint extends BaseEndpoint<type.VoteRequestArgs, Cal
       userEmail: auth.user.email,
       voteType: args.voteType
     }).catch((err: { message: string }) => {
-      throw new RequestError("DatabaseError", err.message);
+      throw new RequestError("DatabaseError",[ err.message]);
     });
 
     return { success: true };
@@ -81,7 +81,7 @@ export default class VoteEndpoint extends BaseEndpoint<type.VoteRequestArgs, Cal
 
     const post = await this.postModel.read(args.postId);
     if (!post) {
-      throw new RequestError("DatabaseError", "", 2);
+      throw new RequestError("DatabaseError", [""], 2);
     }
 
     const goodCount = await this.voteModel.readVoteCount(args.postId, VoteType.Up);

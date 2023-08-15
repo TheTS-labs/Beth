@@ -15,13 +15,8 @@ const base = Joi.object().keys({
 // <<< Base <<< 
 
 // >>> Vote >>>
-export interface VoteArgs extends Base {
-  unvote: boolean
-}
-
-export const VoteArgsSchema = base.keys({
-  unvote: Joi.boolean().default(false)
-});
+export type VoteArgs = Base;
+export const VoteArgsSchema = base;
 // <<< Vote <<<
 
 // >>> Vote count >>>

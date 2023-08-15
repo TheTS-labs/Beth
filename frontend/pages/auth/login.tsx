@@ -3,11 +3,11 @@ import Link from "next/link";
 import { FormEvent, useState } from "react";
 import { useCookies } from "react-cookie";
 
-import axiosConfig from "../axios.config";
-import Errors from "../components/common/errors";
-import Header from "../components/common/header";
-import headerStyles from "../public/styles/auth/header.module.sass";
-import styles from "../public/styles/auth/main.module.sass";
+import axiosConfig from "../../axios.config";
+import Errors from "../../components/errors";
+import Header from "../../components/header";
+import headerStyles from "../../public/styles/pages/auth/header.module.sass";
+import styles from "../../public/styles/pages/auth/common.module.sass";
 
 interface Entry {
   value: string
@@ -84,7 +84,7 @@ export default function LogIn(): React.JSX.Element {
 
     <div className={styles.form_wrap}>
       <h1 className={styles.text}><i>log in here</i></h1>
-      <p><i>Yeah, right here, don't be scared</i></p>
+      <p><i>Yeah, right here, don't be afraid~</i></p>
       <form onSubmit={onsubmit}>
         <input type="email" name="email" id="email" placeholder="Email" required/>
         <br />

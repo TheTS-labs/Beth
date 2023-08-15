@@ -1,24 +1,28 @@
 import Link from "next/link";
 
-import Header from "../components/common/header";
-import PageContent from "../components/home/page_content";
-import styles from "../public/styles/home/header.module.sass";
+import Header from "../components/header";
+import styles from "../public/styles/pages/home/index.module.sass";
 import { useCookies } from "react-cookie";
 import { useEffect, useState } from "react";
+import { Buffer } from "buffer";
+import Posts from "../components/home/posts";
+import HotTags from "../components/home/hot_tags";
 
 export default function App(): React.JSX.Element {
   const [ token ] = useCookies(["AUTH_TOKEN"]);
-  const [ account, setAccount ] = useState([
-    <Link href="/login"><button>Log In</button></Link>,
-    <Link href="/signup"><button>Sign Up</button></Link>
-  ])
   const [ email, setEmail ] = useState("");
+  const [ account, setAccount ] = useState([
+    <Link href="/auth/login"><button>Log In</button></Link>,
+    <Link href="/auth/signup"><button>Sign Up</button></Link>
+  ])
 
   useEffect(() => {
     if (token.AUTH_TOKEN) {
-      setAccount([<Link href="/logout"><button data-type="logout">Log Out</button></Link>])
+      const base64PayloadFromToken = token.AUTH_TOKEN.split(".")[1],
+            stringPayload = Buffer.from(base64PayloadFromToken, 'base64').toString('utf8'),
+            payload = JSON.parse(stringPayload);
 
-      const payload = JSON.parse(atob(token.AUTH_TOKEN.split(".")[1]))
+      setAccount([<Link href="/auth/logout"><button data-type="logout">Log Out</button></Link>])
       setEmail(payload.email);
     }
   }, [])
@@ -32,10 +36,12 @@ export default function App(): React.JSX.Element {
         </form>
       </div>
       <p>{email}</p>
-      <div className={styles.account_buttons}>
-        {...account}
-      </div>
+      <div className={styles.account_buttons}>{...account}</div>
     </Header>
-    <PageContent token={token.AUTH_TOKEN} />
+    
+    <div className={styles.container}>
+      <HotTags />
+      <Posts token={token.AUTH_TOKEN} />
+    </div>
   </>;
 }

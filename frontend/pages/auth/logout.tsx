@@ -1,9 +1,9 @@
 import { useCookies } from "react-cookie";
-import Header from "../components/common/header";
-import headerStyles from "../public/styles/auth/header.module.sass";
+import Header from "../../components/header";
+import headerStyles from "../../public/styles/pages/auth/header.module.sass";
 import Link from "next/link";
 import { MouseEvent } from "react";
-import styles from "../public/styles/auth/main.module.sass";
+import styles from "../../public/styles/pages/auth/common.module.sass";
 
 export default function LogOut() {
   const [ _token, _setToken, removeToken ] = useCookies(["AUTH_TOKEN"]);

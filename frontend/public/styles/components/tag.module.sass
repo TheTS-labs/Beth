@@ -1,0 +1,37 @@
+@use "../base" as *
+
+
+.hot_tag
+  background-color: secondary-color()
+  width: 250px
+  height: 100px
+  padding: 10px
+  box-sizing: border-box
+
+  &[data-broken="true"]
+    background-color: #853939
+    filter: blur(5px)
+
+.hot_tag_name
+  font-size: 1.5em
+  font-weight: bolder
+
+.hot_tag_name:hover
+  text-decoration: underline dotted
+  cursor: pointer
+
+.hot_tag_posts
+  font-size: 1rem
+  color: text-color(0.6)
+
+  display: flex
+  flex-direction: row
+
+.loading_hot_tag_posts
+  display: flex
+  gap: 10px
+
+.hot_tag_name_and_posts_container
+  margin-block-start: 1em
+  margin-block-end: 1em
+  margin-bottom: 0

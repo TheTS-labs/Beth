@@ -2,13 +2,9 @@
 /* eslint-disable max-len */
 import { useEffect, useRef } from "react";
 
-import styles from "../../public/styles/common/errors.module.sass";
+import styles from "../public/styles/components/errors.module.sass";
 
-interface Props {
-  errors: string[]
-}
-
-export default function Errors(props: Props): React.JSX.Element {
+export default function Errors(props: { errors: string[] }): React.JSX.Element {
   const errorsRef = useRef(null);
 
   useEffect(() => {

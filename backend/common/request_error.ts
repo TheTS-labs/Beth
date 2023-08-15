@@ -40,9 +40,10 @@ export const requestErrors = {
       "Post doesn't exist",
       "User doesn't exist",
       "You already voted",
-      "There aren't enough posts to show"
+      "There aren't enough posts to show",
+      "Vote doesn't exist"
     ],
-    statusCodes: [500, 500, 404, 404, 403, 500],
+    statusCodes: [500, 500, 404, 404, 403, 500, 404],
   },
   PermissionError: {
     templates: [

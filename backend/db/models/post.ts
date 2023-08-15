@@ -7,7 +7,6 @@ import { ENV } from "../../app";
 import ICRUDModel from "../../common/types/crud_model";
 import { User } from "./user";
 import { Vote, VoteType } from "./vote";
-import RequestError from "../../common/request_error";
 
 export interface Post {
   id: number
@@ -20,16 +19,18 @@ export interface Post {
   tags: string
 }
 
+export type DetailedPost = (
+  Omit<Post, "id"> &
+  Omit<User, "password" | "id" | "tags"> &
+  { 
+    _cursor_0: number
+    score: number
+    userVote: null | boolean | VoteType
+  }
+);
+
 export interface DetailedPosts {
-  results: (
-    Omit<Post, "id"> &
-    Omit<User, "password" | "id" | "tags"> &
-    { 
-      _cursor_0: number
-      score: number
-      userVote: null | boolean | VoteType
-    }
-  )[]
+  results: DetailedPost[]
   endCursor: string
 }
 

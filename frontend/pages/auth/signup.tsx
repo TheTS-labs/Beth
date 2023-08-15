@@ -2,11 +2,11 @@ import axios from "axios";
 import Link from "next/link";
 import { FormEvent, useState } from "react";
 
-import axiosConfig from "../axios.config";
-import Errors from "../components/common/errors";
-import Header from "../components/common/header";
-import headerStyles from "../public/styles/auth/header.module.sass";
-import styles from "../public/styles/auth/main.module.sass";
+import axiosConfig from "../../axios.config";
+import headerStyles from "../../public/styles/pages/auth/header.module.sass";
+import styles from "../../public/styles/pages/auth/common.module.sass";
+import Errors from "../../components/errors";
+import Header from "../../components/header";
 
 interface Entry {
   value: string
@@ -54,7 +54,7 @@ export default function Singup(): React.JSX.Element {
       return;
     }
 
-    if ("errorType" in response && "errorMessage" in response) {
+    if (response.hasOwnProperty("errorMessage")) {
       setErrors(prevErrors => [...prevErrors, response.errorMessage]);
       return;
     }

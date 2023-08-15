@@ -4,7 +4,7 @@ import { Knex } from "knex";
 import { DBBool } from "../../common/types";
 import { User } from "../models/user";
 
-const seedUsers = 10;
+const seedUsers = 100;
 export async function seed(knex: Knex): Promise<void> {
   const passwordHash = "$2b$04$nYbKivKTN4593hXpkJC.s.WcJ8lecwMiPcdXsWTUDs7BNN1JxVWl2"; // 12345678
 

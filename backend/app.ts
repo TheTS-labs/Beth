@@ -42,11 +42,11 @@ export default class App {
   config: ENV;
   scheduledTasks: ScheduledTasks;
 
+  headersMiddleware: HeadersMiddleware;
   JWTMiddleware: JWTMiddleware;
   identityMiddleware: IdentityMiddleware;
   permissionMiddleware: PermissionMiddleware;
   frozenMiddleware: FrozenMiddleware;
-  headersMiddleware: HeadersMiddleware;
   errorMiddleware: ErrorMiddleware;
 
   server!: Server<typeof IncomingMessage, typeof ServerResponse>;
@@ -60,11 +60,11 @@ export default class App {
     this.redisClient = new Redis(this.logger, this.config).get();
     this.scheduledTasks = new ScheduledTasks(this.db, this.logger);
 
+    this.headersMiddleware = new HeadersMiddleware(this.logger, this.db, this.redisClient, this.config);
     this.JWTMiddleware = new JWTMiddleware(this.logger, this.db, this.redisClient, this.config);
     this.identityMiddleware = new IdentityMiddleware(this.logger, this.db, this.redisClient, this.config);
     this.permissionMiddleware = new PermissionMiddleware(this.logger, this.db, this.redisClient, this.config);
     this.frozenMiddleware = new FrozenMiddleware(this.logger, this.db, this.redisClient, this.config);
-    this.headersMiddleware = new HeadersMiddleware(this.logger, this.db, this.redisClient, this.config);
     this.errorMiddleware = new ErrorMiddleware(this.logger, this.config);
   
     this.scheduledTasks.start();
@@ -81,11 +81,11 @@ export default class App {
     });
     this.app.use(express.json());
     this.app.use(express.urlencoded({ extended: true }));
+    this.app.use(asyncMiddleware(this.headersMiddleware.middleware()));
     this.app.use(this.JWTMiddleware.middleware(disableAuthFor));
     this.app.use(asyncMiddleware(this.identityMiddleware.middleware()));
     this.app.use(asyncMiddleware(this.permissionMiddleware.middleware()));
     this.app.use(asyncMiddleware(this.frozenMiddleware.middleware()));
-    this.app.use(asyncMiddleware(this.headersMiddleware.middleware()));
   }
 
   private createInstancesOfDomains(domains: Domains): void {

@@ -15,7 +15,8 @@ import UserModel from "../../db/models/user";
 import VoteModel, { VoteType } from "../../db/models/vote";
 import * as type from "./types";
 
-type CallEndpointReturnType = { success: true } | { goodCount: number, badCount: number, total: number };
+type CallEndpointReturnType = { success: true, action: "create" | "update" | "delete" } |
+                              { goodCount: number, badCount: number, total: number };
 
 export default class VoteEndpoint extends BaseEndpoint<type.VoteRequestArgs, CallEndpointReturnType> {
   public allowNames: string[] = [
@@ -44,6 +45,7 @@ export default class VoteEndpoint extends BaseEndpoint<type.VoteRequestArgs, Cal
     this.voteModel = new VoteModelType(this.db, this.logger, this.redisClient, this.config);
   }
  
+  // TODO: Refactor
   async vote(args: type.VoteArgs, auth: Auth): Promise<CallEndpointReturnType>{
     args = await this.validate(type.VoteArgsSchema, args);
 
@@ -53,27 +55,30 @@ export default class VoteEndpoint extends BaseEndpoint<type.VoteRequestArgs, Cal
     }
 
     const vote = await this.voteModel.readByIds(args.postId, auth.user.email);
-    if (vote && !args.unvote) {
-      throw new RequestError("DatabaseError", [""], 4);
-    }
-
-    if (args.unvote) {
-      await this.voteModel.delete(vote?.id||-1).catch((err: { message: string }) => {
+    if (!vote) {
+      await this.voteModel.create({
+        postId: args.postId,
+        userEmail: auth.user.email,
+        voteType: args.voteType
+      }).catch((err: { message: string }) => {
         throw new RequestError("DatabaseError",[ err.message]);
       });
-
-      return { success: true };
+  
+      return { success: true, action: "create" };
     }
 
-    await this.voteModel.create({
-      postId: args.postId,
-      userEmail: auth.user.email,
-      voteType: args.voteType
-    }).catch((err: { message: string }) => {
-      throw new RequestError("DatabaseError",[ err.message]);
-    });
+    if (vote.voteType == args.voteType) {
+      await this.voteModel.delete(vote?.id||-1).catch((err: { message: string }) => {
+        throw new RequestError("DatabaseError", [err.message]);
+      });
 
-    return { success: true };
+      return { success: true, action: "delete" };
+    } else {
+      await this.voteModel.update(vote.id, { voteType: args.voteType }).catch((err: { message: string }) => {
+        throw new RequestError("DatabaseError", [err.message]);
+      });
+      return { success: true, action: "update" };
+    }
   }
   
   async voteCount(args: type.VoteCountArgs, _auth: Auth): Promise<CallEndpointReturnType>{

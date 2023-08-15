@@ -5,7 +5,7 @@ import { Post } from "../models/post";
 import { User } from "../models/user";
 import { Vote, VoteType } from "../models/vote";
 
-const seedVotes = 100;
+const seedVotes = 1000;
 
 export async function seed(knex: Knex): Promise<void> {
   // Deletes ALL existing entries

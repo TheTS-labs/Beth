@@ -9,11 +9,11 @@ import { Auth } from "../../common/types";
 import CachingPostModel from "../../db/models/caching/caching_post";
 import CachingUserModel from "../../db/models/caching/caching_user";
 import PermissionModel, { Permissions,PermissionStatus } from "../../db/models/permission";
-import PostModel, { NestedPost, Post } from "../../db/models/post";
+import PostModel, { DetailedPost, Post } from "../../db/models/post";
 import UserModel from "../../db/models/user";
 import * as type from "./types";
 
-type CallEndpointReturnType = { success: true, id: number } | { success: true } | NestedPost[] | {};
+type CallEndpointReturnType = { success: true, id: number } | { success: true } | DetailedPost[] | {};
 
 export default class PostEndpoint extends BaseEndpoint<type.PostRequestArgs, CallEndpointReturnType> {
   public allowNames: string[] = [
@@ -137,16 +137,11 @@ export default class PostEndpoint extends BaseEndpoint<type.PostRequestArgs, Cal
   async viewReplies(args: type.ViewRepliesArgs, _auth: Auth): Promise<CallEndpointReturnType> {
     args = await this.validate(type.ViewRepliesArgsSchema, args);
 
-    const results = await this.postModel.readReplies(args.parent).catch((err: { message: string }) => {
-      throw new RequestError("DatabaseError",[ err.message]);
+    const results = await this.postModel.readReplies(args.repliesTo).catch((err: { message: string }) => {
+      throw new RequestError("DatabaseError", [err.message]);
     });
 
-    const REDIS_REQUIRED = this.config.get("REDIS_REQUIRED").required().asBool();
-    if (REDIS_REQUIRED) {
-      return this.getNestedChildren(results, args.parent);
-    }
-
-    return this.getNestedChildrenWithoutRedis(results, args.parent);
+    return results;
   }
 
   async editTags(args: type.EditTagsArgs, auth: Auth): Promise<CallEndpointReturnType> {
@@ -168,98 +163,5 @@ export default class PostEndpoint extends BaseEndpoint<type.PostRequestArgs, Cal
     });
 
     return { success: true };
-  }
-
-  async getNestedChildren(arr: Post[], repliesTo: number): Promise<NestedPost[]> {
-    const doesKeyExist = await this.redisClient.exists(`post:replies:${repliesTo}`);
-    if (doesKeyExist) {
-      const result = await this.redisClient.get(`post:replies:${repliesTo}`) as string;
-      return JSON.parse(result) as NestedPost[];
-    }
-
-    const stack: Post[] = [];
-    const map = new Map<number, NestedPost>();
-
-    for (const post of arr) {
-      const nestedPost = post as NestedPost;
-
-      if (post.repliesTo == repliesTo) {
-        const doesNestedKeyExist = await this.redisClient.exists(`post:replies:${post.id}`);
-        if (doesNestedKeyExist) {
-          const nestedResult = await this.redisClient.get(`post:replies:${post.id}`) as string;
-          nestedPost.replies = JSON.parse(nestedResult) as NestedPost[];
-        } else {
-          nestedPost.replies = [];
-          stack.push(post);
-        }
-      }
-      map.set(post.id, nestedPost);
-    }
-
-    while (stack.length) {
-      const post = stack.pop() as Post;
-      const nestedPost = map.get(post.id) as NestedPost;
-      const grandChildrenCache = await this.redisClient.get(`post:replies:${post.id}`) as string;
-
-      const grandChildren = nestedPost.replies = nestedPost.replies.concat(
-        JSON.parse(grandChildrenCache) ?? [],
-        arr.filter(post => post.repliesTo == post.id)
-           .map(post => {
-              if (!map.get(post.id)?.replies) {
-                stack.push(post);
-                map.set(post.id, { ...post, replies: [] });
-              }
-              
-              return map.get(post.id) as NestedPost;
-            }),
-      );
-
-      await this.redisClient.set(`post:replies:${post.id}`, JSON.stringify(grandChildren), {
-        NX: true,
-        EX: this.config.get("POST_REPLIES_EX").required().asIntPositive()
-      });
-    }
-
-    const result = arr.filter(post => post.repliesTo == repliesTo)
-                      .map(post => map.get(post.id) as NestedPost);
-
-    await this.redisClient.set(`post:replies:${repliesTo}`, JSON.stringify(result), {
-      NX: true,
-      EX: this.config.get("POST_REPLIES_EX").required().asIntPositive()
-    });
-
-    return result;
-  }
-
-  async getNestedChildrenWithoutRedis(arr: Post[], repliesTo: number): Promise<NestedPost[]> {
-    const stack: Post[] = [];
-    const map = new Map<number, NestedPost>();
-
-    for (const post of arr) {
-      const nestedPost = post as NestedPost;
-
-      if (post.repliesTo == repliesTo) {
-        nestedPost.replies = [];
-        stack.push(post);
-      }
-      map.set(post.id, nestedPost);
-    }
-
-    while (stack.length) {
-      const post = stack.pop() as Post;
-      const nestedPost = map.get(post.id) as NestedPost;
-
-      nestedPost.replies = arr.filter(post => post.repliesTo == post.id).map(post => {
-        stack.push(post);
-        map.set(post.id, { ...post, replies: [] });
-        
-        return map.get(post.id) as NestedPost;
-      });
-    }
-
-    const result = arr.filter(post => post.repliesTo == repliesTo)
-                      .map(post => map.get(post.id) as NestedPost);
-
-    return result;
   }
 }

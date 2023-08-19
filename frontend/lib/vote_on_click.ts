@@ -39,7 +39,7 @@ export default (token: string, setErrors: Dispatch<SetStateAction<string[]>>): R
 
     const postId = event.currentTarget.getAttribute("data-post-id"),
           voteType = event.currentTarget.getAttribute("data-vote-type"),
-          score = document.getElementById(`post_${postId}_score`),
+          scores = document.querySelectorAll<HTMLElement>(`#post_${postId}_score`),
           voteColor = parseInt(voteType) ? "green" : "red",
           result = await vote(token, postId, voteType, setErrors);
       
@@ -55,7 +55,9 @@ export default (token: string, setErrors: Dispatch<SetStateAction<string[]>>): R
       setErrors(prevErrors => [...prevErrors, String(e)]);
     });
 
-    score.innerHTML = response.total;
-    score.style.color = result == "delete" ? "#f9f4e6" : voteColor;
+    scores.forEach(score => {
+      score.innerHTML = response.total;
+      score.style.color = result == "delete" ? "#f9f4e6" : voteColor;
+    });
   }
 }

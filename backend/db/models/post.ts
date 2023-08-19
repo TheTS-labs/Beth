@@ -20,7 +20,7 @@ export interface Post {
 }
 
 export type DetailedPost = (
-  Omit<Post, "id"> &
+  Post &
   Omit<User, "password" | "id" | "tags"> &
   { 
     _cursor_0: number
@@ -144,18 +144,26 @@ export default class PostModel implements ICRUDModel<
     };
   }
 
-  public async readReplies(parent: number): Promise<Post[]> {
+  public async readReplies(repliesTo: number): Promise<DetailedPost[]> {
     this.logger.log({
       level: "trying",
       message: "To read replies of the posts",
       path: module.filename,
-      context: { parent }
+      context: { repliesTo }
     });
 
-    const result = await this.db<Post>("post").where("frozenAt", null)
-                                              .andWhere("parent", parent)
-                                              .select()
-                                              .orderBy("createdAt", "DESC");
+    const result = await this.db<DetailedPost>("post").select(
+      "post.*",
+      "user.isFrozen",
+      "user.displayName",
+      "user.username",
+      "user.email",
+      "user.verified"
+    ).join("user", "post.author", "=", "user.email")
+     .where("frozenAt", null)
+     .andWhere("repliesTo", repliesTo)
+     .where("user.isFrozen", false)
+     .orderBy("createdAt", "DESC");
 
     return result;
   }

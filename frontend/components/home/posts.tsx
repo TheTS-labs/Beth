@@ -3,7 +3,6 @@ import useSWR from "swr";
 import { DetailedPosts } from "../../../backend/db/models/post";
 import fetcher from "../../lib/fetcher";
 import styles from "../../public/styles/pages/home/posts.module.sass";
-import Post from "../post";
 import { faker } from '@faker-js/faker';
 import { useEffect, useRef, useState } from "react";
 import { RequestErrorObject } from "../../../backend/common/types";
@@ -12,6 +11,7 @@ import Errors from "../errors";
 import voteOnClick from "../../lib/vote_on_click";
 import observer from "../../lib/home/observer";
 import fetchPosts from "../../lib/home/fetch_posts";
+import { ExpandedPost } from "../expanded_post";
 
 export default function Posts(props: { token: string | undefined }): React.JSX.Element {
   const postsResponse = useSWR(
@@ -38,6 +38,7 @@ export default function Posts(props: { token: string | undefined }): React.JSX.E
     // You may need an appropriate loader to handle this file type,
     // currently no loaders are configured to process this file.
     // See https://webpack.js.org/concepts#loaders
+    id: i,
     text: faker.lorem.text(), 
     score: faker.number.int({ min: -1000, max: 1000 }),
     displayName: faker.internet.displayName(),
@@ -80,7 +81,7 @@ export default function Posts(props: { token: string | undefined }): React.JSX.E
     }
   
     postElements.push(...posts.current.map((post, i) => (
-      <Post 
+      <ExpandedPost 
         reactKey={i}
         post={post}
         broken={Boolean(postsResponse.error || postsResponse.data?.hasOwnProperty("errorMessage"))}

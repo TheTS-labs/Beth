@@ -159,10 +159,10 @@ export default class App {
   public listen(): void {
     const port = this.config.get("APP_PORT").required().asPortNumber();
 
-    this.server = this.app.listen(port, () => {
+    this.server = this.app.listen(port, "0.0.0.0", () => {
       this.logger.log({
         level: "system",
-        message: `Server is running at http://localhost:${port}`,
+        message: `Server is running at http://0.0.0.0:${port}`,
         path: module.filename
       });
     });

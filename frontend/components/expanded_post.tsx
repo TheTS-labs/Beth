@@ -9,6 +9,7 @@ import axios from "axios";
 import axiosConfig from "../axios.config";
 import Errors from "./errors";
 import { RequestErrorObject } from "../../backend/common/types";
+import { WriteReply } from "./write_reply";
 
 interface Props {
   reactKey: number
@@ -34,6 +35,7 @@ export function ExpandedPost(props: Props): React.JSX.Element {
         url: "post/viewReplies", 
         data: new URLSearchParams({ repliesTo: String(props.post.id) })
       }}).then(response => response.data).catch(e => {
+        setDoRequest(false);
         setErrors(prevErrors => [...prevErrors, String(e)]);
       });
 
@@ -42,7 +44,9 @@ export function ExpandedPost(props: Props): React.JSX.Element {
       }
 
       if (response.hasOwnProperty("errorMessage")) {
+        setDoRequest(false);
         setErrors(prevErrors => [...prevErrors, response.errorMessage]);
+        return;
       }
 
       setDoRequest(false);
@@ -58,11 +62,12 @@ export function ExpandedPost(props: Props): React.JSX.Element {
   }
 
   return <>
-    <Post {...props} onPostClick={() => setIsOpen(true)} />
+    <Post {...props} onPostClick={() => !props.broken && setIsOpen(true)} />
     {isOpen && <div className={modalStyles.overlay}>
       <div className={modalStyles.modal} ref={modal}>
         <Post {...props} expanded={true} />
         <hr className={styles.hr}/>
+        <WriteReply postId={props.post.id} setDoRequest={setDoRequest} />
         {...replies}
         <h3 className={styles.end}>
           That seems to be all there is, cutie~ <br/>

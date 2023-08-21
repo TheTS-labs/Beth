@@ -3,10 +3,13 @@ import Link from "next/link";
 import Header from "../components/header";
 import styles from "../public/styles/pages/home/index.module.sass";
 import { useCookies } from "react-cookie";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Buffer } from "buffer";
 import Posts from "../components/home/posts";
 import HotTags from "../components/home/hot_tags";
+import SearchBar from "../components/home/search_bar";
+import { DetailedPosts } from "../../backend/db/models/post";
+import SearchPosts from "../components/home/search_posts";
 
 export default function App(): React.JSX.Element {
   const [ token ] = useCookies(["AUTH_TOKEN"]);
@@ -15,6 +18,10 @@ export default function App(): React.JSX.Element {
     <Link href="/auth/login"><button>Log In</button></Link>,
     <Link href="/auth/signup"><button>Sign Up</button></Link>
   ])
+
+  const [ searchAfterCursor, setSearchAfterCursor ] = useState<string>(null);
+  const searchResults = useRef<DetailedPosts["results"]>([]);
+  const query = useRef<string>(null);
 
   useEffect(() => {
     if (token.AUTH_TOKEN) {
@@ -30,18 +37,22 @@ export default function App(): React.JSX.Element {
   return <>
     <Header>
       <span className={styles.logo}>✨Beth✨</span>
-      <div className={styles.search_bar}>
-        <form action="/somewhere" method="GET">
-          <input className="search-bar-input" type="search" id="search" placeholder="Search something..." />
-        </form>
-      </div>
+      <SearchBar setSearchAfterCursor={setSearchAfterCursor} searchResults={searchResults} query={query} />
       <p>{email}</p>
       <div className={styles.account_buttons}>{...account}</div>
     </Header>
     
     <div className={styles.container}>
       <HotTags />
-      <Posts token={token.AUTH_TOKEN} />
+      {searchAfterCursor ? 
+      <SearchPosts 
+        token={token.AUTH_TOKEN} 
+        setSearchAfterCursor={setSearchAfterCursor} 
+        searchResults={searchResults} 
+        query={query} 
+        searchAfterCursor={searchAfterCursor}
+      /> : 
+      <Posts token={token.AUTH_TOKEN} />}
     </div>
   </>;
 }

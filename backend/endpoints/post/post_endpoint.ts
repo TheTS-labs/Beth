@@ -9,18 +9,19 @@ import { Auth } from "../../common/types";
 import CachingPostModel from "../../db/models/caching/caching_post";
 import CachingUserModel from "../../db/models/caching/caching_user";
 import PermissionModel, { Permissions,PermissionStatus } from "../../db/models/permission";
-import PostModel, { DetailedPost, Post } from "../../db/models/post";
+import PostModel, { DetailedPost, DetailedPosts, Post } from "../../db/models/post";
 import UserModel from "../../db/models/user";
 import * as type from "./types";
 
-type CallEndpointReturnType = { success: true, id: number } | { success: true } | DetailedPost[] | {};
+type CallEndpointReturnType = { success: true, id: number } | { success: true } | DetailedPost[] | {} |
+                              DetailedPosts;
 
 export default class PostEndpoint extends BaseEndpoint<type.PostRequestArgs, CallEndpointReturnType> {
   public allowNames: string[] = [
     "create", "view", "edit", 
     "delete", "getList", 
     "forceDelete", "viewReplies", 
-    "editTags"
+    "editTags", "search"
   ];
   userModel: UserModel | CachingUserModel;
   permissionModel: PermissionModel;
@@ -163,5 +164,19 @@ export default class PostEndpoint extends BaseEndpoint<type.PostRequestArgs, Cal
     });
 
     return { success: true };
+  }
+
+  async search(args: type.SearchArgs, _auth: Auth): Promise<CallEndpointReturnType> {
+    args = await this.validate(type.SearchArgsSchema, args);
+
+    const searchResults = await this.postModel.search(
+      args.query,
+      args.afterCursor,
+      args.numberRecords
+    ).catch((err: { message: string }) => {
+      throw new RequestError("DatabaseError", [err.message]);
+    });
+
+    return searchResults;
   }
 }

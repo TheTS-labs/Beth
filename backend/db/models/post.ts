@@ -269,4 +269,40 @@ export default class PostModel implements ICRUDModel<
       endCursor
     };
   }
+
+  public async search(
+    query: string,
+    afterCursor?: string,
+    numberRecords?: number
+  ): Promise<DetailedPosts> {
+    this.logger.log({
+      level: "trying",
+      message: "To search posts",
+      path: module.filename,
+      context: { query, afterCursor, numberRecords }
+    });
+
+    const results = await knexCursorPagination(this.db.queryBuilder()
+      .select(
+        "post.*",
+        "user.isFrozen",
+        "user.displayName",
+        "user.username",
+        "user.email",
+        "user.verified"
+      )
+      .from("post")
+      .join("user", "post.author", "=", "user.email")
+      .whereNull("post.repliesTo")
+      .whereNull("post.frozenAt")
+      .where("user.isFrozen", false)
+      .whereLike("text", query)
+      .orderBy("post.id", "desc"), { after: afterCursor, first: numberRecords });
+    const endCursor = getCursor(results[results.length - 1]);
+
+    return {
+      results: results,
+      endCursor: endCursor
+    };
+  }
 }

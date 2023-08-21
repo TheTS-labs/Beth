@@ -82,6 +82,20 @@ export const EditTagsArgsSchema = base.keys({
 });
 // <<< Edit Tags <<<
 
+// >>> Search >>>
+export interface SearchArgs {
+  query: string
+  afterCursor: string | undefined
+  numberRecords: number
+}
+
+export const SearchArgsSchema = Joi.object({
+  query: Joi.string().required(),
+  afterCursor: Joi.string().default(() => undefined),
+  numberRecords: Joi.number().positive().default(10)
+});
+// <<< Search <<<
+
 export type PostRequestArgs = CreateArgs | ViewArgs | EditArgs |
                               DeleteArgs | GetListArgs | ForceDeleteArgs |
-                              ViewRepliesArgs | EditTagsArgs;
+                              ViewRepliesArgs | EditTagsArgs | SearchArgs;

@@ -20,5 +20,6 @@ export const disableAuthFor = [
   "/recommendation/getHotTags",
   "/recommendation/globalRecommend",
   "/user/issueToken", // Authenticates itself
-  "/post/viewReplies"
+  "/post/viewReplies",
+  "/post/search",
 ];

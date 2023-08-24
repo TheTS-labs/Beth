@@ -11,9 +11,12 @@ import fetchSearchResults from "../../lib/home/search";
 interface Props {
   token: string | undefined
   setSearchAfterCursor: Dispatch<SetStateAction<string>>
+  setQuery: Dispatch<SetStateAction<string>>
+  setTags: Dispatch<SetStateAction<string>>
   searchResults: MutableRefObject<DetailedPost[]>
-  query: MutableRefObject<string>
   searchAfterCursor: string
+  query: string
+  tags: string
 }
 
 export default function SearchPosts(props: Props): React.JSX.Element {
@@ -21,11 +24,19 @@ export default function SearchPosts(props: Props): React.JSX.Element {
   const observerTarget = useRef(null);
   const postElements: React.JSX.Element[] = [];
 
+  const clearResults = () => {
+    props.searchResults.current = [];
+    props.setTags(null);
+    props.setSearchAfterCursor(null);
+    props.setQuery(null);
+  };
+
   useEffect(observer(observerTarget, fetchSearchResults, [
-    props.query.current,
+    props.query,
     setErrors,
     props.setSearchAfterCursor,
     props.searchResults,
+    props.tags,
     props.searchAfterCursor
   ]), [props.searchAfterCursor]);
 
@@ -40,7 +51,7 @@ export default function SearchPosts(props: Props): React.JSX.Element {
   )))
 
   return <div className={styles.posts}>
-    <p className={styles.text} onClick={() => props.setSearchAfterCursor(null)} style={{ cursor: "pointer" }}>⬅ Search results</p>
+    <p className={styles.text} onClick={clearResults} style={{ cursor: "pointer" }}>⬅ Search results</p>
     {...postElements}
 
     <div className={styles.loader} ref={observerTarget}><Loader /></div>

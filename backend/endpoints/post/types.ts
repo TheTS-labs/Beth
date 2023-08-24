@@ -87,13 +87,15 @@ export interface SearchArgs {
   query: string
   afterCursor: string | undefined
   numberRecords: number
+  tags: string | undefined
 }
 
 export const SearchArgsSchema = Joi.object({
-  query: Joi.string().required(),
+  query: Joi.string().allow("").default("%_%"),
   afterCursor: Joi.string().default(() => undefined),
-  numberRecords: Joi.number().positive().default(10)
-});
+  numberRecords: Joi.number().positive().default(10),
+  tags: Joi.string().pattern(/([a-zA-Z0-9]+(?:,[a-zA-Z0-9]+)*)/).default(() => undefined)
+}).or("query", "tags");
 // <<< Search <<<
 
 export type PostRequestArgs = CreateArgs | ViewArgs | EditArgs |

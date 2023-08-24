@@ -19,9 +19,11 @@ export default function App(): React.JSX.Element {
     <Link href="/auth/signup"><button>Sign Up</button></Link>
   ])
 
+  // Search
   const [ searchAfterCursor, setSearchAfterCursor ] = useState<string>(null);
   const searchResults = useRef<DetailedPosts["results"]>([]);
-  const query = useRef<string>(null);
+  const [ query, setQuery ] = useState<string>(null);
+  const [ tags, setTags ] = useState<string>(null);
 
   useEffect(() => {
     if (token.AUTH_TOKEN) {
@@ -32,27 +34,43 @@ export default function App(): React.JSX.Element {
       setAccount([<Link href="/auth/logout"><button data-type="logout">Log Out</button></Link>])
       setEmail(payload.email);
     }
-  }, [])
+  }, []);
 
   return <>
     <Header>
       <span className={styles.logo}>✨Beth✨</span>
-      <SearchBar setSearchAfterCursor={setSearchAfterCursor} searchResults={searchResults} query={query} />
+      <SearchBar 
+        setSearchAfterCursor={setSearchAfterCursor}
+        setQuery={setQuery}
+        setTags={setTags}
+        searchResults={searchResults}
+        query={query}
+        tags={tags}
+      />
       <p>{email}</p>
       <div className={styles.account_buttons}>{...account}</div>
     </Header>
     
     <div className={styles.container}>
-      <HotTags />
+      <HotTags
+        setSearchAfterCursor={setSearchAfterCursor}
+        setTags={setTags}
+        searchResults={searchResults}
+        tags={tags}
+      />
       {searchAfterCursor ? 
-      <SearchPosts 
-        token={token.AUTH_TOKEN} 
-        setSearchAfterCursor={setSearchAfterCursor} 
-        searchResults={searchResults} 
-        query={query} 
-        searchAfterCursor={searchAfterCursor}
-      /> : 
-      <Posts token={token.AUTH_TOKEN} />}
+        <SearchPosts 
+          token={token.AUTH_TOKEN} 
+          setSearchAfterCursor={setSearchAfterCursor}
+          setQuery={setQuery}
+          setTags={setTags}
+          searchAfterCursor={searchAfterCursor}
+          searchResults={searchResults}
+          query={query}
+          tags={tags}
+        /> : 
+        <Posts token={token.AUTH_TOKEN} />
+      }
     </div>
   </>;
 }

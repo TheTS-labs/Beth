@@ -4,15 +4,23 @@ import axiosConfig from "../../axios.config";
 import { DetailedPost } from "../../../backend/db/models/post";
 
 export default async function fetchSearchResults(
-  query: string,
+  query: string | null,
   setErrors: Dispatch<SetStateAction<string[]>>,
   setAfterCursor: Dispatch<SetStateAction<string>>,
   posts: MutableRefObject<DetailedPost[]>,
+  tags: string | null,
   afterCursor?: string
 ): Promise<void> {
-  const body = new URLSearchParams({ query });
+  const body = new URLSearchParams();
+
   if (afterCursor) {
     body.append("afterCursor", afterCursor);
+  }
+  if (tags) {
+    body.append("tags", tags);
+  }
+  if (query) {
+    body.append("query", query);
   }
 
   const response = await axios.request({...axiosConfig, ...{

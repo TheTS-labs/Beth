@@ -3,8 +3,17 @@ import useSWR from "swr";
 import fetcher from "../../lib/fetcher";
 import styles from "../../public/styles/pages/home/hot_tags.module.sass";
 import Tag from "../tag";
+import { Dispatch, SetStateAction, MutableRefObject } from "react";
+import { DetailedPost } from "../../../backend/db/models/post";
 
-export default function HotTags(): React.JSX.Element {
+interface Props {
+  setSearchAfterCursor: Dispatch<SetStateAction<string>>
+  setTags: Dispatch<SetStateAction<string>>
+  searchResults: MutableRefObject<DetailedPost[]>
+  tags: string
+}
+
+export default function HotTags(props: Props): React.JSX.Element {
   const hotTagsResponse = useSWR("recommendation/getHotTags", fetcher<{ result: { tag: string, post_count: string }[] }>({}));
   const hotTags = hotTagsResponse.data?.result || [
     { tag: "#Hot", post_count: "767027" },
@@ -36,6 +45,11 @@ export default function HotTags(): React.JSX.Element {
       posts={value.post_count}
       broken={hotTagsResponse.error ? true : false}
       loading={hotTagsResponse.isLoading}
+      onClick={() => {
+        props.searchResults.current = [];
+        props.setSearchAfterCursor(null);
+        props.setTags(value.tag);
+      }}
     />
   )))
 

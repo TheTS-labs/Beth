@@ -66,6 +66,7 @@ export function ExpandedPost(props: Props): React.JSX.Element {
     {isOpen && <div className={modalStyles.overlay}>
       <div className={modalStyles.modal} ref={modal}>
         <Post {...props} expanded={true} />
+        <p className={styles.tags}>#{props.post.tags.replaceAll(",", " #")}</p>
         <hr className={styles.hr}/>
         <WriteReply postId={props.post.id} setDoRequest={setDoRequest} />
         {...replies}

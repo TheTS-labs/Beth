@@ -166,7 +166,7 @@ export default class PostEndpoint extends BaseEndpoint<type.PostRequestArgs, Cal
     return { success: true };
   }
 
-  async search(args: type.SearchArgs, _auth: Auth): Promise<CallEndpointReturnType> {
+  async search(args: type.SearchArgs, _auth: Auth, recursive?: boolean): Promise<CallEndpointReturnType> {
     args = await this.validate(type.SearchArgsSchema, args);
 
     const searchResults = await this.postModel.search(
@@ -176,6 +176,42 @@ export default class PostEndpoint extends BaseEndpoint<type.PostRequestArgs, Cal
     ).catch((err: { message: string }) => {
       throw new RequestError("DatabaseError", [err.message]);
     });
+
+    if (args.tags) {
+      const filtered = searchResults.results.filter(({ tags }) => {
+        const postTags = tags.split(",");
+        const queryTags = args.tags?.split(",") || [];
+
+        return postTags.some(tag => queryTags.includes(tag));
+      });
+
+      if (filtered.length >= 1) {
+        return {
+          endCursor: searchResults.endCursor,
+          results: filtered
+        };
+      }
+
+      const multiplier = this.config.get("RECURSIVE_SEARCH_MULTIPLIER").required().asFloatPositive();
+
+      const performanceStart = performance.now();
+      const recursiveSearch = await this.search({
+        query: args.query,
+        afterCursor: searchResults.endCursor,
+        numberRecords: Math.floor(args.numberRecords*multiplier),
+        tags: args.tags
+      }, _auth, true) as DetailedPosts;
+
+      if (!recursive) {
+        this.logger.log({
+          level: "system",
+          message: `Time collapsed to complete the search: ~${Math.floor(performance.now()-performanceStart)} ms`,
+          path: module.filename
+        });
+      }
+
+      return recursiveSearch;
+    }
 
     return searchResults;
   }

@@ -53,7 +53,7 @@ export default class Logger {
       ),
       transports: [
         new winston.transports.Console({ level: level }),
-        new winston.transports.File({ level: "debug", filename: "app.log" }),
+        new winston.transports.File({ level: "env", filename: "app.log" }),
       ],
     });
   }

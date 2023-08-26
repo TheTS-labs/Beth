@@ -20,8 +20,8 @@ export interface Post {
 }
 
 export type DetailedPost = (
-  Post &
-  Omit<User, "password" | "id" | "tags"> &
+  Pick<Post, "id" | "text" | "repliesTo" | "tags" | "author"> &
+  Pick<User, "displayName" | "username" | "verified"> &
   { 
     _cursor_0: number
     score: number
@@ -153,11 +153,13 @@ export default class PostModel implements ICRUDModel<
     });
 
     const result = await this.db<DetailedPost>("post").select(
-      "post.*",
-      "user.isFrozen",
+      "post.id",
+      "post.author",
+      "post.text",
+      "post.repliesTo",
+      "post.tags",
       "user.displayName",
       "user.username",
-      "user.email",
       "user.verified"
     ).join("user", "post.author", "=", "user.email")
      .where("frozenAt", null)
@@ -224,11 +226,13 @@ export default class PostModel implements ICRUDModel<
 
     const results = await knexCursorPagination(this.db.queryBuilder()
       .select(
-        "post.*",
-        "user.isFrozen",
+        "post.id",
+        "post.author",
+        "post.text",
+        "post.repliesTo",
+        "post.tags",
         "user.displayName",
         "user.username",
-        "user.email",
         "user.verified"
       )
       .from("post")
@@ -284,11 +288,13 @@ export default class PostModel implements ICRUDModel<
 
     const results = await knexCursorPagination(this.db.queryBuilder()
       .select(
-        "post.*",
-        "user.isFrozen",
+        "post.id",
+        "post.author",
+        "post.text",
+        "post.repliesTo",
+        "post.tags",
         "user.displayName",
         "user.username",
-        "user.email",
         "user.verified"
       )
       .from("post")
@@ -320,11 +326,13 @@ export default class PostModel implements ICRUDModel<
 
     const results = await knexCursorPagination(this.db.queryBuilder()
       .select(
-        "post.*",
-        "user.isFrozen",
+        "post.id",
+        "post.author",
+        "post.text",
+        "post.repliesTo",
+        "post.tags",
         "user.displayName",
         "user.username",
-        "user.email",
         "user.verified"
       )
       .from("post")

@@ -13,6 +13,7 @@ interface Props {
   isReply?: boolean
   expanded?: boolean
   onPostClick?: (event: MouseEvent<any, any>) => Promise<void> | void
+  onUsernameClick?: (event: MouseEvent<any, any>) => Promise<void> | void
 }
 
 export default function Post(props: Props): React.JSX.Element {
@@ -28,7 +29,7 @@ export default function Post(props: Props): React.JSX.Element {
           <span className={styles.username}>{props.loading ? <Loading /> : props.post.displayName}</span>
           {userCheckmark}
         </div>
-        <span className={styles.email}>@{props.loading ? <Loading /> : props.post.username}</span>
+        <span className={styles.email} onClick={props.onUsernameClick}>@{props.loading ? <Loading /> : props.post.username}</span>
       </div>
 
       {/* Post itself */}

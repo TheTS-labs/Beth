@@ -22,4 +22,5 @@ export const disableAuthFor = [
   "/user/issueToken", // Authenticates itself
   "/post/viewReplies",
   "/post/search",
+  "/post/getUserPosts",
 ];

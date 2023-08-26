@@ -98,6 +98,21 @@ export const SearchArgsSchema = Joi.object({
 }).or("query", "tags");
 // <<< Search <<<
 
+// >>> Get User Posts >>>
+export interface GetUserPostsArgs {
+  username: string
+  afterCursor: string | undefined
+  numberRecords: number
+}
+
+export const GetUserPostsArgsSchema = Joi.object({
+  username: Joi.string().required(),
+  afterCursor: Joi.string().default(() => undefined),
+  numberRecords: Joi.number().positive().default(10)
+});
+// <<< Get User Posts <<<
+
 export type PostRequestArgs = CreateArgs | ViewArgs | EditArgs |
                               DeleteArgs | GetListArgs | ForceDeleteArgs |
-                              ViewRepliesArgs | EditTagsArgs | SearchArgs;
+                              ViewRepliesArgs | EditTagsArgs | SearchArgs |
+                              GetUserPostsArgs;

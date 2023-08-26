@@ -58,7 +58,7 @@ export default function App(): React.JSX.Element {
         searchResults={searchResults}
         tags={tags}
       />
-      {searchAfterCursor ? 
+      {(searchAfterCursor && (tags || query)) ? 
         <SearchPosts 
           token={token.AUTH_TOKEN} 
           setSearchAfterCursor={setSearchAfterCursor}

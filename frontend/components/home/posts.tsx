@@ -70,14 +70,14 @@ export default function Posts(props: { token: string | undefined }): React.JSX.E
       posts.current = postsResponse.data?.results;
     }
     if (!afterCursor && postsResponse.data?.endCursor) {
-      setAfterCursor(postsResponse.data?.endCursor)
+      setAfterCursor(postsResponse.data?.endCursor);
     }
 
     if (postsResponse.error || postsResponse.data?.hasOwnProperty("errorMessage")) {
       postElements.push(<div className={styles.posts_broken_container} key={-1}>
         <p className={styles.broken_text}>Feed unavailable</p>
         <p className={styles.broken_explain}>{postsResponse.data?.errorMessage||"The feed is not available right now, maybe the server is overloaded and therefore cannot respond to the request, try again sometime later"}</p>
-      </div>)
+      </div>);
     }
   
     postElements.push(...posts.current.map((post, i) => (
@@ -88,7 +88,7 @@ export default function Posts(props: { token: string | undefined }): React.JSX.E
         loading={postsResponse.isLoading}
         voteOnClick={voteOnClick(props.token, setErrors)}
       />
-    )))
+    )));
   }
 
   return <div className={styles.posts}>

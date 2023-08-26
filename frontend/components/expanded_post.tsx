@@ -10,6 +10,7 @@ import axiosConfig from "../axios.config";
 import Errors from "./errors";
 import { RequestErrorObject } from "../../backend/common/types";
 import { WriteReply } from "./write_reply";
+import { ExpandedUser } from "./expanded_user";
 
 interface Props {
   reactKey: number
@@ -22,10 +23,11 @@ interface Props {
 
 export function ExpandedPost(props: Props): React.JSX.Element {
   const [ isOpen, setIsOpen ] = useState(false);
+  const [ userIsOpen, setUserIsOpen ] = useState(false);
   const [ doRequest, setDoRequest ] = useState(true);
   const modal = useRef(null);
-  useOutside(modal, () => setIsOpen(false), []);
-  useKeyPress("Escape", () => setIsOpen(false), []);
+  useOutside(modal, () => { setIsOpen(false); setUserIsOpen(false); }, []);
+  useKeyPress("Escape", () => { setIsOpen(false); setUserIsOpen(false); }, []);
   const [ replies, setReplies ] = useState<React.JSX.Element[]>([]);
   const [ errors, setErrors ] = useState<string[]>([]);
 
@@ -62,7 +64,11 @@ export function ExpandedPost(props: Props): React.JSX.Element {
   }
 
   return <>
-    <Post {...props} onPostClick={() => !props.broken && setIsOpen(true)} />
+    <Post
+      {...props}
+      onPostClick={() => !props.broken && setIsOpen(true)}
+      onUsernameClick={() => !props.broken && setUserIsOpen(true)}
+    />
     {isOpen && <div className={modalStyles.overlay}>
       <div className={modalStyles.modal} ref={modal}>
         <Post {...props} expanded={true} />
@@ -74,6 +80,21 @@ export function ExpandedPost(props: Props): React.JSX.Element {
           That seems to be all there is, cutie~ <br/>
           <a href="#" onClick={() => setDoRequest(true)}>Retry</a>
         </h3>
+      </div>
+      <p className={modalStyles.hint}>
+        Click anywhere or press Esc to close. Press Esc to close all <br/>
+        Of course, you can scroll this window
+      </p>
+    </div>}
+
+    {userIsOpen && <div className={modalStyles.overlay} key={props.post.username}>
+      <div className={modalStyles.modal} ref={modal}>
+        <ExpandedUser
+          username={props.post.username}
+          setErrors={setErrors}
+          Self={ExpandedPost}
+          voteOnClick={props.voteOnClick}
+        />
       </div>
       <p className={modalStyles.hint}>
         Click anywhere or press Esc to close. Press Esc to close all <br/>

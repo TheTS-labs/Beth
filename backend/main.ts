@@ -1,7 +1,7 @@
 import dotenv from "dotenv";
 
 import App from "./app";
-import { disableAuthFor,endpoints } from "./common/endpoints";
+import { disableAuthFor, endpoints } from "./common/endpoints";
 
 dotenv.config();
 

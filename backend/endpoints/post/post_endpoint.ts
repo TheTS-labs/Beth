@@ -21,7 +21,7 @@ export default class PostEndpoint extends BaseEndpoint<type.PostRequestArgs, Cal
     "create", "view", "edit", 
     "delete", "getList", 
     "forceDelete", "viewReplies", 
-    "editTags", "search"
+    "editTags", "search", "getUserPosts"
   ];
   userModel: UserModel | CachingUserModel;
   permissionModel: PermissionModel;
@@ -214,5 +214,19 @@ export default class PostEndpoint extends BaseEndpoint<type.PostRequestArgs, Cal
     }
 
     return searchResults;
+  }
+
+  async getUserPosts(args: type.GetUserPostsArgs, _auth: Auth): Promise<CallEndpointReturnType> {
+    args = await this.validate(type.GetUserPostsArgsSchema, args);
+
+    const results = await this.postModel.getUserPosts(
+      args.username,
+      args.afterCursor,
+      args.numberRecords
+    ).catch((err: { message: string }) => {
+      throw new RequestError("DatabaseError", [err.message]);
+    });
+
+    return results;
   }
 }

@@ -1,5 +1,3 @@
-// Ignore SVG lines
-/* eslint-disable max-len */
 import { useEffect, useRef } from "react";
 
 import styles from "../public/styles/components/errors.module.sass";

@@ -32,4 +32,6 @@ export interface Auth {
   token: Token
 }
 
-export type JWTRequest = Request & { auth: Auth };
+export interface JWTRequest extends Request {
+  auth: Auth
+}

@@ -1,9 +1,10 @@
-import { useCookies } from "react-cookie";
-import Header from "../../components/header";
-import headerStyles from "../../public/styles/pages/auth/header.module.sass";
 import Link from "next/link";
 import { MouseEvent } from "react";
+import { useCookies } from "react-cookie";
+
+import Header from "../../components/header";
 import styles from "../../public/styles/pages/auth/common.module.sass";
+import headerStyles from "../../public/styles/pages/auth/header.module.sass";
 
 export default function LogOut() {
   const [ _token, _setToken, removeToken ] = useCookies(["AUTH_TOKEN"]);
@@ -11,7 +12,7 @@ export default function LogOut() {
   const logout = (_event: MouseEvent<HTMLButtonElement>) => {
     removeToken("AUTH_TOKEN");
     window.location.replace("/");
-  }
+  };
 
   return <>
     <Header>

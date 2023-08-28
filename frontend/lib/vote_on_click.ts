@@ -1,5 +1,6 @@
 import axios from "axios";
 import { Dispatch, MouseEvent, SetStateAction } from "react";
+
 import axiosConfig from "../axios.config";
 
 type ReturnType = (event: MouseEvent<any, any>) => Promise<void>;
@@ -19,7 +20,7 @@ async function vote(
   });
 
   if (!response) {
-    return
+    return;
   }
 
   if (response.hasOwnProperty("errorMessage")) {
@@ -59,5 +60,5 @@ export default (token: string, setErrors: Dispatch<SetStateAction<string[]>>): R
       score.innerHTML = response.total;
       score.style.color = result == "delete" ? "#f9f4e6" : voteColor;
     });
-  }
-}
+  };
+};

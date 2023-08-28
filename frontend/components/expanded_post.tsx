@@ -1,16 +1,17 @@
-import { DetailedPost } from "../../backend/db/models/post";
+import axios from "axios";
 import { MouseEvent, useRef, useState } from "react";
-import styles from "../public/styles/components/expanded_post.module.sass";
-import Post from "./post";
+
+import { RequestErrorObject } from "../../backend/common/types";
+import { DetailedPost } from "../../backend/db/models/post";
+import axiosConfig from "../axios.config";
 import useKeyPress from "../lib/hooks/use_key_press";
 import useOutside from "../lib/hooks/use_outside";
+import styles from "../public/styles/components/expanded_post.module.sass";
 import modalStyles from "../public/styles/components/modal.module.sass";
-import axios from "axios";
-import axiosConfig from "../axios.config";
 import Errors from "./errors";
-import { RequestErrorObject } from "../../backend/common/types";
-import { WriteReply } from "./write_reply";
 import { ExpandedUser } from "./expanded_user";
+import Post from "./post";
+import { WriteReply } from "./write_reply";
 
 interface Props {
   reactKey: number
@@ -52,15 +53,15 @@ export function ExpandedPost(props: Props): React.JSX.Element {
       }
 
       setDoRequest(false);
-      setReplies(response.map(post => (<ExpandedPost 
+      setReplies(response.map(post => <ExpandedPost 
         reactKey={post.id}
         broken={false}
         loading={false}
         post={post}
         isReply={true}
         voteOnClick={props.voteOnClick}
-      />)));
-    })()
+      />));
+    })();
   }
 
   return <>

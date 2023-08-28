@@ -62,10 +62,5 @@ typings/
 
 dist
 *.sqlite3
-backend/docker-compose.yml
-backend/seed.py
-*.pem
-*.key
+docker-compose.yml
 .yarn
-backend/print_todos.py
-backend/print_request_errors.py

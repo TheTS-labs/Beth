@@ -1,23 +1,7 @@
 {
-  "parser": "@typescript-eslint/parser",
-  "plugins": ["@typescript-eslint", "simple-import-sort"],
-  "overrides": [
-    {
-      "files": ["*.ts", "*.tsx"],
-      "extends": ["@wemake-services/typescript/strict", "next/core-web-vitals"],
-      "parserOptions": { "project": ["./frontend/tsconfig.json"] },
-      "rules": {
-        "@typescript-eslint/semi": [2, "always"],
-        "quotes": [2, "double", { "avoidEscape": true }],
-        "simple-import-sort/imports": "warn",
-        "simple-import-sort/exports": "warn",
-        "camelcase": "error",
-        "@typescript-eslint/indent": "off",
-        "max-len": ["warn", { "code": 120, "tabWidth": 2 }],
-        "import/max-dependencies": ["warn", { "ignoreTypeImports": true }],
-        "@typescript-eslint/no-unused-vars": "warn",
-        "@typescript-eslint/ban-types": ["error", { "types": { "{}": false } }]
-      }
-    }
-  ]
+  "extends": ["../.eslintrc", "next/core-web-vitals", "plugin:react/recommended"],
+  "rules": {
+    "@typescript-eslint/semi": [2, "always"],
+    "@next/next/no-html-link-for-pages": ["error", "frontend/pages"]
+  }
 }

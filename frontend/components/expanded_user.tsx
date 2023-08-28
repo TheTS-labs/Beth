@@ -1,7 +1,8 @@
+import { Dispatch, MouseEvent,SetStateAction, useEffect, useRef, useState } from "react";
+
 import { DetailedPost, DetailedPosts } from "../../backend/db/models/post";
-import { Dispatch, SetStateAction, useEffect, useRef, useState, MouseEvent } from "react";
-import observer from "../lib/home/observer";
 import fetchUserPosts from "../lib/home/fetch_user_posts";
+import observer from "../lib/home/observer";
 import Loader from "./loader";
 
 interface SelfProps {
@@ -35,7 +36,7 @@ export function ExpandedUser(props: Props): React.JSX.Element {
     }
   }, []);
 
-  const postElements: React.JSX.Element[] = posts.current.map((post, i) => (
+  const postElements: React.JSX.Element[] = posts.current.map((post, i) => 
     <props.Self 
       reactKey={i}
       post={post}
@@ -44,7 +45,7 @@ export function ExpandedUser(props: Props): React.JSX.Element {
       voteOnClick={props.voteOnClick}
       isReply={true}
     />
-  ));
+  );
 
   return <>
     <h1>The posts of @{props.username}, enjoy</h1>

@@ -1,7 +1,8 @@
 import { MouseEvent, useRef, useState } from "react";
-import defaultStyles from "../public/styles/components/post.module.sass";
-import expandedStyles from "../public/styles/components/expanded_post.module.sass";
+
 import { DetailedPost, Post } from "../../backend/db/models/post";
+import expandedStyles from "../public/styles/components/expanded_post.module.sass";
+import defaultStyles from "../public/styles/components/post.module.sass";
 import Loading from "./loading";
 
 interface Props {
@@ -38,11 +39,11 @@ export default function Post(props: Props): React.JSX.Element {
           if (props.loading) {
             return <>
               <br/>
-              <p className={styles.post_text} onClick={props.onPostClick}><Loading length={(Math.random() * (90 - 50) + 50)+"%"}/></p>
-              <p className={styles.post_text} onClick={props.onPostClick}><Loading length={(Math.random() * (90 - 20) + 20)+"%"}/></p>
-              <p className={styles.post_text} onClick={props.onPostClick}><Loading length={(Math.random() * (90 - 20) + 20)+"%"}/></p>
-              <p className={styles.post_text} onClick={props.onPostClick}><Loading length={(Math.random() * (90 - 50) + 50)+"%"}/></p>
-              <p className={styles.post_text} onClick={props.onPostClick}><Loading length={(Math.random() * (90 - 20) + 20)+"%"}/></p>
+              <p className={styles.post_text} onClick={props.onPostClick}><Loading length={Math.random() * (90 - 50) + 50+"%"}/></p>
+              <p className={styles.post_text} onClick={props.onPostClick}><Loading length={Math.random() * (90 - 20) + 20+"%"}/></p>
+              <p className={styles.post_text} onClick={props.onPostClick}><Loading length={Math.random() * (90 - 20) + 20+"%"}/></p>
+              <p className={styles.post_text} onClick={props.onPostClick}><Loading length={Math.random() * (90 - 50) + 50+"%"}/></p>
+              <p className={styles.post_text} onClick={props.onPostClick}><Loading length={Math.random() * (90 - 20) + 20+"%"}/></p>
             </>;
           }
 

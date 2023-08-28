@@ -20,4 +20,4 @@ export default (observerTarget: MutableRefObject<any>, callback: Function, args:
       }
     }; 
   };
-}
+};

@@ -1,17 +1,17 @@
+import { faker } from "@faker-js/faker";
+import { useEffect, useRef, useState } from "react";
 import useSWR from "swr";
 
+import { RequestErrorObject } from "../../../backend/common/types";
 import { DetailedPosts } from "../../../backend/db/models/post";
 import fetcher from "../../lib/fetcher";
-import styles from "../../public/styles/pages/home/posts.module.sass";
-import { faker } from '@faker-js/faker';
-import { useEffect, useRef, useState } from "react";
-import { RequestErrorObject } from "../../../backend/common/types";
-import Loader from "../loader";
-import Errors from "../errors";
-import voteOnClick from "../../lib/vote_on_click";
-import observer from "../../lib/home/observer";
 import fetchPosts from "../../lib/home/fetch_posts";
+import observer from "../../lib/home/observer";
+import voteOnClick from "../../lib/vote_on_click";
+import styles from "../../public/styles/pages/home/posts.module.sass";
+import Errors from "../errors";
 import { ExpandedPost } from "../expanded_post";
+import Loader from "../loader";
 
 export default function Posts(props: { token: string | undefined }): React.JSX.Element {
   const postsResponse = useSWR(
@@ -80,7 +80,7 @@ export default function Posts(props: { token: string | undefined }): React.JSX.E
       </div>);
     }
   
-    postElements.push(...posts.current.map((post, i) => (
+    postElements.push(...posts.current.map((post, i) => 
       <ExpandedPost 
         reactKey={i}
         post={post}
@@ -88,7 +88,7 @@ export default function Posts(props: { token: string | undefined }): React.JSX.E
         loading={postsResponse.isLoading}
         voteOnClick={voteOnClick(props.token, setErrors)}
       />
-    )));
+    ));
   }
 
   return <div className={styles.posts}>

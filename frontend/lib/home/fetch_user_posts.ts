@@ -1,7 +1,8 @@
 import axios from "axios";
 import { Dispatch, MutableRefObject, SetStateAction } from "react";
-import axiosConfig from "../../axios.config";
+
 import { DetailedPost } from "../../../backend/db/models/post";
+import axiosConfig from "../../axios.config";
 
 export default async function fetchUserPosts(
   afterCursor: string | null,

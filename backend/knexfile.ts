@@ -2,7 +2,7 @@ import dotenv from "dotenv";
 import * as env from "env-var";
 import { Knex } from "knex";
 
-dotenv.config();
+dotenv.config({ path: "../.backend.env" });
 
 const config: { [key: string]: Knex.Config } = {
   development: {

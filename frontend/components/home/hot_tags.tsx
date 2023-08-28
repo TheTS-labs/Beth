@@ -1,10 +1,10 @@
+import { Dispatch, MutableRefObject,SetStateAction } from "react";
 import useSWR from "swr";
 
+import { DetailedPost } from "../../../backend/db/models/post";
 import fetcher from "../../lib/fetcher";
 import styles from "../../public/styles/pages/home/hot_tags.module.sass";
 import Tag from "../tag";
-import { Dispatch, SetStateAction, MutableRefObject } from "react";
-import { DetailedPost } from "../../../backend/db/models/post";
 
 interface Props {
   setSearchAfterCursor: Dispatch<SetStateAction<string>>
@@ -33,10 +33,10 @@ export default function HotTags(props: Props): React.JSX.Element {
       <div className={styles.broken_container} key={-1}>
         <p className={styles.broken_text}>Hot Tags unavailable</p>
       </div>
-    )
+    );
   }
 
-  hotTagsElements.push(...hotTags.map((value, i) => (
+  hotTagsElements.push(...hotTags.map((value, i) => 
     //? ...And then all tags
     //? `.push` and spread operator is used to make `hotTagsElements` variable constant
     <Tag
@@ -51,7 +51,7 @@ export default function HotTags(props: Props): React.JSX.Element {
         props.setTags(value.tag);
       }}
     />
-  )))
+  ));
 
   return <div className={`${styles.hot_tags_container} ${hotTagsResponse.error ? styles.broken_hot_tags : ""}`}>
     <p className={styles.text}>Hot Tags</p>

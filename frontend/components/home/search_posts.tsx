@@ -1,12 +1,13 @@
-import { DetailedPost } from "../../../backend/db/models/post";
-import styles from "../../public/styles/pages/home/posts.module.sass";
 import { Dispatch, MutableRefObject, SetStateAction, useEffect, useRef, useState } from "react";
-import Loader from "../loader";
-import Errors from "../errors";
-import voteOnClick from "../../lib/vote_on_click";
+
+import { DetailedPost } from "../../../backend/db/models/post";
 import observer from "../../lib/home/observer";
-import { ExpandedPost } from "../expanded_post";
 import fetchSearchResults from "../../lib/home/search";
+import voteOnClick from "../../lib/vote_on_click";
+import styles from "../../public/styles/pages/home/posts.module.sass";
+import Errors from "../errors";
+import { ExpandedPost } from "../expanded_post";
+import Loader from "../loader";
 
 interface Props {
   token: string | undefined
@@ -40,7 +41,7 @@ export default function SearchPosts(props: Props): React.JSX.Element {
     props.searchAfterCursor
   ]), [props.searchAfterCursor]);
 
-  postElements.push(...props.searchResults.current.map((post, i) => (
+  postElements.push(...props.searchResults.current.map((post, i) => 
     <ExpandedPost 
       reactKey={i}
       post={post}
@@ -48,7 +49,7 @@ export default function SearchPosts(props: Props): React.JSX.Element {
       loading={false}
       voteOnClick={voteOnClick(props.token, setErrors)}
     />
-  )))
+  ));
 
   return <div className={styles.posts}>
     <p className={styles.text} onClick={clearResults} style={{ cursor: "pointer" }}>⬅ Search results</p>

@@ -1,0 +1,36 @@
+{
+  "name": "root",
+  "packageManager": "yarn@3.6.0",
+  "private": true,
+  "workspaces": [
+    "backend",
+    "frontend"
+  ],
+  "scripts": {
+    "backend:start": "yarn workspace backend run -T nodemon main.ts",
+    "backend:migrate": "yarn workspace backend knex migrate:latest --knexfile knexfile.js --migrations-directory db/migrations",
+    "backend:seed": "yarn workspace backend knex seed:run",
+    "backend:test": "yarn workspace backend jest --detectOpenHandles --forceExit --maxWorkers=50%",
+    "backend:lint": "yarn eslint 'backend/**/*.{ts,tsx}'",
+    "root:lint": "yarn eslint '**/*.{ts,tsx}'",
+    "root:start": "yarn concurrently \"yarn backend:start\" \"yarn frontend:start\" -n BACKEND,FRONTEND -c \"bgCyan.bold,bgGreen.bold\"",
+    "frontend:start": "yarn workspace frontend next dev",
+    "frontend:lint": "yarn eslint 'frontend/**/*.{ts,tsx}'"
+  },
+  "dependencies": {
+    "ts-node": "^10.9.1",
+    "typescript": "^5.2.2"
+  },
+  "devDependencies": {
+    "@types/node": "^20.5.6",
+    "@typescript-eslint/eslint-plugin": "^6.4.1",
+    "@typescript-eslint/parser": "^6.4.1",
+    "@wemake-services/eslint-config-typescript": "^3.1.1",
+    "concurrently": "^8.2.1",
+    "eslint": "^8.48.0",
+    "eslint-import-resolver-typescript": "^3.6.0",
+    "eslint-plugin-import": "^2.28.1",
+    "eslint-plugin-simple-import-sort": "^10.0.0",
+    "nodemon": "^3.0.1"
+  }
+}

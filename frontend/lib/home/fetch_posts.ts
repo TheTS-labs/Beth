@@ -1,5 +1,6 @@
 import axios from "axios";
 import { Dispatch, SetStateAction } from "react";
+
 import axiosConfig from "../../axios.config";
 
 export default async function fetchPosts(
@@ -10,7 +11,7 @@ export default async function fetchPosts(
   token: string | undefined
 ): Promise<void> {
   if (!afterCursor) {
-    return
+    return;
   }
   const body = new URLSearchParams({ afterCursor });
 

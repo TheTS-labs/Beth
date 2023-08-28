@@ -1,7 +1,8 @@
 import { Dispatch, FormEvent, MutableRefObject, SetStateAction, useEffect, useState } from "react";
-import styles from "../../public/styles/pages/home/index.module.sass";
+
 import { DetailedPost } from "../../../backend/db/models/post";
 import fetchSearchResults from "../../lib/home/search";
+import styles from "../../public/styles/pages/home/index.module.sass";
 import Errors from "../errors";
 
 interface Event extends FormEvent<HTMLFormElement> {
@@ -42,11 +43,11 @@ export default function SearchBar(props: Props): React.JSX.Element {
     }
 
     props.setQuery(query);
-  }
+  };
 
   useEffect(() => {
     fetchSearchResults(props.query, setErrors, props.setSearchAfterCursor, props.searchResults, props.tags);
-  }, [props.query, props.tags])
+  }, [props.query, props.tags]);
 
   return <div className={styles.search_bar}>
     <form onSubmit={onSubmit} method="GET">

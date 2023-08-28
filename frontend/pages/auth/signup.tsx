@@ -3,10 +3,10 @@ import Link from "next/link";
 import { FormEvent, useState } from "react";
 
 import axiosConfig from "../../axios.config";
-import headerStyles from "../../public/styles/pages/auth/header.module.sass";
-import styles from "../../public/styles/pages/auth/common.module.sass";
 import Errors from "../../components/errors";
 import Header from "../../components/header";
+import styles from "../../public/styles/pages/auth/common.module.sass";
+import headerStyles from "../../public/styles/pages/auth/header.module.sass";
 
 interface Entry {
   value: string

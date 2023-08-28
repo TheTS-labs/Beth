@@ -1,15 +1,24 @@
 {
-    "cSpell.words": [
-        "Checkmark",
-        "creds",
-        "downvotes",
-        "Hasnt",
-        "ICRUD",
-        "knexfile",
-        "middlewares",
-        "unnest",
-        "Unvote",
-        "upvotes"
-    ],
-    "jest.rootPath": "./backend"
+  "cSpell.words": [
+    "camelcase",
+    "Checkmark",
+    "creds",
+    "downvotes",
+    "Hasnt",
+    "ICRUD",
+    "knexfile",
+    "middlewares",
+    "unnest",
+    "Unvote",
+    "upvotes"
+  ],
+  "jest.rootPath": "./backend",
+  "search.exclude": {
+    "**/.yarn": true,
+    "**/.pnp.*": true,
+    "**/node_modules": true
+  },
+  "eslint.nodePath": ".yarn/sdks",
+  "typescript.tsdk": ".yarn/sdks/typescript/lib",
+  "typescript.enablePromptUseWorkspaceTsdk": true
 }

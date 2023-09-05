@@ -1,5 +1,5 @@
 import axios from "axios";
-import { MouseEvent, useRef, useState } from "react";
+import React, { MouseEvent, useRef, useState } from "react";
 
 import { RequestErrorObject } from "../../backend/common/types";
 import { DetailedPost } from "../../backend/db/models/post";
@@ -14,9 +14,8 @@ import Post from "./post";
 import { WriteReply } from "./write_reply";
 
 interface Props {
-  reactKey: number
   post: DetailedPost
-  voteOnClick?: (event: MouseEvent<any, any>) => Promise<void> | void
+  voteOnClick?: (event: MouseEvent<unknown, unknown>) => Promise<void> | void
   broken: boolean
   loading: boolean
   isReply?: boolean
@@ -33,7 +32,7 @@ export function ExpandedPost(props: Props): React.JSX.Element {
   const [ errors, setErrors ] = useState<string[]>([]);
 
   if (isOpen && doRequest) {
-    (async () => {
+    (async (): Promise<void> => {
       const response = await axios.request<Partial<DetailedPost[]&RequestErrorObject>>({...axiosConfig, ...{
         url: "post/viewReplies", 
         data: new URLSearchParams({ repliesTo: String(props.post.id) })
@@ -48,13 +47,13 @@ export function ExpandedPost(props: Props): React.JSX.Element {
 
       if (response.hasOwnProperty("errorMessage")) {
         setDoRequest(false);
-        setErrors(prevErrors => [...prevErrors, response.errorMessage]);
+        setErrors(prevErrors => [...prevErrors, response.errorMessage || ""]);
         return;
       }
 
       setDoRequest(false);
       setReplies(response.map(post => <ExpandedPost 
-        reactKey={post.id}
+        key={post.id}
         broken={false}
         loading={false}
         post={post}
@@ -67,8 +66,8 @@ export function ExpandedPost(props: Props): React.JSX.Element {
   return <>
     <Post
       {...props}
-      onPostClick={() => !props.broken && setIsOpen(true)}
-      onUsernameClick={() => !props.broken && setUserIsOpen(true)}
+      onPostClick={(): void => (!props.broken && setIsOpen(true)) as void}
+      onUsernameClick={(): void => (!props.broken && setUserIsOpen(true)) as void}
     />
     {isOpen && <div className={modalStyles.overlay}>
       <div className={modalStyles.modal} ref={modal}>
@@ -79,7 +78,7 @@ export function ExpandedPost(props: Props): React.JSX.Element {
         {...replies}
         <h3 className={styles.end}>
           That seems to be all there is, cutie~ <br/>
-          <a href="#" onClick={() => setDoRequest(true)}>Retry</a>
+          <a href="#" onClick={(): void => setDoRequest(true)}>Retry</a>
         </h3>
       </div>
       <p className={modalStyles.hint}>
@@ -105,4 +104,4 @@ export function ExpandedPost(props: Props): React.JSX.Element {
 
     <Errors errors={errors} />
   </>;
-};
+}

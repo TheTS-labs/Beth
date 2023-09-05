@@ -1,6 +1,6 @@
 import { Buffer } from "buffer";
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useCookies } from "react-cookie";
 
 import { DetailedPosts } from "../../backend/db/models/post";
@@ -15,15 +15,15 @@ export default function App(): React.JSX.Element {
   const [ token ] = useCookies(["AUTH_TOKEN"]);
   const [ email, setEmail ] = useState("");
   const [ account, setAccount ] = useState([
-    <Link href="/auth/login"><button>Log In</button></Link>,
-    <Link href="/auth/signup"><button>Sign Up</button></Link>
+    <Link href="/auth/login" key="login"><button>Log In</button></Link>,
+    <Link href="/auth/signup" key="signup"><button>Sign Up</button></Link>
   ]);
 
   // Search
-  const [ searchAfterCursor, setSearchAfterCursor ] = useState<string>(null);
+  const [ searchAfterCursor, setSearchAfterCursor ] = useState<string | null>(null);
   const searchResults = useRef<DetailedPosts["results"]>([]);
-  const [ query, setQuery ] = useState<string>(null);
-  const [ tags, setTags ] = useState<string>(null);
+  const [ query, setQuery ] = useState<string | null>(null);
+  const [ tags, setTags ] = useState<string | null>(null);
 
   useEffect(() => {
     if (token.AUTH_TOKEN) {
@@ -31,10 +31,10 @@ export default function App(): React.JSX.Element {
             stringPayload = Buffer.from(base64PayloadFromToken, "base64").toString("utf8"),
             payload = JSON.parse(stringPayload);
 
-      setAccount([<Link href="/auth/logout"><button data-type="logout">Log Out</button></Link>]);
+      setAccount([<Link href="/auth/logout" key="logout"><button data-type="logout">Log Out</button></Link>]);
       setEmail(payload.email);
     }
-  }, []);
+  }, [token.AUTH_TOKEN]);
 
   return <>
     <Header>
@@ -47,7 +47,9 @@ export default function App(): React.JSX.Element {
         query={query}
         tags={tags}
       />
-      <p>{email}</p>
+      <Link href={{ pathname: "/updateData", query: { email } }} key="updateData">
+        <p style={{ color: "white", textDecoration: "underline" }}>{email}</p>
+      </Link>
       <div className={styles.account_buttons}>{...account}</div>
     </Header>
     

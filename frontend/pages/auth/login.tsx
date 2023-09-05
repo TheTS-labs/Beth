@@ -1,7 +1,7 @@
 import axios from "axios";
 import Link from "next/link";
 import { FormEvent, useState } from "react";
-import { useCookies } from "react-cookie";
+import React, { useCookies } from "react-cookie";
 
 import axiosConfig from "../../axios.config";
 import Errors from "../../components/errors";
@@ -26,7 +26,8 @@ interface Event extends FormEvent<HTMLFormElement> {
 
 export default function LogIn(): React.JSX.Element {
   const [ errors, setErrors ] = useState<string[]>([]);
-  const [_token, setToken, _removeToken] = useCookies(["AUTH_TOKEN"]);
+  // Skip first variable
+  const [ , setToken] = useCookies(["AUTH_TOKEN"]);
 
   const onsubmit = async (e: Event): Promise<void> => {
     e.preventDefault();
@@ -84,7 +85,7 @@ export default function LogIn(): React.JSX.Element {
 
     <div className={styles.form_wrap}>
       <h1 className={styles.text}><i>log in here</i></h1>
-      <p><i>Yeah, right here, don't be afraid~</i></p>
+      <p><i>Yeah, right here, don&apos;t be afraid~</i></p>
       <form onSubmit={onsubmit}>
         <input type="email" name="email" id="email" placeholder="Email" required/>
         <br />

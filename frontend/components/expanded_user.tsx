@@ -1,4 +1,5 @@
-import { Dispatch, MouseEvent,SetStateAction, useEffect, useRef, useState } from "react";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import React, { Dispatch, MouseEvent,SetStateAction, useEffect, useRef, useState } from "react";
 
 import { DetailedPost, DetailedPosts } from "../../backend/db/models/post";
 import fetchUserPosts from "../lib/home/fetch_user_posts";
@@ -6,7 +7,6 @@ import observer from "../lib/home/observer";
 import Loader from "./loader";
 
 interface SelfProps {
-  reactKey: number
   post: DetailedPost
   voteOnClick?: (event: MouseEvent<any, any>) => Promise<void> | void
   broken: boolean
@@ -23,9 +23,14 @@ interface Props {
 
 export function ExpandedUser(props: Props): React.JSX.Element {
   const posts = useRef<DetailedPosts["results"]>([]);
-  const [ afterCursor, setAfterCursor ] = useState(null);
+  const [ afterCursor, setAfterCursor ] = useState<string | null>(null);
   const observerTarget = useRef(null);
-  useEffect(observer(observerTarget, fetchUserPosts, [afterCursor, props.setErrors, setAfterCursor, posts, props.username]), [afterCursor]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(observer(
+    observerTarget,
+    fetchUserPosts,
+    [ afterCursor, props.setErrors, setAfterCursor, posts, props.username ]
+  ), [afterCursor]);
   useEffect(() => {
     //? Note: In dev this code will run twice because of React Strict mode
     //? So first 20 posts will be the same 10 posts from this request
@@ -34,11 +39,12 @@ export function ExpandedUser(props: Props): React.JSX.Element {
     if (!afterCursor) {
       fetchUserPosts(afterCursor, props.setErrors, setAfterCursor, posts, props.username, true);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const postElements: React.JSX.Element[] = posts.current.map((post, i) => 
     <props.Self 
-      reactKey={i}
+      key={i}
       post={post}
       broken={false}
       loading={false}
@@ -52,4 +58,4 @@ export function ExpandedUser(props: Props): React.JSX.Element {
     {...postElements}
     <div ref={observerTarget}><Loader /></div>
   </>;
-};
+}

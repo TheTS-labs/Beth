@@ -1,9 +1,15 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { MutableRefObject, useEffect } from "react";
 
-export default function useOutside(ref: MutableRefObject<any>, callback: Function, args: any[]) {
+
+export default function useOutside(
+  ref: MutableRefObject<HTMLDivElement>,
+  callback: (...args: any[]) => any,
+  args: any[]
+): void {
   useEffect(() => {
-    function handleClickOutside(event) {
-      if (ref.current && !ref.current.contains(event.target)) {
+    function handleClickOutside(event: MouseEvent): void {
+      if (ref.current && !ref.current.contains(event.target as Node)) {
         callback(...args);
       }
     }
@@ -12,5 +18,5 @@ export default function useOutside(ref: MutableRefObject<any>, callback: Functio
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [ref]);
+  }, [ref, args, callback]);
 }

@@ -1,4 +1,4 @@
-import { Dispatch, FormEvent, MutableRefObject, SetStateAction, useEffect, useState } from "react";
+import React, { Dispatch, FormEvent, MutableRefObject, SetStateAction, useEffect, useState } from "react";
 
 import { DetailedPost } from "../../../backend/db/models/post";
 import fetchSearchResults from "../../lib/home/search";
@@ -12,12 +12,12 @@ interface Event extends FormEvent<HTMLFormElement> {
 }
 
 interface Props {
-  setSearchAfterCursor: Dispatch<SetStateAction<string>>
-  setQuery: Dispatch<SetStateAction<string>>
-  setTags: Dispatch<SetStateAction<string>>
+  setSearchAfterCursor: Dispatch<SetStateAction<string | null>>
+  setQuery: Dispatch<SetStateAction<string | null>>
+  setTags: Dispatch<SetStateAction<string | null>>
   searchResults: MutableRefObject<DetailedPost[]>
-  query: string
-  tags: string
+  query: string | null
+  tags: string | null
 }
 
 const tagsRegex = / tags:\[([a-zA-Z0-9]+(?:,[a-zA-Z0-9]+)*)\]/gm;
@@ -25,7 +25,7 @@ const tagsRegex = / tags:\[([a-zA-Z0-9]+(?:,[a-zA-Z0-9]+)*)\]/gm;
 export default function SearchBar(props: Props): React.JSX.Element {
   const [ errors, setErrors ] = useState<string[]>([]);
 
-  const onSubmit = (event: Event) => {
+  const onSubmit = (event: Event): void => {
     event.preventDefault();
     if (props.query || props.tags) {
       props.searchResults.current = [];
@@ -47,7 +47,7 @@ export default function SearchBar(props: Props): React.JSX.Element {
 
   useEffect(() => {
     fetchSearchResults(props.query, setErrors, props.setSearchAfterCursor, props.searchResults, props.tags);
-  }, [props.query, props.tags]);
+  }, [props.query, props.tags, props.searchResults, props.setSearchAfterCursor]);
 
   return <div className={styles.search_bar}>
     <form onSubmit={onSubmit} method="GET">

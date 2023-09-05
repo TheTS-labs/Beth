@@ -16,7 +16,7 @@ import VoteModel, { VoteType } from "../../db/models/vote";
 import * as type from "./types";
 
 type CallEndpointReturnType = { results: PostWithRate[] } |
-                              { result: { tag: string, post_count: string }[] } |
+                              { result: { tag: string, postCount: string }[] } |
                               DetailedPosts;
 type PostWithVote = Post & { voteType: VoteType };
 type PostWithRate = Post & { rate: number };
@@ -78,7 +78,7 @@ export default class RecommendationEndpoint extends BaseEndpoint<type.Recommenda
 
   async getHotTags(_args: type.GetHotTagsArgs, _auth: Auth): Promise<{ result: {
     tag: string
-    post_count: string
+    postCount: string
   }[] }> {
     const hotTags = await this.postModel.readHotTags();
     return { result: hotTags };

@@ -3,7 +3,12 @@ import { Dispatch, SetStateAction } from "react";
 
 import axiosConfig from "../axios.config";
 
-export default async (replyTo: number, text: string, setErrors: Dispatch<SetStateAction<string[]>>, token: string) => {
+export default async (
+  replyTo: number,
+  text: string,
+  setErrors: Dispatch<SetStateAction<string[]>>,
+  token: string
+): Promise<boolean> => {
   const response = await axios.request({...axiosConfig, ...{
     url: "post/create",
     data: new URLSearchParams({ replyTo: String(replyTo), text }),

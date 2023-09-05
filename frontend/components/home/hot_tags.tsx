@@ -1,4 +1,4 @@
-import { Dispatch, MutableRefObject,SetStateAction } from "react";
+import React, { Dispatch, MutableRefObject,SetStateAction } from "react";
 import useSWR from "swr";
 
 import { DetailedPost } from "../../../backend/db/models/post";
@@ -7,23 +7,26 @@ import styles from "../../public/styles/pages/home/hot_tags.module.sass";
 import Tag from "../tag";
 
 interface Props {
-  setSearchAfterCursor: Dispatch<SetStateAction<string>>
-  setTags: Dispatch<SetStateAction<string>>
+  setSearchAfterCursor: Dispatch<SetStateAction<string | null>>
+  setTags: Dispatch<SetStateAction<string | null>>
   searchResults: MutableRefObject<DetailedPost[]>
-  tags: string
+  tags: string | null
 }
 
 export default function HotTags(props: Props): React.JSX.Element {
-  const hotTagsResponse = useSWR("recommendation/getHotTags", fetcher<{ result: { tag: string, post_count: string }[] }>({}));
+  const hotTagsResponse = useSWR(
+    "recommendation/getHotTags",
+    fetcher<{ result: { tag: string, postCount: string }[] }>({})
+  );
   const hotTags = hotTagsResponse.data?.result || [
-    { tag: "#Hot", post_count: "767027" },
-    { tag: "#Tags", post_count: "2756" },
-    { tag: "#Unavailable", post_count: "26363" },
-    { tag: "#Due", post_count: "901743" },
-    { tag: "#To", post_count: "15632" },
-    { tag: "#Server", post_count: "19563" },
-    { tag: "#Error", post_count: "521421" },
-    { tag: "._.", post_count: "82642" },
+    { tag: "#Hot", postCount: "767027" },
+    { tag: "#Tags", postCount: "2756" },
+    { tag: "#Unavailable", postCount: "26363" },
+    { tag: "#Due", postCount: "901743" },
+    { tag: "#To", postCount: "15632" },
+    { tag: "#Server", postCount: "19563" },
+    { tag: "#Error", postCount: "521421" },
+    { tag: "._.", postCount: "82642" },
   ];
   const hotTagsElements: React.JSX.Element[] = [];
 
@@ -40,12 +43,12 @@ export default function HotTags(props: Props): React.JSX.Element {
     //? ...And then all tags
     //? `.push` and spread operator is used to make `hotTagsElements` variable constant
     <Tag
-      reactKey={i}
+      key={i}
       hotTagName={value.tag}
-      posts={value.post_count}
+      posts={value.postCount}
       broken={hotTagsResponse.error ? true : false}
       loading={hotTagsResponse.isLoading}
-      onClick={() => {
+      onClick={(): void => {
         props.searchResults.current = [];
         props.setSearchAfterCursor(null);
         props.setTags(value.tag);

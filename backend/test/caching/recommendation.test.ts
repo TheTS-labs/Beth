@@ -89,7 +89,7 @@ describe("POST /recommendation/getHotTags", () => {
     expect(res.statusCode).toBe(200);
     expect(res.body.result).not.toBeUndefined();
     expect(res.body.result.length).toBe(1);
-    expect(res.body.result[0].post_count).toBe("3");
+    expect(res.body.result[0].postCount).toBe("3");
     expect(res.body.result[0].tag).toBe("tag");
   });
 
@@ -122,10 +122,10 @@ describe("POST /recommendation/getHotTags", () => {
     expect(res.statusCode).toBe(200);
     expect(res.body.result).not.toBeUndefined();
     expect(res.body.result.length).toBe(2);
-    expect(res.body.result[0].post_count).toBe("2");
+    expect(res.body.result[0].postCount).toBe("2");
     expect(res.body.result[0].tag).toBe("notTag");
 
-    expect(res.body.result[1].post_count).toBe("1");
+    expect(res.body.result[1].postCount).toBe("1");
     expect(res.body.result[1].tag).toBe("tag");
   });
 });

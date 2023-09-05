@@ -7,7 +7,7 @@ import axiosConfig from "../../axios.config";
 export default async function fetchUserPosts(
   afterCursor: string | null,
   setErrors: Dispatch<SetStateAction<string[]>>,
-  setAfterCursor: Dispatch<SetStateAction<string>>,
+  setAfterCursor: Dispatch<SetStateAction<string | null>>,
   posts: MutableRefObject<DetailedPost[]>,
   username: string,
   ignoreAfterCursor?: boolean

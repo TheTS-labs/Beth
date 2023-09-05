@@ -19,7 +19,7 @@ type CallEndpointReturnType = { success: true } | {} | SafeUserObject | { token:
 
 export default class UserEndpoint extends BaseEndpoint<type.UserRequestArgs, CallEndpointReturnType> {
   allowNames: Array<string> = [
-    "create", "view", "editPassword",
+    "create", "view", "edit",
     "froze", "editTags", "verify",
     "issueToken"
   ];
@@ -71,12 +71,20 @@ export default class UserEndpoint extends BaseEndpoint<type.UserRequestArgs, Cal
     return requestedUser || {};
   }
 
-  async editPassword(args: type.EditPasswordArgs, auth: Auth): Promise<CallEndpointReturnType> {
-    args = await this.validate(type.EditPasswordArgsSchema, args);
+  async edit(args: type.EditArgs, auth: Auth): Promise<CallEndpointReturnType> {
+    args = await this.validate(type.EditArgsSchema, args);
+    const hash = await bcrypt.compare(args.password, auth.user.password);
 
-    const newHash = await bcrypt.hash(args.newPassword, 3);
+    if (!hash) {
+      throw new RequestError("AuthError");
+    }
 
-    await this.userModel.update(auth.user.email, { password: newHash });
+    if (args.edit.password) {
+      const newHash = await bcrypt.hash(args.edit.password, 3);
+      args.edit.password = newHash;
+    }
+
+    await this.userModel.update(auth.user.email, args.edit);
 
     return { success: true };
   }

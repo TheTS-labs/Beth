@@ -7,10 +7,10 @@ import axiosConfig from "../../axios.config";
 export default async function fetchSearchResults(
   query: string | null,
   setErrors: Dispatch<SetStateAction<string[]>>,
-  setAfterCursor: Dispatch<SetStateAction<string>>,
+  setAfterCursor: Dispatch<SetStateAction<string | null>>,
   posts: MutableRefObject<DetailedPost[]>,
   tags: string | null,
-  afterCursor?: string
+  afterCursor?: string | null
 ): Promise<void> {
   const body = new URLSearchParams();
 

@@ -6,7 +6,7 @@ import { User } from "../models/user";
 
 const seedUsers = 100;
 export async function seed(knex: Knex): Promise<void> {
-  const passwordHash = "$2b$04$nYbKivKTN4593hXpkJC.s.WcJ8lecwMiPcdXsWTUDs7BNN1JxVWl2"; // 12345678
+  const passwordHash = "$2b$04$LL.nTjsYZY6V.LuBAlVikOgBt/gYiEHu3XtvHvMGwwByqBOgFqZoC"; // Pa$$w0rd!
 
   // Deletes ALL existing entries
   await knex("user").del();

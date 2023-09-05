@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
 import dotenv from "dotenv";
 import { ExtenderTypeOptional, from, IEnv, IOptionalVariable } from "env-var";
 import express, { Express, Response } from "express";
@@ -81,10 +82,14 @@ export default class App {
     });
     this.app.use(express.json());
     this.app.use(express.urlencoded({ extended: true }));
+    //@ts-ignore
     this.app.use(asyncMiddleware(this.headersMiddleware.middleware()));
     this.app.use(this.JWTMiddleware.middleware(disableAuthFor));
+    //@ts-ignore
     this.app.use(asyncMiddleware(this.identityMiddleware.middleware()));
+    //@ts-ignore
     this.app.use(asyncMiddleware(this.permissionMiddleware.middleware()));
+    //@ts-ignore
     this.app.use(asyncMiddleware(this.frozenMiddleware.middleware()));
   }
 

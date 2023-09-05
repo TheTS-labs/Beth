@@ -1,8 +1,8 @@
 import { faker } from "@faker-js/faker";
-import { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import useSWR from "swr";
 
-import { RequestErrorObject } from "../../../backend/common/types";
+import { DBBool, RequestErrorObject } from "../../../backend/common/types";
 import { DetailedPosts } from "../../../backend/db/models/post";
 import fetcher from "../../lib/fetcher";
 import fetchPosts from "../../lib/home/fetch_posts";
@@ -43,7 +43,7 @@ export default function Posts(props: { token: string | undefined }): React.JSX.E
     score: faker.number.int({ min: -1000, max: 1000 }),
     displayName: faker.internet.displayName(),
     username: faker.internet.userName(),
-    verified: faker.datatype.boolean() as any,
+    verified: faker.datatype.boolean() as unknown as DBBool,
     userVote: faker.datatype.boolean(),
     author: faker.internet.userName(),
     createdAt: new Date(),
@@ -52,10 +52,11 @@ export default function Posts(props: { token: string | undefined }): React.JSX.E
     parent: null,
     tags: "",
     email: faker.internet.email(),
-    isFrozen: false as any,
+    isFrozen: DBBool.No,
+    // eslint-disable-next-line camelcase
     _cursor_0: i
   })));
-  const [ afterCursor, setAfterCursor ] = useState(null);
+  const [ afterCursor, setAfterCursor ] = useState<string | null>(null);
   const [ errors, setErrors ] = useState<string[]>([]);
   const [isClient, setIsClient] = useState(false);
   const posts = useRef<DetailedPosts["results"]>(defaultPosts);
@@ -63,7 +64,12 @@ export default function Posts(props: { token: string | undefined }): React.JSX.E
   const postElements: React.JSX.Element[] = [];
 
   useEffect(() => setIsClient(true), []);
-  useEffect(observer(observerTarget, fetchPosts, [afterCursor, setErrors, setAfterCursor, posts, props.token]), [afterCursor]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(observer(
+    observerTarget,
+    fetchPosts,
+    [ afterCursor, setErrors, setAfterCursor, posts, props.token ]
+  ), [afterCursor]);
 
   if (isClient) {
     if (postsResponse.data?.results && posts.current == defaultPosts) {
@@ -76,13 +82,19 @@ export default function Posts(props: { token: string | undefined }): React.JSX.E
     if (postsResponse.error || postsResponse.data?.hasOwnProperty("errorMessage")) {
       postElements.push(<div className={styles.posts_broken_container} key={-1}>
         <p className={styles.broken_text}>Feed unavailable</p>
-        <p className={styles.broken_explain}>{postsResponse.data?.errorMessage||"The feed is not available right now, maybe the server is overloaded and therefore cannot respond to the request, try again sometime later"}</p>
+        <p className={styles.broken_explain}>{
+          postsResponse.data?.errorMessage||[
+            "The feed is not available right now,",
+            "maybe the server is overloaded and therefore cannot respond to the request,",
+            "try again sometime later"
+          ].join(" ")
+        }</p>
       </div>);
     }
   
     postElements.push(...posts.current.map((post, i) => 
-      <ExpandedPost 
-        reactKey={i}
+      <ExpandedPost
+        key={i}
         post={post}
         broken={Boolean(postsResponse.error || postsResponse.data?.hasOwnProperty("errorMessage"))}
         loading={postsResponse.isLoading}

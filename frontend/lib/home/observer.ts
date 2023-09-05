@@ -1,7 +1,12 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { MutableRefObject } from "react";
 
-export default (observerTarget: MutableRefObject<any>, callback: Function, args: any[]) => {
-  return () => {
+export default function observer(
+  observerTarget: MutableRefObject<any>,
+  callback: (...args: any[]) => any,
+  args: any[]
+): () => () => void {
+  return (): () => void => {
     const observer = new IntersectionObserver(
       entries => {
         if (entries[0].isIntersecting) {
@@ -14,10 +19,10 @@ export default (observerTarget: MutableRefObject<any>, callback: Function, args:
       observer.observe(observerTarget.current);
     }
   
-    return () => {
+    return (): void => {
       if (observerTarget.current) {
         observer.unobserve(observerTarget.current);
       }
     }; 
   };
-};
+}

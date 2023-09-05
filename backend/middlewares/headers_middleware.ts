@@ -25,7 +25,7 @@ export default class HeadersMiddleware {
 
       res.setHeader(
         "Access-Control-Allow-Headers",
-        "Authorization"
+        "Authorization,Content-Type"
       );
 
       next();

@@ -1,4 +1,4 @@
-import { Dispatch, MutableRefObject, SetStateAction, useEffect, useRef, useState } from "react";
+import React, { Dispatch, MutableRefObject, SetStateAction, useEffect, useRef, useState } from "react";
 
 import { DetailedPost } from "../../../backend/db/models/post";
 import observer from "../../lib/home/observer";
@@ -11,13 +11,13 @@ import Loader from "../loader";
 
 interface Props {
   token: string | undefined
-  setSearchAfterCursor: Dispatch<SetStateAction<string>>
-  setQuery: Dispatch<SetStateAction<string>>
-  setTags: Dispatch<SetStateAction<string>>
+  setSearchAfterCursor: Dispatch<SetStateAction<string | null>>
+  setQuery: Dispatch<SetStateAction<string | null>>
+  setTags: Dispatch<SetStateAction<string | null>>
   searchResults: MutableRefObject<DetailedPost[]>
-  searchAfterCursor: string
-  query: string
-  tags: string
+  searchAfterCursor: string | null
+  query: string | null
+  tags: string | null
 }
 
 export default function SearchPosts(props: Props): React.JSX.Element {
@@ -25,13 +25,14 @@ export default function SearchPosts(props: Props): React.JSX.Element {
   const observerTarget = useRef(null);
   const postElements: React.JSX.Element[] = [];
 
-  const clearResults = () => {
+  const clearResults = (): void => {
     props.searchResults.current = [];
     props.setTags(null);
     props.setSearchAfterCursor(null);
     props.setQuery(null);
   };
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(observer(observerTarget, fetchSearchResults, [
     props.query,
     setErrors,
@@ -43,7 +44,7 @@ export default function SearchPosts(props: Props): React.JSX.Element {
 
   postElements.push(...props.searchResults.current.map((post, i) => 
     <ExpandedPost 
-      reactKey={i}
+      key={i}
       post={post}
       broken={false}
       loading={false}

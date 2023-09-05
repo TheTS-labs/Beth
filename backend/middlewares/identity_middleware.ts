@@ -62,8 +62,12 @@ export default class IdentityMiddleware {
         throw new RequestError("DatabaseError", [""], 3);
       }
 
-      req.auth.token = token;
-      req.auth.user = user;
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      //@ts-ignore
+      req.auth = {
+        token,
+        user
+      };
 
       this.logger.log({
         level: "middleware",

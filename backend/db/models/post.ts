@@ -96,25 +96,25 @@ export default class PostModel implements ICRUDModel<
     await this.db<Post>("post").where({ id: identifier }).del();
   }
 
-  public async readHotTags(): Promise<{ tag: string, post_count: string }[]> {
+  public async readHotTags(): Promise<{ tag: string, postCount: string }[]> {
     this.logger.log({
       level: "trying",
       message: "To read hot tags",
       path: module.filename
     });
 
-    //? I can't do this without raw also because Knex turns .select("tag", "COUNT(*) as post_count") into
-    //? select "tag", "COUNT(*)" as "post_count"
+    //? I can't do this without raw also because Knex turns .select("tag", "COUNT(*) as postCount") into
+    //? select "tag", "COUNT(*)" as "postCount"
     // TODO: https://knexjs.org/guide/ref.html#alias
 
     const hotTags = await this.db.raw(`
-      SELECT tag, COUNT(*) as post_count
+      SELECT tag, COUNT(*) as postCount
       FROM (
         SELECT unnest(string_to_array(tags, ',')) AS tag
         FROM post
       ) AS subquery
       GROUP BY tag
-      ORDER BY post_count DESC
+      ORDER BY postCount DESC
       LIMIT 8
     `);
 

@@ -13,7 +13,7 @@
     "backend:test": "yarn workspace backend jest --detectOpenHandles --forceExit --maxWorkers=50%",
     "backend:lint": "yarn eslint 'backend/**/*.{ts,tsx}'",
     "root:lint": "yarn eslint '**/*.{ts,tsx}'",
-    "root:start": "yarn concurrently \"yarn backend:start\" \"yarn frontend:start\" -n BACKEND,FRONTEND -c \"bgCyan.bold,bgGreen.bold\"",
+    "root:start": "yarn concurrently \"yarn backend:start\" \"yarn frontend:start\" -n \"SERVER,CLIENT\" -c \"bgCyan.bold,bgGreen.bold\"",
     "frontend:start": "yarn workspace frontend next dev",
     "frontend:lint": "yarn eslint 'frontend/**/*.{ts,tsx}'"
   },

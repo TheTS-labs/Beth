@@ -1,13 +1,14 @@
 import axios from "axios";
-import { Dispatch, SetStateAction } from "react";
+import { Dispatch, MutableRefObject, SetStateAction } from "react";
 
+import { DetailedPosts } from "../../../backend/db/models/post";
 import axiosConfig from "../../axios.config";
 
 export default async function fetchPosts(
   afterCursor: string,
   setErrors: Dispatch<SetStateAction<string[]>>,
   setAfterCursor: Dispatch<SetStateAction<string>>,
-  posts: any,
+  posts: MutableRefObject<DetailedPosts["results"]>,
   token: string | undefined
 ): Promise<void> {
   if (!afterCursor) {

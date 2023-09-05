@@ -1,6 +1,6 @@
 import axios from "axios";
 import Link from "next/link";
-import { FormEvent, useState } from "react";
+import React, { FormEvent, useState } from "react";
 
 import axiosConfig from "../../axios.config";
 import Errors from "../../components/errors";
@@ -87,7 +87,7 @@ export default function Singup(): React.JSX.Element {
 
     <div className={styles.form_wrap}>
       <h1 className={styles.text}><i>sign up here</i></h1>
-      <p><i>Then, don't forget to Log In</i></p>
+      <p><i>Then, don&apos;t forget to Log In</i></p>
       <form onSubmit={onsubmit}>
         <input type="text" name="username" id="username" placeholder="Username" required/>
         <br />

@@ -1,4 +1,4 @@
-import { MouseEvent, useRef, useState } from "react";
+import React, { MouseEvent } from "react";
 
 import { DetailedPost, Post } from "../../backend/db/models/post";
 import expandedStyles from "../public/styles/components/expanded_post.module.sass";
@@ -6,15 +6,14 @@ import defaultStyles from "../public/styles/components/post.module.sass";
 import Loading from "./loading";
 
 interface Props {
-  reactKey: number
   post: DetailedPost
-  voteOnClick?: (event: MouseEvent<any, any>) => Promise<void> | void
+  voteOnClick?: (event: MouseEvent<unknown, unknown>) => Promise<void> | void
   broken: boolean
   loading: boolean
   isReply?: boolean
   expanded?: boolean
-  onPostClick?: (event: MouseEvent<any, any>) => Promise<void> | void
-  onUsernameClick?: (event: MouseEvent<any, any>) => Promise<void> | void
+  onPostClick?: (event: MouseEvent<unknown, unknown>) => Promise<void> | void
+  onUsernameClick?: (event: MouseEvent<unknown, unknown>) => Promise<void> | void
 }
 
 export default function Post(props: Props): React.JSX.Element {
@@ -23,27 +22,39 @@ export default function Post(props: Props): React.JSX.Element {
   const postText = props.post.text.split("\n").map(line => <><br/>{line}</>);
 
   return <>
-    <div className={styles.post} key={props.reactKey} data-key={props.reactKey} data-broken={props.broken} data-reply={props.isReply}>
+    <div className={styles.post} data-key={props.post.id} data-broken={props.broken} data-reply={props.isReply}>
       {/* User information */}
       <div className={styles.user}>
         <div className={styles.username_and_checkmark}>
           <span className={styles.username}>{props.loading ? <Loading /> : props.post.displayName}</span>
           {userCheckmark}
         </div>
-        <span className={styles.email} onClick={props.onUsernameClick}>@{props.loading ? <Loading /> : props.post.username}</span>
+        <span className={styles.email} onClick={props.onUsernameClick}>
+          @{props.loading ? <Loading /> : props.post.username}
+        </span>
       </div>
 
       {/* Post itself */}
       <div className={styles.post_container} data-reply={props.isReply}>
-        {(() => {
+        {((): React.JSX.Element => {
           if (props.loading) {
             return <>
               <br/>
-              <p className={styles.post_text} onClick={props.onPostClick}><Loading length={Math.random() * (90 - 50) + 50+"%"}/></p>
-              <p className={styles.post_text} onClick={props.onPostClick}><Loading length={Math.random() * (90 - 20) + 20+"%"}/></p>
-              <p className={styles.post_text} onClick={props.onPostClick}><Loading length={Math.random() * (90 - 20) + 20+"%"}/></p>
-              <p className={styles.post_text} onClick={props.onPostClick}><Loading length={Math.random() * (90 - 50) + 50+"%"}/></p>
-              <p className={styles.post_text} onClick={props.onPostClick}><Loading length={Math.random() * (90 - 20) + 20+"%"}/></p>
+              <p className={styles.post_text} onClick={props.onPostClick}>
+                <Loading length={Math.random() * (90 - 20) + 20+"%"}/>
+              </p>
+              <p className={styles.post_text} onClick={props.onPostClick}>
+                <Loading length={Math.random() * (90 - 20) + 20+"%"}/>
+              </p>
+              <p className={styles.post_text} onClick={props.onPostClick}>
+                <Loading length={Math.random() * (90 - 20) + 20+"%"}/>
+              </p>
+              <p className={styles.post_text} onClick={props.onPostClick}>
+                <Loading length={Math.random() * (90 - 20) + 20+"%"}/>
+              </p>
+              <p className={styles.post_text} onClick={props.onPostClick}>
+                <Loading length={Math.random() * (90 - 20) + 20+"%"}/>
+              </p>
             </>;
           }
 
@@ -76,4 +87,4 @@ export default function Post(props: Props): React.JSX.Element {
       </div>
     </div>
   </>;
-};
+}

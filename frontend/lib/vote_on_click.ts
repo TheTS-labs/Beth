@@ -3,7 +3,7 @@ import { Dispatch, MouseEvent, SetStateAction } from "react";
 
 import axiosConfig from "../axios.config";
 
-type ReturnType = (event: MouseEvent<any, any>) => Promise<void>;
+type ReturnType = (event: MouseEvent<unknown, unknown>) => Promise<void>;
 
 async function vote(
   token: string,
@@ -31,8 +31,8 @@ async function vote(
   return response.action || undefined;
 }
 
-export default (token: string, setErrors: Dispatch<SetStateAction<string[]>>): ReturnType => {
-  return async (event: MouseEvent<any, any>): Promise<void> => {
+export default (token: string | undefined, setErrors: Dispatch<SetStateAction<string[]>>): ReturnType => {
+  return async (event: MouseEvent<unknown, unknown>): Promise<void> => {
     if (!token) {
       setErrors(prevErrors => [...prevErrors, "Log In or Sing Up to vote"]);
       return;

@@ -79,7 +79,7 @@ export default class CachingPostModel extends PostModel {
     await this.redisClient.del(`post:${identifier}`);
   }
 
-  public async readHotTags(): Promise<{ tag: string, post_count: string }[]> {
+  public async readHotTags(): Promise<{ tag: string, postCount: string }[]> {
     this.logger.log({
       level: "trying",
       message: "To read hot tags",
@@ -87,20 +87,20 @@ export default class CachingPostModel extends PostModel {
     });
 
     const cachedHotTagsString = await this.redisClient.get("post:hotTags");
-    const cachedHotTags: { tag: string, post_count: string }[] | null = JSON.parse(cachedHotTagsString||"null");
+    const cachedHotTags: { tag: string, postCount: string }[] | null = JSON.parse(cachedHotTagsString||"null");
 
     if (cachedHotTags) {
       return cachedHotTags;
     }
 
     const hotTags = await this.db.raw(`
-      SELECT tag, COUNT(*) as post_count
+      SELECT tag, COUNT(*) as postCount
       FROM (
         SELECT unnest(string_to_array(tags, ',')) AS tag
         FROM post
       ) AS subquery
       GROUP BY tag
-      ORDER BY post_count DESC
+      ORDER BY postCount DESC
       LIMIT 8
     `);
 

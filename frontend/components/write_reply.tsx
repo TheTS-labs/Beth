@@ -1,4 +1,4 @@
-import { Dispatch, FormEvent, SetStateAction, useState } from "react";
+import React, { Dispatch, FormEvent, SetStateAction, useState } from "react";
 import { useCookies } from "react-cookie";
 
 import reply from "../lib/reply";
@@ -12,11 +12,16 @@ interface Event extends FormEvent<HTMLFormElement> {
   }
 }
 
-export function WriteReply(props: { postId: number, setDoRequest: Dispatch<SetStateAction<boolean>>}): React.JSX.Element {
+interface Props {
+  postId: number
+  setDoRequest: Dispatch<SetStateAction<boolean>>
+}
+
+export function WriteReply(props: Props): React.JSX.Element {
   const [ token ] = useCookies(["AUTH_TOKEN"]);
   const [ errors, setErrors ] = useState<string[]>([]);
 
-  const onSubmit = (event: Event) => {
+  const onSubmit = (event: Event): void => {
     event.preventDefault();
     reply(props.postId, event.target.text.value, setErrors, token.AUTH_TOKEN).then(result => {
       if (result) {
@@ -34,4 +39,4 @@ export function WriteReply(props: { postId: number, setDoRequest: Dispatch<SetSt
 
     <Errors errors={errors} />
   </>;
-};
+}

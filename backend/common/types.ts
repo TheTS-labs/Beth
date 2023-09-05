@@ -33,5 +33,5 @@ export interface Auth {
 }
 
 export interface JWTRequest extends Request {
-  auth: Auth
+  auth: Auth | undefined
 }

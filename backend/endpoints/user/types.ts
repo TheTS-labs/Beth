@@ -34,17 +34,29 @@ export const ViewArgsSchema = Joi.object({
 });
 // <<< View <<<
 
-// >>> Edit Password >>>
-export interface EditPasswordArgs {
-  newPassword: string
+// >>> Edit >>>
+export interface EditArgs {
+  password: string
+  edit: {
+    password?: string
+    username?: string
+    displayName?: string
+  }
 }
 
-export const EditPasswordArgsSchema = Joi.object({
-  newPassword: Joi.string().regex(
+export const EditArgsSchema = Joi.object({
+  password: Joi.string().regex(
     /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$/mi
   ).required(),
+  edit: Joi.object({
+    password: Joi.string().regex(
+      /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$/mi
+    ).default(() => undefined),
+    username: Joi.string().default(() => undefined),
+    displayName: Joi.string().default(() => undefined)
+  })
 });
-// <<< Edit Password <<<
+// <<< Edit <<<
 
 // >>> Froze >>>
 export interface FrozeArgs {
@@ -108,5 +120,5 @@ export const IssueTokenArgsSchema = Joi.object({
 }).xor("scope", "shorthand");
 // <<< Issue Token <<<
 
-export type UserRequestArgs = CreateArgs | ViewArgs | EditPasswordArgs |
+export type UserRequestArgs = CreateArgs | ViewArgs | EditArgs |
                               FrozeArgs | EditTagsArgs | VerifyArgs | IssueTokenArgs;

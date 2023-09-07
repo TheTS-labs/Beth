@@ -108,13 +108,13 @@ export default class PostModel implements ICRUDModel<
     // TODO: https://knexjs.org/guide/ref.html#alias
 
     const hotTags = await this.db.raw(`
-      SELECT tag, COUNT(*) as postCount
+      SELECT tag, COUNT(*) as "postCount"
       FROM (
         SELECT unnest(string_to_array(tags, ',')) AS tag
         FROM post
       ) AS subquery
       GROUP BY tag
-      ORDER BY postCount DESC
+      ORDER BY "postCount" DESC
       LIMIT 8
     `);
 

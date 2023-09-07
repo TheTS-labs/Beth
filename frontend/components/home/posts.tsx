@@ -2,7 +2,7 @@ import { faker } from "@faker-js/faker";
 import React, { useEffect, useRef, useState } from "react";
 import useSWR from "swr";
 
-import { DBBool, RequestErrorObject } from "../../../backend/common/types";
+import { RequestErrorObject } from "../../../backend/common/types";
 import { DetailedPosts } from "../../../backend/db/models/post";
 import fetcher from "../../lib/fetcher";
 import fetchPosts from "../../lib/home/fetch_posts";
@@ -43,7 +43,8 @@ export default function Posts(props: { token: string | undefined }): React.JSX.E
     score: faker.number.int({ min: -1000, max: 1000 }),
     displayName: faker.internet.displayName(),
     username: faker.internet.userName(),
-    verified: faker.datatype.boolean() as unknown as DBBool,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    verified: faker.datatype.boolean() as any,
     userVote: faker.datatype.boolean(),
     author: faker.internet.userName(),
     createdAt: new Date(),
@@ -52,7 +53,8 @@ export default function Posts(props: { token: string | undefined }): React.JSX.E
     parent: null,
     tags: "",
     email: faker.internet.email(),
-    isFrozen: DBBool.No,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    isFrozen: false as any,
     // eslint-disable-next-line camelcase
     _cursor_0: i
   })));

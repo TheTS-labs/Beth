@@ -91,6 +91,7 @@ export default class UserEndpoint extends BaseEndpoint<type.UserRequestArgs, Cal
 
   async froze(args: type.FrozeArgs, auth: Auth): Promise<CallEndpointReturnType> {
     args = await this.validate(type.FrozeArgsSchema, args);
+    args.email = args.email || auth.user.email;
 
     const permissions = await this.permissionModel.read(auth.user.email) as Permissions;
 

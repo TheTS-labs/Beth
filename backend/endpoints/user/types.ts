@@ -65,7 +65,7 @@ export interface FrozeArgs {
 }
 
 export const FrozeArgsSchema = Joi.object({
-  email: Joi.string().email().required(),
+  email: Joi.string().email().default(() => undefined),
   froze: Joi.number().min(0).max(1).default(1)
 });
 // <<< Froze <<<

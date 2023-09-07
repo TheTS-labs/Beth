@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+// eslint-disable-next-line import/named
 import axios, { AxiosRequestConfig } from "axios";
 
 import axiosConfig from "../axios.config";

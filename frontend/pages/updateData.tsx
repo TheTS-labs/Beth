@@ -88,23 +88,32 @@ export default function App(): React.JSX.Element {
   return <>
     <Header>
       <div className={headerStyles.back}>
-      <Link href="/">
-        <button>
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14" >
-            <g id="return-2--arrow-return-enter-keyboard">
-              <path 
-                id="Vector" 
-                stroke="#3e3e3e" 
-                strokeLinecap="round" 
-                strokeLinejoin="round" 
-                d="M.5 9.5h9a4 4 0 1 0 0-8h-3" 
-              />
-              <path id="Vector_2" stroke="#3e3e3e" strokeLinecap="round" strokeLinejoin="round" d="m3.5 6.5-3 3 3 3" />
-            </g>
-          </svg>
-        </button>
-      </Link>
+        <Link href="/">
+          <button>
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14" >
+              <g id="return-2--arrow-return-enter-keyboard">
+                <path 
+                  id="Vector" 
+                  stroke="#3e3e3e" 
+                  strokeLinecap="round" 
+                  strokeLinejoin="round" 
+                  d="M.5 9.5h9a4 4 0 1 0 0-8h-3" 
+                />
+                <path
+                  id="Vector_2"
+                  stroke="#3e3e3e"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="m3.5 6.5-3 3 3 3"
+                />
+              </g>
+            </svg>
+          </button>
+        </Link>
       </div>
+      <Link href="/auth/froze" className={styles.froze_account}>
+        <button>Froze account</button>
+      </Link>
     </Header>
 
     <div className={styles.text_container}>
@@ -170,6 +179,8 @@ export default function App(): React.JSX.Element {
             value={postsResponse.data?.displayName || "..."}
             readOnly
           />
+          <br />
+          <input type="text" className={styles.placeholder} />
           <br />
         </form>
       </div>

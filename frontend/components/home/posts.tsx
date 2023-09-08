@@ -12,6 +12,8 @@ import styles from "../../public/styles/pages/home/posts.module.sass";
 import Errors from "../errors";
 import { ExpandedPost } from "../expanded_post";
 import Loader from "../loader";
+import { WriteReply } from "../write_reply";
+import { WritePost } from "../write_post";
 
 export default function Posts(props: { token: string | undefined }): React.JSX.Element {
   const postsResponse = useSWR(
@@ -107,6 +109,7 @@ export default function Posts(props: { token: string | undefined }): React.JSX.E
 
   return <div className={styles.posts}>
     <p className={styles.text}>Feed</p>
+    { isClient && <WritePost /> }
     {...postElements}
 
     <div className={styles.loader} ref={observerTarget}><Loader /></div>

@@ -53,11 +53,11 @@ export default function LogIn(): React.JSX.Element {
       return;
     }
 
-    e.target.submit.value = "done, redirecting...";
-
     const payload = JSON.parse(atob(response.data.token.split(".")[1]));
 
     setToken("AUTH_TOKEN", response.data.token, { expires: new Date(payload.exp*1000) });
+
+    e.target.submit.value = "done, redirecting...";
     window.location.replace("/");
   };
 

@@ -2,7 +2,7 @@
 import React, { Dispatch, MouseEvent,SetStateAction, useEffect, useRef, useState } from "react";
 
 import { DetailedPost, DetailedPosts } from "../../backend/db/models/post";
-import fetchUserPosts from "../lib/home/fetch_user_posts";
+import FetchPosts from "../lib/home/fetch_posts";
 import observer from "../lib/home/observer";
 import Loader from "./loader";
 
@@ -25,11 +25,13 @@ export function ExpandedUser(props: Props): React.JSX.Element {
   const posts = useRef<DetailedPosts["results"]>([]);
   const [ afterCursor, setAfterCursor ] = useState<string | null>(null);
   const observerTarget = useRef(null);
+  const fetch = new FetchPosts(afterCursor, props.setErrors, setAfterCursor, undefined, props.username);
+
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(observer(
     observerTarget,
-    fetchUserPosts,
-    [ afterCursor, props.setErrors, setAfterCursor, posts, props.username ]
+    async (posts) => fetch.request(posts),
+    [ posts ]
   ), [afterCursor]);
   useEffect(() => {
     //? Note: In dev this code will run twice because of React Strict mode
@@ -37,7 +39,7 @@ export function ExpandedUser(props: Props): React.JSX.Element {
     //? But only in dev
 
     if (!afterCursor) {
-      fetchUserPosts(afterCursor, props.setErrors, setAfterCursor, posts, props.username, true);
+      fetch.request(posts, true);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

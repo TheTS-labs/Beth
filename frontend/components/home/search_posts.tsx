@@ -1,8 +1,8 @@
 import React, { Dispatch, MutableRefObject, SetStateAction, useEffect, useRef, useState } from "react";
 
 import { DetailedPost } from "../../../backend/db/models/post";
+import FetchPosts from "../../lib/home/fetch_posts";
 import observer from "../../lib/home/observer";
-import fetchSearchResults from "../../lib/home/search";
 import voteOnClick from "../../lib/vote_on_click";
 import styles from "../../public/styles/pages/home/posts.module.sass";
 import Errors from "../errors";
@@ -25,6 +25,15 @@ export default function SearchPosts(props: Props): React.JSX.Element {
   const observerTarget = useRef(null);
   const postElements: React.JSX.Element[] = [];
 
+  const fetch = new FetchPosts(
+    props.searchAfterCursor,
+    setErrors,
+    props.setSearchAfterCursor,
+    undefined, undefined,
+    props.tags || undefined,
+    props.query || undefined
+  );
+
   const clearResults = (): void => {
     props.searchResults.current = [];
     props.setTags(null);
@@ -33,14 +42,11 @@ export default function SearchPosts(props: Props): React.JSX.Element {
   };
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(observer(observerTarget, fetchSearchResults, [
-    props.query,
-    setErrors,
-    props.setSearchAfterCursor,
-    props.searchResults,
-    props.tags,
-    props.searchAfterCursor
-  ]), [props.searchAfterCursor]);
+  useEffect(observer(
+    observerTarget,
+    async (searchResults) => fetch.request(searchResults),
+    [ props.searchResults ]
+  ), [props.searchAfterCursor]);
 
   postElements.push(...props.searchResults.current.map((post, i) => 
     <ExpandedPost 

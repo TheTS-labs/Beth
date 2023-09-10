@@ -5,14 +5,13 @@ import useSWR from "swr";
 import { RequestErrorObject } from "../../../backend/common/types";
 import { DetailedPosts } from "../../../backend/db/models/post";
 import fetcher from "../../lib/fetcher";
-import fetchPosts from "../../lib/home/fetch_posts";
+import FetchPosts from "../../lib/home/fetch_posts";
 import observer from "../../lib/home/observer";
 import voteOnClick from "../../lib/vote_on_click";
 import styles from "../../public/styles/pages/home/posts.module.sass";
 import Errors from "../errors";
 import { ExpandedPost } from "../expanded_post";
 import Loader from "../loader";
-import { WriteReply } from "../write_reply";
 import { WritePost } from "../write_post";
 
 export default function Posts(props: { token: string | undefined }): React.JSX.Element {
@@ -66,14 +65,10 @@ export default function Posts(props: { token: string | undefined }): React.JSX.E
   const posts = useRef<DetailedPosts["results"]>(defaultPosts);
   const observerTarget = useRef(null);
   const postElements: React.JSX.Element[] = [];
+  const fetch = new FetchPosts(afterCursor, setErrors, setAfterCursor, props.token);
 
   useEffect(() => setIsClient(true), []);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(observer(
-    observerTarget,
-    fetchPosts,
-    [ afterCursor, setErrors, setAfterCursor, posts, props.token ]
-  ), [afterCursor]);
+  useEffect(observer(observerTarget, async (posts) => fetch.request(posts), [ posts ]), [afterCursor]);
 
   if (isClient) {
     if (postsResponse.data?.results && posts.current == defaultPosts) {

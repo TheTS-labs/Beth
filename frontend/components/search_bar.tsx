@@ -1,9 +1,9 @@
 import React, { Dispatch, FormEvent, MutableRefObject, SetStateAction, useEffect, useState } from "react";
 
-import { DetailedPost } from "../../../backend/db/models/post";
-import fetchSearchResults from "../../lib/home/search";
-import styles from "../../public/styles/pages/home/index.module.sass";
-import Errors from "../errors";
+import { DetailedPost } from "../../backend/db/models/post";
+import FetchPosts from "../lib/home/fetch_posts";
+import styles from "../public/styles/pages/index.module.sass";
+import Errors from "./common/errors";
 
 interface Event extends FormEvent<HTMLFormElement> {
   target: EventTarget & {
@@ -12,12 +12,12 @@ interface Event extends FormEvent<HTMLFormElement> {
 }
 
 interface Props {
-  setSearchAfterCursor: Dispatch<SetStateAction<string | null>>
-  setQuery: Dispatch<SetStateAction<string | null>>
-  setTags: Dispatch<SetStateAction<string | null>>
+  setSearchAfterCursor: Dispatch<SetStateAction<string | undefined>>
+  setQuery: Dispatch<SetStateAction<string | undefined>>
+  setTags: Dispatch<SetStateAction<string | undefined>>
   searchResults: MutableRefObject<DetailedPost[]>
-  query: string | null
-  tags: string | null
+  query: string | undefined
+  tags: string | undefined
 }
 
 const tagsRegex = / tags:\[([a-zA-Z0-9]+(?:,[a-zA-Z0-9]+)*)\]/gm;
@@ -29,8 +29,8 @@ export default function SearchBar(props: Props): React.JSX.Element {
     event.preventDefault();
     if (props.query || props.tags) {
       props.searchResults.current = [];
-      props.setTags(null);
-      props.setQuery(null);
+      props.setTags(undefined);
+      props.setQuery(undefined);
     }
 
     const query = event.target.query.value;
@@ -46,7 +46,16 @@ export default function SearchBar(props: Props): React.JSX.Element {
   };
 
   useEffect(() => {
-    fetchSearchResults(props.query, setErrors, props.setSearchAfterCursor, props.searchResults, props.tags);
+    const fetch = new FetchPosts(
+      undefined,
+      setErrors,
+      props.setSearchAfterCursor,
+      undefined, undefined,
+      props.tags || undefined,
+      props.query || undefined
+    );
+
+    fetch.request(props.searchResults, true);
   }, [props.query, props.tags, props.searchResults, props.setSearchAfterCursor]);
 
   return <div className={styles.search_bar}>

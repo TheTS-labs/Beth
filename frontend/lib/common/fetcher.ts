@@ -2,7 +2,7 @@
 // eslint-disable-next-line import/named
 import axios, { AxiosRequestConfig } from "axios";
 
-import axiosConfig from "../axios.config";
+import axiosConfig from "../../axios.config";
 
 export default <DataType=any>(config: AxiosRequestConfig={}): (url: string) => Promise<DataType> => {
   return async (url: string): Promise<DataType> => {

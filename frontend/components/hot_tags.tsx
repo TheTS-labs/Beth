@@ -1,16 +1,16 @@
 import React, { Dispatch, MutableRefObject,SetStateAction } from "react";
 import useSWR from "swr";
 
-import { DetailedPost } from "../../../backend/db/models/post";
-import fetcher from "../../lib/fetcher";
-import styles from "../../public/styles/pages/home/hot_tags.module.sass";
-import Tag from "../tag";
+import { DetailedPost } from "../../backend/db/models/post";
+import fetcher from "../lib/common/fetcher";
+import styles from "../public/styles/pages/hot_tags.module.sass";
+import Tag from "./common/tag";
 
 interface Props {
-  setSearchAfterCursor: Dispatch<SetStateAction<string | null>>
-  setTags: Dispatch<SetStateAction<string | null>>
+  setSearchAfterCursor: Dispatch<SetStateAction<string | undefined>>
+  setTags: Dispatch<SetStateAction<string | undefined>>
   searchResults: MutableRefObject<DetailedPost[]>
-  tags: string | null
+  tags: string | undefined
 }
 
 export default function HotTags(props: Props): React.JSX.Element {
@@ -50,7 +50,7 @@ export default function HotTags(props: Props): React.JSX.Element {
       loading={hotTagsResponse.isLoading}
       onClick={(): void => {
         props.searchResults.current = [];
-        props.setSearchAfterCursor(null);
+        props.setSearchAfterCursor(undefined);
         props.setTags(value.tag);
       }}
     />

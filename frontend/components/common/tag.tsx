@@ -1,6 +1,6 @@
 import React from "react";
 
-import styles from "../public/styles/components/tag.module.sass";
+import styles from "../../public/styles/components/common/tag.module.sass";
 import Loading from "./loading";
 
 type Props = {

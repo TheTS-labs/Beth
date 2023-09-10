@@ -3,8 +3,8 @@ import Link from "next/link";
 import React, { FormEvent, useState } from "react";
 
 import axiosConfig from "../../axios.config";
-import Errors from "../../components/errors";
-import Header from "../../components/header";
+import Errors from "../../components/common/errors";
+import Header from "../../components/common/header";
 import styles from "../../public/styles/pages/auth/common.module.sass";
 import headerStyles from "../../public/styles/pages/auth/header.module.sass";
 

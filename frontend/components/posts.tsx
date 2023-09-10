@@ -2,17 +2,17 @@ import { faker } from "@faker-js/faker";
 import React, { useEffect, useRef, useState } from "react";
 import useSWR from "swr";
 
-import { RequestErrorObject } from "../../../backend/common/types";
-import { DetailedPosts } from "../../../backend/db/models/post";
-import fetcher from "../../lib/fetcher";
-import FetchPosts from "../../lib/home/fetch_posts";
-import observer from "../../lib/home/observer";
-import voteOnClick from "../../lib/vote_on_click";
-import styles from "../../public/styles/pages/home/posts.module.sass";
-import Errors from "../errors";
-import { ExpandedPost } from "../expanded_post";
-import Loader from "../loader";
-import { WritePost } from "../write_post";
+import { RequestErrorObject } from "../../backend/common/types";
+import { DetailedPosts } from "../../backend/db/models/post";
+import fetcher from "../lib/common/fetcher";
+import observer from "../lib/common/observer";
+import FetchPosts from "../lib/home/fetch_posts";
+import voteOnClick from "../lib/vote_on_click";
+import styles from "../public/styles/pages/posts.module.sass";
+import Errors from "./common/errors";
+import Loader from "./common/loader";
+import { Write } from "./common/write";
+import { ExpandedPost } from "./expanded_post";
 
 export default function Posts(props: { token: string | undefined }): React.JSX.Element {
   const postsResponse = useSWR(
@@ -59,7 +59,7 @@ export default function Posts(props: { token: string | undefined }): React.JSX.E
     // eslint-disable-next-line camelcase
     _cursor_0: i
   })));
-  const [ afterCursor, setAfterCursor ] = useState<string | null>(null);
+  const [ afterCursor, setAfterCursor ] = useState<string | undefined>();
   const [ errors, setErrors ] = useState<string[]>([]);
   const [isClient, setIsClient] = useState(false);
   const posts = useRef<DetailedPosts["results"]>(defaultPosts);
@@ -68,6 +68,7 @@ export default function Posts(props: { token: string | undefined }): React.JSX.E
   const fetch = new FetchPosts(afterCursor, setErrors, setAfterCursor, props.token);
 
   useEffect(() => setIsClient(true), []);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(observer(observerTarget, async (posts) => fetch.request(posts), [ posts ]), [afterCursor]);
 
   if (isClient) {
@@ -104,7 +105,7 @@ export default function Posts(props: { token: string | undefined }): React.JSX.E
 
   return <div className={styles.posts}>
     <p className={styles.text}>Feed</p>
-    { isClient && <WritePost /> }
+    { isClient && <Write setErrors={setErrors} placeholder="Your definitely important opinion..." /> }
     {...postElements}
 
     <div className={styles.loader} ref={observerTarget}><Loader /></div>

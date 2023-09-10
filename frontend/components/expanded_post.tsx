@@ -8,10 +8,10 @@ import useKeyPress from "../lib/hooks/use_key_press";
 import useOutside from "../lib/hooks/use_outside";
 import styles from "../public/styles/components/expanded_post.module.sass";
 import modalStyles from "../public/styles/components/modal.module.sass";
-import Errors from "./errors";
+import Errors from "./common/errors";
+import Post from "./common/post";
+import { Write } from "./common/write";
 import { ExpandedUser } from "./expanded_user";
-import Post from "./post";
-import { WriteReply } from "./write_reply";
 
 interface Props {
   post: DetailedPost
@@ -25,7 +25,7 @@ export function ExpandedPost(props: Props): React.JSX.Element {
   const [ isOpen, setIsOpen ] = useState(false);
   const [ userIsOpen, setUserIsOpen ] = useState(false);
   const [ doRequest, setDoRequest ] = useState(true);
-  const modal = useRef(null);
+  const modal = useRef<HTMLDivElement>(null);
   useOutside(modal, () => { setIsOpen(false); setUserIsOpen(false); }, []);
   useKeyPress("Escape", () => { setIsOpen(false); setUserIsOpen(false); }, []);
   const [ replies, setReplies ] = useState<React.JSX.Element[]>([]);
@@ -74,7 +74,12 @@ export function ExpandedPost(props: Props): React.JSX.Element {
         <Post {...props} expanded={true} />
         <p className={styles.tags}>#{props.post.tags.replaceAll(",", " #")}</p>
         <hr className={styles.hr}/>
-        <WriteReply postId={props.post.id} setDoRequest={setDoRequest} />
+        <Write
+          replyTo={props.post.id}
+          setDoRequest={setDoRequest}
+          setErrors={setErrors}
+          placeholder="Your comment..."
+        />
         {...replies}
         <h3 className={styles.end}>
           That seems to be all there is, cutie~ <br/>

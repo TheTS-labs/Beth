@@ -1,6 +1,6 @@
 import React from "react";
 
-import styles from "../public/styles/components/loader.module.sass";
+import styles from "../../public/styles/components/common/loader.module.sass";
 
 export default function Loader(): React.JSX.Element {
   return <div className={styles.loader}>

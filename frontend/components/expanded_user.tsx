@@ -2,9 +2,9 @@
 import React, { Dispatch, MouseEvent,SetStateAction, useEffect, useRef, useState } from "react";
 
 import { DetailedPost, DetailedPosts } from "../../backend/db/models/post";
+import observer from "../lib/common/observer";
 import FetchPosts from "../lib/home/fetch_posts";
-import observer from "../lib/home/observer";
-import Loader from "./loader";
+import Loader from "./common/loader";
 
 interface SelfProps {
   post: DetailedPost
@@ -23,7 +23,7 @@ interface Props {
 
 export function ExpandedUser(props: Props): React.JSX.Element {
   const posts = useRef<DetailedPosts["results"]>([]);
-  const [ afterCursor, setAfterCursor ] = useState<string | null>(null);
+  const [ afterCursor, setAfterCursor ] = useState<string | undefined>();
   const observerTarget = useRef(null);
   const fetch = new FetchPosts(afterCursor, props.setErrors, setAfterCursor, undefined, props.username);
 

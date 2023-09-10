@@ -2,7 +2,7 @@ import Link from "next/link";
 import React, { MouseEvent } from "react";
 import { useCookies } from "react-cookie";
 
-import Header from "../../components/header";
+import Header from "../../components/common/header";
 import styles from "../../public/styles/pages/auth/common.module.sass";
 import headerStyles from "../../public/styles/pages/auth/header.module.sass";
 

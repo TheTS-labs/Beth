@@ -1,23 +1,23 @@
 import React, { Dispatch, MutableRefObject, SetStateAction, useEffect, useRef, useState } from "react";
 
-import { DetailedPost } from "../../../backend/db/models/post";
-import FetchPosts from "../../lib/home/fetch_posts";
-import observer from "../../lib/home/observer";
-import voteOnClick from "../../lib/vote_on_click";
-import styles from "../../public/styles/pages/home/posts.module.sass";
-import Errors from "../errors";
-import { ExpandedPost } from "../expanded_post";
-import Loader from "../loader";
+import { DetailedPost } from "../../backend/db/models/post";
+import observer from "../lib/common/observer";
+import FetchPosts from "../lib/home/fetch_posts";
+import voteOnClick from "../lib/vote_on_click";
+import styles from "../public/styles/pages/posts.module.sass";
+import Errors from "./common/errors";
+import Loader from "./common/loader";
+import { ExpandedPost } from "./expanded_post";
 
 interface Props {
   token: string | undefined
-  setSearchAfterCursor: Dispatch<SetStateAction<string | null>>
-  setQuery: Dispatch<SetStateAction<string | null>>
-  setTags: Dispatch<SetStateAction<string | null>>
+  setSearchAfterCursor: Dispatch<SetStateAction<string | undefined>>
+  setQuery: Dispatch<SetStateAction<string | undefined>>
+  setTags: Dispatch<SetStateAction<string | undefined>>
   searchResults: MutableRefObject<DetailedPost[]>
-  searchAfterCursor: string | null
-  query: string | null
-  tags: string | null
+  searchAfterCursor: string | undefined
+  query: string | undefined
+  tags: string | undefined
 }
 
 export default function SearchPosts(props: Props): React.JSX.Element {
@@ -36,9 +36,9 @@ export default function SearchPosts(props: Props): React.JSX.Element {
 
   const clearResults = (): void => {
     props.searchResults.current = [];
-    props.setTags(null);
-    props.setSearchAfterCursor(null);
-    props.setQuery(null);
+    props.setTags(undefined);
+    props.setSearchAfterCursor(undefined);
+    props.setQuery(undefined);
   };
 
   // eslint-disable-next-line react-hooks/exhaustive-deps

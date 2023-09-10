@@ -9,13 +9,13 @@ export default class FetchPosts {
   private requestUrl: string;
 
   constructor(
-    public afterCursor: string | null,
+    public afterCursor: string | undefined, // TODO: Move to request
     public setErrors: Dispatch<SetStateAction<string[]>>,
-    public setAfterCursor: Dispatch<SetStateAction<string | null>>,
+    public setAfterCursor: Dispatch<SetStateAction<string | undefined>>,
     public token?: string | undefined,
     public username?: string,
-    public tags?: string,
-    public query?: string,
+    public tags?: string, // TODO: Move to request
+    public query?: string, // TODO: Move to request
   ) {
     this.requestUrl = this.token ? "recommendation/recommend" : "recommendation/globalRecommend";
 

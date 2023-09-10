@@ -1,9 +1,9 @@
 import React, { useEffect, useRef } from "react";
 
-import styles from "../public/styles/components/errors.module.sass";
+import styles from "../../public/styles/components/common/errors.module.sass";
 
 export default function Errors(props: { errors: string[] }): React.JSX.Element {
-  const errorsRef = useRef<HTMLDivElement | null>(null);
+  const errorsRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (errorsRef.current) {

@@ -1,8 +1,8 @@
 import React, { MouseEvent } from "react";
 
-import { DetailedPost, Post } from "../../backend/db/models/post";
-import expandedStyles from "../public/styles/components/expanded_post.module.sass";
-import defaultStyles from "../public/styles/components/post.module.sass";
+import { DetailedPost, Post } from "../../../backend/db/models/post";
+import defaultStyles from "../../public/styles/components/common/post.module.sass";
+import expandedStyles from "../../public/styles/components/expanded_post.module.sass";
 import Loading from "./loading";
 
 interface Props {

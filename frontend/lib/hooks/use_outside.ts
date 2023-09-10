@@ -3,7 +3,7 @@ import { MutableRefObject, useEffect } from "react";
 
 
 export default function useOutside(
-  ref: MutableRefObject<HTMLDivElement>,
+  ref: MutableRefObject<HTMLDivElement | null>,
   callback: (...args: any[]) => any,
   args: any[]
 ): void {

@@ -5,14 +5,12 @@ import React, { FormEvent, useState } from "react";
 import { useCookies } from "react-cookie";
 import useSWR from "swr";
 
-import axiosConfig from "../axios.config";
-import Errors from "../components/errors";
-import Header from "../components/header";
-import fetcher from "../lib/fetcher";
-import headerStyles from "../public/styles/pages/auth/header.module.sass";
-import styles from "../public/styles/pages/update_data.module.sass";
-
-;
+import axiosConfig from "../../axios.config";
+import Errors from "../../components/common/errors";
+import Header from "../../components/common/header";
+import fetcher from "../../lib/common/fetcher";
+import headerStyles from "../../public/styles/pages/auth/header.module.sass";
+import styles from "../../public/styles/pages/auth/update_data.module.sass";
 
 interface Entry {
   value: string

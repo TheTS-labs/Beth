@@ -2,7 +2,7 @@
 import { MutableRefObject } from "react";
 
 export default function observer(
-  observerTarget: MutableRefObject<any>,
+  observerTarget: MutableRefObject<HTMLDivElement | null>,
   callback: (...args: any[]) => any,
   args: any[]
 ): () => () => void {

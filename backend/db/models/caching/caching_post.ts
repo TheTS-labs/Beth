@@ -94,13 +94,13 @@ export default class CachingPostModel extends PostModel {
     }
 
     const hotTags = await this.db.raw(`
-      SELECT tag, COUNT(*) as postCount
+      SELECT tag, COUNT(*) as "postCount"
       FROM (
         SELECT unnest(string_to_array(tags, ',')) AS tag
         FROM post
       ) AS subquery
       GROUP BY tag
-      ORDER BY postCount DESC
+      ORDER BY "postCount" DESC
       LIMIT 8
     `);
 

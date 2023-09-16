@@ -106,18 +106,23 @@ describe("POST /user/view", () => {
   });
 });
 
-describe("POST /user/editPassword", () => {
+describe("POST /user/edit", () => {
   it("should change user password", async () => {
     // Preparing
     const { email, token } = await auth(server, {
       userData,
       password: credentials.hash,
-      scope: ["UserEditPassword"]
+      scope: ["UserEdit"]
     });
     // Preparing
 
-    const res = await req.post("/user/editPassword")
-                         .send({ newPassword: credentials.newPassword })
+    const res = await req.post("/user/edit")
+                         .send({
+                          password: credentials.password,
+                          edit: {
+                            password: credentials.newPassword
+                          }
+                         })
                          .set({ "Authorization": "Bearer " + token });
 
     const newHash = await server.db<User>("user").select("password").where({ email }).first();

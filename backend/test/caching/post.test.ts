@@ -478,7 +478,9 @@ describe("POST /post/viewReplies", () => {
     await server.db<Post>("post").insert({ text: "Example 3", author: userData.email, repliesTo: parent, parent });
     // Preparing
 
-    const res = await req.post("/post/viewReplies").send({ parent }).set({ "Authorization": "Bearer " + token });
+    const res = await req.post("/post/viewReplies")
+                         .send({ repliesTo: parent })
+                         .set({ "Authorization": "Bearer " + token });
 
     expect(res.body.errorMessage).toBeUndefined();
     expect(res.statusCode).toBe(200);
@@ -583,5 +585,128 @@ describe("POST /post/editTags", () => {
 
     const post = await server.db<Post>("post").where({ id }).first();
     expect(post?.tags).toBe("123,456");
+  });
+});
+
+describe("POST /post/search", () => {
+  it("should return post with tag test1", async () => {
+    // Preparing
+    await auth(server, {
+      userData,
+      password: credentials.hash,
+      scope: []
+    });
+    await server.db<Post>("post").insert({
+      text: "Example",
+      author: userData.email,
+      tags: "test2"
+    }, "id");
+    const id = (await server.db<Post>("post").insert({
+      text: "Example",
+      author: userData.email,
+      tags: "test1"
+    }, "id"))[0].id;
+    // Preparing
+
+    const res = await req.post("/post/search")
+                         .send({ tags: "test1" });
+
+    expect(res.body.errorMessage).toBeUndefined();
+    expect(res.statusCode).toBe(200);
+    expect(res.body.results[0].id).toBe(id);
+    expect(res.body.results[1]).toBeUndefined();
+  });
+
+  it("should return everything", async () => {
+    // Preparing
+    await auth(server, {
+      userData,
+      password: credentials.hash,
+      scope: []
+    });
+    const id = (await server.db<Post>("post").insert({
+      text: "Example",
+      author: userData.email,
+      tags: "test1"
+    }, "id"))[0].id;
+    const id1 = (await server.db<Post>("post").insert({
+      text: "Example",
+      author: userData.email,
+      tags: "test2"
+    }, "id"))[0].id;
+    // Preparing
+
+    const res = await req.post("/post/search").send();
+
+    expect(res.body.errorMessage).toBeUndefined();
+    expect(res.statusCode).toBe(200);
+    expect(res.body.results[0].id).toBe(id1);
+    expect(res.body.results[1].id).toBe(id);
+  });
+
+  it("should return post with tag test1 using recursion", async () => {
+    // Preparing
+    await auth(server, {
+      userData,
+      password: credentials.hash,
+      scope: []
+    });
+    const posts: Pick<Post, "author" | "text" | "tags">[] = [];
+    [...Array(100).keys()].map(async () => {
+      posts.push({
+        author: userData.email,
+        text: "Example",
+        tags: "test2"
+      });
+    });
+  
+    await server.db("post").insert(posts);
+  
+    const id = (await server.db<Post>("post").insert({
+      text: "Example",
+      author: userData.email,
+      tags: "test1"
+    }, "id"))[0].id;
+    // Preparing
+
+    const res = await req.post("/post/search")
+                         .send({ tags: "test1", numberRecords: 1 });
+
+    expect(res.body.errorMessage).toBeUndefined();
+    expect(res.statusCode).toBe(200);
+    expect(res.body.results[0].id).toBe(id);
+    expect(res.body.results[1]).toBeUndefined();
+  });
+});
+
+describe("POST /post/getUserPosts", () => {
+  it("should return user posts", async () => {
+    // Preparing
+    await auth(server, {
+      userData,
+      password: credentials.hash,
+      scope: []
+    });
+    const id = (await server.db<Post>("post").insert({
+      text: "Example",
+      author: userData.email
+    }, "id"))[0].id;
+    // Preparing
+
+    const res = await req.post("/post/getUserPosts")
+                         .send({ username: userData.username });
+
+    expect(res.body.errorMessage).toBeUndefined();
+    expect(res.statusCode).toBe(200);
+    expect(res.body.results[0].id).toBe(id);
+  });
+
+  it("should throw DatabaseError", async () => {
+    const res = await req.post("/post/getUserPosts")
+                         .send({ username: "notFound" });
+
+    expect(res.body.errorType).toBe("DatabaseError");
+    expect(res.body.errorMessage).not.toBeUndefined();
+    expect(res.statusCode).toBe(500);
   });
 });

@@ -1,7 +1,7 @@
 import axios from "axios";
 import Link from "next/link";
-import { FormEvent, useState } from "react";
-import React, { useCookies } from "react-cookie";
+import React, { FormEvent, useState } from "react";
+import { useCookies } from "react-cookie";
 
 import axiosConfig from "../../axios.config";
 import Errors from "../../components/common/errors";
@@ -55,7 +55,7 @@ export default function LogIn(): React.JSX.Element {
 
     const payload = JSON.parse(atob(response.data.token.split(".")[1]));
 
-    setToken("AUTH_TOKEN", response.data.token, { expires: new Date(payload.exp*1000) });
+    setToken("AUTH_TOKEN", response.data.token, { expires: new Date(payload.exp*1000), path: "/" });
 
     e.target.submit.value = "done, redirecting...";
     window.location.replace("/");
@@ -64,22 +64,28 @@ export default function LogIn(): React.JSX.Element {
   return <>
     <Header>
       <div className={headerStyles.back}>
-      <Link href="/">
-        <button>
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14" >
-            <g id="return-2--arrow-return-enter-keyboard">
-              <path 
-                id="Vector" 
-                stroke="#3e3e3e" 
-                strokeLinecap="round" 
-                strokeLinejoin="round" 
-                d="M.5 9.5h9a4 4 0 1 0 0-8h-3" 
-              />
-              <path id="Vector_2" stroke="#3e3e3e" strokeLinecap="round" strokeLinejoin="round" d="m3.5 6.5-3 3 3 3" />
-            </g>
-          </svg>
-        </button>
-      </Link>
+        <Link href="/">
+          <button>
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14" >
+              <g id="return-2--arrow-return-enter-keyboard">
+                <path 
+                  id="Vector" 
+                  stroke="#3e3e3e" 
+                  strokeLinecap="round" 
+                  strokeLinejoin="round" 
+                  d="M.5 9.5h9a4 4 0 1 0 0-8h-3" 
+                />
+                <path id="Vector_2" stroke="#3e3e3e" strokeLinecap="round" strokeLinejoin="round" d="m3.5 6.5-3 3 3 3" />
+              </g>
+            </svg>
+          </button>
+        </Link>
+      </div>
+
+      <div className={styles.another_actions}>
+        <Link href="/auth/login_using_token">
+          <button>Log in using token</button>
+        </Link>
       </div>
     </Header>
 

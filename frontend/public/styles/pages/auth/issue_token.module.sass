@@ -20,13 +20,38 @@
   align-items: flex-end
   gap: 20px
 
+.permission_checkbox 
+  display: flex
+  gap: 8px
+  align-items: center
+
+.token
+  max-width: 1000px
+  overflow-wrap: break-word
+  font-family: monospace
+
 .form_wrap
   display: flex
   flex-direction: column
   align-items: center
 
   form
+    display: flex
+    flex-direction: column
+    align-items: center
     margin: 10px
+    gap: 10px
+
+    .scope
+      display: grid
+      grid-template-columns: 1fr 1fr 1fr
+      gap: 20px
+
+    .loader_wrapper
+      grid-column: 2
+    
+    .error
+      grid-column: 2
 
     input
       color: text-color()
@@ -35,7 +60,6 @@
   
       width: 250px
       height: 30px
-      margin-bottom: 20px
       padding: 0
   
       box-sizing: border-box
@@ -48,10 +72,12 @@
         background-color: primary-color()
         border: none
         transition: background-color 100ms ease
+        grid-column: 2
 
       &[type="checkbox"]
-        width: 55px
         margin-bottom: 0
+        width: 20px
+        height: 20px
 
       &[type="submit"]:hover
         background-color: primary-color(0.8)

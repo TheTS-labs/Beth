@@ -42,7 +42,7 @@ export default function App(): React.JSX.Element {
         query={query}
         tags={tags}
       />
-      <Link href={{ pathname: "/updateData", query: { email } }} key="updateData">
+      <Link href={{ pathname: "/auth/update_data", query: { email } }} key="update_data">
         <p style={{ color: "white", textDecoration: "underline" }}>{email}</p>
       </Link>
       <div className={styles.account_buttons}>

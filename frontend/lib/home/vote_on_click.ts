@@ -1,7 +1,7 @@
 import axios from "axios";
 import { Dispatch, MouseEvent, SetStateAction } from "react";
 
-import axiosConfig from "../axios.config";
+import axiosConfig from "../../axios.config";
 
 type ReturnType = (event: MouseEvent<unknown, unknown>) => Promise<void>;
 

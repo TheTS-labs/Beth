@@ -7,7 +7,7 @@ import { DetailedPosts } from "../../backend/db/models/post";
 import fetcher from "../lib/common/fetcher";
 import observer from "../lib/common/observer";
 import FetchPosts from "../lib/home/fetch_posts";
-import voteOnClick from "../lib/vote_on_click";
+import voteOnClick from "../lib/home/vote_on_click";
 import styles from "../public/styles/pages/posts.module.sass";
 import Errors from "./common/errors";
 import Loader from "./common/loader";

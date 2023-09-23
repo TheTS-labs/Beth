@@ -1,17 +1,16 @@
 import axios from "axios";
 import Link from "next/link";
 import React, { MouseEvent, useState } from "react";
-import { useCookies } from "react-cookie";
 
 import axiosConfig from "../../axios.config";
 import Errors from "../../components/common/errors";
 import Header from "../../components/common/header";
+import useAuthToken from "../../lib/common/token";
 import styles from "../../public/styles/pages/auth/common.module.sass";
 import headerStyles from "../../public/styles/pages/auth/header.module.sass";
 
 export default function Froze(): React.JSX.Element {
-  // Skip middle variable
-  const [ token, /*changeToken*/, removeToken ] = useCookies(["AUTH_TOKEN"]);
+  const authToken = useAuthToken();
   const [ errors, setErrors ] = useState<string[]>([]);
 
   const froze = async (_event: MouseEvent<HTMLButtonElement>): Promise<void> => {
@@ -26,7 +25,7 @@ export default function Froze(): React.JSX.Element {
     
     const response = await axios.request({...axiosConfig, ...{
       url: "user/froze",
-      headers: { Authorization: `Bearer ${token.AUTH_TOKEN}` }
+      headers: { Authorization: `Bearer ${authToken.value}` }
     }}).then(response => response.data).catch(e => {
       setErrors(prevErrors => [...prevErrors, String(e)]);
     });
@@ -41,7 +40,7 @@ export default function Froze(): React.JSX.Element {
     }
 
     if (response.success) {
-      removeToken("AUTH_TOKEN");
+      authToken.remove();
       window.location.replace("/");
     }
   };

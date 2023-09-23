@@ -1,17 +1,16 @@
 import Link from "next/link";
 import React, { MouseEvent } from "react";
-import { useCookies } from "react-cookie";
 
 import Header from "../../components/common/header";
+import useAuthToken from "../../lib/common/token";
 import styles from "../../public/styles/pages/auth/common.module.sass";
 import headerStyles from "../../public/styles/pages/auth/header.module.sass";
 
 export default function LogOut(): React.JSX.Element {
-  // Skip first two variables
-  const [ , , removeToken ] = useCookies(["AUTH_TOKEN"]);
+  const authToken = useAuthToken();
 
   const logout = (_event: MouseEvent<HTMLButtonElement>): void => {
-    removeToken("AUTH_TOKEN");
+    authToken.remove();
     window.location.replace("/");
   };
 

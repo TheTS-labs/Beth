@@ -1,8 +1,8 @@
 import Link from "next/link";
 import React, { FormEvent } from "react";
-import { useCookies } from "react-cookie";
 
 import Header from "../../components/common/header";
+import useAuthToken from "../../lib/common/token";
 import styles from "../../public/styles/pages/auth/common.module.sass";
 import headerStyles from "../../public/styles/pages/auth/header.module.sass";
 
@@ -18,8 +18,7 @@ interface Event extends FormEvent<HTMLFormElement> {
 }
 
 export default function LogInUsingToken(): React.JSX.Element {
-  // Skip first variable
-  const [ , setToken] = useCookies(["AUTH_TOKEN"]);
+  const authToken = useAuthToken();
 
   const onsubmit = async (e: Event): Promise<void> => {
     e.preventDefault();
@@ -27,7 +26,7 @@ export default function LogInUsingToken(): React.JSX.Element {
 
     const payload = JSON.parse(atob(e.target.token.value.split(".")[1]));
 
-    setToken("AUTH_TOKEN", e.target.token.value, { expires: new Date(payload.exp*1000), path: "/" });
+    authToken.update(e.target.token.value, { expires: new Date(payload.exp*1000), path: "/" });
 
     e.target.submit.value = "done, redirecting...";
     window.location.replace("/");

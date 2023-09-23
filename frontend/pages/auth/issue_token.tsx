@@ -2,7 +2,6 @@ import axios from "axios";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import React, { FormEvent, useState } from "react";
-import { useCookies } from "react-cookie";
 import useSWR from "swr";
 
 import axiosConfig from "../../axios.config";
@@ -10,11 +9,12 @@ import Errors from "../../components/common/errors";
 import Header from "../../components/common/header";
 import Loader from "../../components/common/loader";
 import fetcher from "../../lib/common/fetcher";
+import useAuthToken from "../../lib/common/token";
 import headerStyles from "../../public/styles/pages/auth/header.module.sass";
 import styles from "../../public/styles/pages/auth/issue_token.module.sass";
 
 export default function App(): React.JSX.Element {
-  const [ token, setToken ] = useCookies(["AUTH_TOKEN"]);
+  const authToken = useAuthToken();
   const router = useRouter();
   const [ errors, setErrors ] = useState<string[]>([]);
   const [ newToken, setNewToken ] = useState<string | undefined>();
@@ -22,7 +22,7 @@ export default function App(): React.JSX.Element {
   const dataResponse = useSWR(
     "permission/view",
     fetcher({
-      headers: { "Authorization": `Bearer ${token.AUTH_TOKEN}` },
+      headers: { "Authorization": `Bearer ${authToken.value}` },
       data: router.query
     })
   );
@@ -57,7 +57,7 @@ export default function App(): React.JSX.Element {
 
     if (data.get("setAsSessionToken")) {
       const payload = JSON.parse(atob(response.token.split(".")[1]));
-      setToken("AUTH_TOKEN", response.token, { expires: new Date(payload.exp*1000), path: "/" });
+      authToken.update(response.token, { expires: new Date(payload.exp*1000), path: "/" });
       window.location.replace("/");
     }
 

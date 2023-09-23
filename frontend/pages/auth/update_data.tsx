@@ -2,13 +2,13 @@ import axios from "axios";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import React, { FormEvent, useState } from "react";
-import { useCookies } from "react-cookie";
 import useSWR from "swr";
 
 import axiosConfig from "../../axios.config";
 import Errors from "../../components/common/errors";
 import Header from "../../components/common/header";
 import fetcher from "../../lib/common/fetcher";
+import useAuthToken from "../../lib/common/token";
 import headerStyles from "../../public/styles/pages/auth/header.module.sass";
 import styles from "../../public/styles/pages/auth/update_data.module.sass";
 
@@ -27,12 +27,12 @@ interface Event extends FormEvent<HTMLFormElement> {
 }
 
 export default function App(): React.JSX.Element {
-  const [ token ] = useCookies(["AUTH_TOKEN"]);
+  const authToken = useAuthToken();
   const router = useRouter();
   const dataResponse = useSWR(
     "user/view",
     fetcher({
-      headers: { "Authorization": `Bearer ${token.AUTH_TOKEN}` },
+      headers: { "Authorization": `Bearer ${authToken.value}` },
       data: router.query
     })
   );
@@ -65,7 +65,7 @@ export default function App(): React.JSX.Element {
     const response = await axios.request({...axiosConfig, ...{
       url: "user/edit",
       data: body,
-      headers: { "Authorization": `Bearer ${token.AUTH_TOKEN}` }
+      headers: { "Authorization": `Bearer ${authToken.value}` }
     }}).then(response => response.data).catch(e => {
       setErrors(prevErrors => [...prevErrors, String(e)]);
     });

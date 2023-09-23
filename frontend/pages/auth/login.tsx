@@ -1,11 +1,11 @@
 import axios from "axios";
 import Link from "next/link";
 import React, { FormEvent, useState } from "react";
-import { useCookies } from "react-cookie";
 
 import axiosConfig from "../../axios.config";
 import Errors from "../../components/common/errors";
 import Header from "../../components/common/header";
+import useAuthToken from "../../lib/common/token";
 import styles from "../../public/styles/pages/auth/common.module.sass";
 import headerStyles from "../../public/styles/pages/auth/header.module.sass";
 
@@ -26,8 +26,7 @@ interface Event extends FormEvent<HTMLFormElement> {
 
 export default function LogIn(): React.JSX.Element {
   const [ errors, setErrors ] = useState<string[]>([]);
-  // Skip first variable
-  const [ , setToken] = useCookies(["AUTH_TOKEN"]);
+  const authToken = useAuthToken();
 
   const onsubmit = async (e: Event): Promise<void> => {
     e.preventDefault();
@@ -55,7 +54,7 @@ export default function LogIn(): React.JSX.Element {
 
     const payload = JSON.parse(atob(response.data.token.split(".")[1]));
 
-    setToken("AUTH_TOKEN", response.data.token, { expires: new Date(payload.exp*1000), path: "/" });
+    authToken.update(response.data.token, { expires: new Date(payload.exp*1000), path: "/" });
 
     e.target.submit.value = "done, redirecting...";
     window.location.replace("/");

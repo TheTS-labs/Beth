@@ -52,7 +52,8 @@ export default class PostEndpoint extends BaseEndpoint<type.PostRequestArgs, Cal
       author: auth.user.email,
       text: args.text,
       repliesTo: args.replyTo||null,
-      parent: parent||null
+      parent: parent||null,
+      tags: args.tags
     }).catch((err: Error) => {
       throw new RequestError("DatabaseError",[ err.message]);
     });

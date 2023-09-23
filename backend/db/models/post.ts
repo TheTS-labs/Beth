@@ -37,7 +37,7 @@ export interface DetailedPosts {
 export type NestedPost = (Post & { replies: NestedPost[] });
 
 export default class PostModel implements ICRUDModel<
-  Omit<Post, "id" | "createdAt" | "frozenAt" | "tags">,
+  Omit<Post, "id" | "createdAt" | "frozenAt">,
   Post
 > {
   constructor(
@@ -48,7 +48,7 @@ export default class PostModel implements ICRUDModel<
   ) {}
 
   public async create(
-    args: Omit<Post, "id" | "createdAt" | "frozenAt" | "tags">
+    args: Omit<Post, "id" | "createdAt" | "frozenAt">
   ): Promise<number> {
     this.logger.log({
       level: "trying",

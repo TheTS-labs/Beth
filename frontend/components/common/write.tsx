@@ -7,6 +7,7 @@ import styles from "../../public/styles/components/common/write.module.sass";
 interface Event extends FormEvent<HTMLFormElement> {
   target: EventTarget & {
     text: { value: string }
+    tags: { value: string }
     submit: { value: string }
   }
 }
@@ -18,6 +19,8 @@ interface Props {
   replyTo?: number
 }
 
+const tagsRegex = /\b([a-zA-Z0-9])\w+,/gm;
+
 export function Write(props: Props): React.JSX.Element {
   const [ token ] = useCookies(["AUTH_TOKEN"]);
   const write = new WritePost(props.setErrors, token.AUTH_TOKEN, props.replyTo);
@@ -25,8 +28,15 @@ export function Write(props: Props): React.JSX.Element {
   const onSubmit = (event: Event): void => {
     event.preventDefault();
     event.target.submit.value = "Sending...";
+
+    tagsRegex.lastIndex = 0;
+    const regexMatches = tagsRegex.exec(event.target.tags.value);
+    if (!regexMatches) {
+      props.setErrors(prevErrors => [...prevErrors, "Tags must be written like this example: tag1,tag2"]);
+      return;
+    }
   
-    write.request(event.target.text.value).then(result => {
+    write.request(event.target.text.value, event.target.tags.value).then(result => {
       if (result) {
         event.target.text.value = "";
         event.target.submit.value = "Done!";
@@ -45,6 +55,7 @@ export function Write(props: Props): React.JSX.Element {
   return token.AUTH_TOKEN && <>
     <form className={styles.form} onSubmit={onSubmit}>
       <textarea name="text" id="text" rows={2} placeholder={props.placeholder} required />
+      <textarea name="tags" id="tags" rows={2} placeholder="Tags" />
       <input type="submit" id="submit" value="Looks good" />
     </form>
   </>;

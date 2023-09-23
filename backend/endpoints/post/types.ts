@@ -14,11 +14,13 @@ const base =  Joi.object().keys({
 export interface CreateArgs {
   text: string
   replyTo: number | undefined
+  tags: string
 }
 
 export const CreateArgsSchema = Joi.object({
   text: Joi.string().required(),
-  replyTo: Joi.number().positive()
+  replyTo: Joi.number().positive(),
+  tags: Joi.string().pattern(/\b([a-zA-Z0-9])\w+,/).default("")
 });
 // <<< Create <<<
 

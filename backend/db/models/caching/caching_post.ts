@@ -3,7 +3,7 @@ import PostModel, { Post } from "../post";
 
 export default class CachingPostModel extends PostModel {
   public async create(
-    args: Omit<Post, "id" | "tags" | "createdAt" | "frozenAt">
+    args: Omit<Post, "id" | "createdAt" | "frozenAt">
   ): Promise<number> {
     this.logger.log({
       level: "trying",

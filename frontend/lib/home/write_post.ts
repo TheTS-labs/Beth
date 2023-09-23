@@ -16,8 +16,9 @@ export default class WritePost {
     }
   }
 
-  async request(text: string): Promise<boolean> {
+  async request(text: string, tags: string): Promise<boolean> {
     this.body.append("text", text);
+    this.body.append("tags", tags);
   
     const response = await axios.request({...axiosConfig, ...{
       url: "post/create",

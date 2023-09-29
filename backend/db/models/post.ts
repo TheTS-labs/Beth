@@ -152,6 +152,8 @@ export default class PostModel implements ICRUDModel<
       context: { repliesTo }
     });
 
+    // TODO: Is it really DetailedPost??
+
     const result = await this.db<DetailedPost>("post").select(
       "post.id",
       "post.author",
@@ -271,6 +273,52 @@ export default class PostModel implements ICRUDModel<
     return {
       results: results.map(result => ({ ...result, ...additionalInfo[result.id] })),
       endCursor
+    };
+  }
+
+  public async readDetailedPost(
+    identifier: number,
+    email: string | undefined
+  ): Promise<DetailedPost | undefined> {
+    this.logger.log({
+      level: "trying",
+      message: "To read posts with more detailed info",
+      path: module.filename,
+      context: { identifier, email }
+    });
+
+    const result = await this.db("post").select(
+      "post.id",
+      "post.author",
+      "post.text",
+      "post.repliesTo",
+      "post.tags",
+      "user.displayName",
+      "user.username",
+      "user.verified"
+    ).join("user", "post.author", "=", "user.email")
+     .where("frozenAt", null)
+     .andWhere("post.id", identifier)
+     .andWhere("user.isFrozen", false)
+     .first() as Omit<DetailedPost, "score" | "userVote">;
+
+    const votes = await this.db<Vote>("vote").select().where("vote.postId", identifier);
+    const additionalInfo: Pick<DetailedPost, "score" | "userVote"> = {
+      score: 0,
+      userVote: null
+    };
+
+    votes.forEach(vote => {
+      if (email && vote.userEmail == email) {
+        additionalInfo.userVote = vote.voteType;
+      };
+
+      additionalInfo.score += vote.voteType ? 1 : -1;
+    });
+
+    return {
+      ...result,
+      ...additionalInfo
     };
   }
 

@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import axios from "axios";
-import { useEffect, useState } from "react";
+import { Dispatch, SetStateAction, useEffect, useState } from "react";
 
 import axiosConfig from "../../axios.config";
 import useAuthToken from "../common/token";
@@ -10,6 +10,7 @@ interface ReturnType<ResultType=any> {
   error: boolean | string
   result: ResultType | undefined
   request: () => void
+  setResult: Dispatch<SetStateAction<ResultType | undefined>>
 }
 
 export default function useRequest<ResultType=any>(
@@ -45,5 +46,5 @@ export default function useRequest<ResultType=any>(
     }
   }, []);
 
-  return { error, loading, result, request };
+  return { error, loading, result, request, setResult };
 }

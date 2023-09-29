@@ -3,6 +3,7 @@ import React from "react";
 
 import Header from "../components/common/header";
 import HotTags from "../components/hot_tags";
+import ModalPost from "../components/modal_post";
 import Posts from "../components/posts";
 import SearchBar from "../components/search_bar";
 import useAuthToken from "../lib/common/token";
@@ -32,6 +33,7 @@ export default function App(): React.JSX.Element {
     <div className={styles.container}>
       <HotTags />
       <Posts />
+      <ModalPost />
     </div>
   </>;
 }

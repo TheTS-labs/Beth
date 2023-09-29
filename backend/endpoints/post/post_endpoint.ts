@@ -61,16 +61,12 @@ export default class PostEndpoint extends BaseEndpoint<type.PostRequestArgs, Cal
     return { success: true, id };
   }
 
-  async view(args: type.ViewArgs, _auth: Auth): Promise<CallEndpointReturnType> {
+  async view(args: type.ViewArgs, auth: Auth | undefined): Promise<CallEndpointReturnType> {
     args = await this.validate(type.ViewArgsSchema, args);
 
-    const post = await this.postModel.read(args.id);
+    const post = await this.postModel.readDetailedPost(args.id, auth?.user?.email);
 
-    if (!post || post?.frozenAt) {
-      return {};
-    }
-
-    return post;
+    return post || {};
   }
 
   async edit(args: type.EditArgs, auth: Auth): Promise<CallEndpointReturnType> {

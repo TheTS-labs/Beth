@@ -7,11 +7,11 @@ import Loading from "./loading";
 
 interface Props {
   post: DetailedPost
-  voteOnClick?: (event: MouseEvent<unknown, unknown>) => Promise<void> | void
   broken: boolean
   loading: boolean
   isReply?: boolean
   expanded?: boolean
+  onVoteClick?: (event: MouseEvent<unknown, unknown>) => Promise<void> | void
   onPostClick?: (event: MouseEvent<unknown, unknown>) => Promise<void> | void
   onUsernameClick?: (event: MouseEvent<unknown, unknown>) => Promise<void> | void
 }
@@ -64,7 +64,7 @@ export default function Post(props: Props): React.JSX.Element {
           <button 
             className={styles.voting_button}
             data-type="dislike"
-            onClick={props.voteOnClick}
+            onClick={props.onVoteClick}
             data-vote-type="0"
             data-post-id={props.post.id}
             disabled={props.loading || props.broken}
@@ -78,7 +78,7 @@ export default function Post(props: Props): React.JSX.Element {
           <button 
             className={styles.voting_button}
             data-type="like"
-            onClick={props.voteOnClick}
+            onClick={props.onVoteClick}
             data-vote-type="1"
             data-post-id={props.post.id}
             disabled={props.loading || props.broken}

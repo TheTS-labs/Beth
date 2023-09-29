@@ -33,7 +33,6 @@ export default function useFetchPosts(): ReturnType {
 
   const [ afterCursor, setAfterCursor ] = useAtom(afterCursorAtom);
   
-  
   let requestUrl = token ? "recommendation/recommend" : "recommendation/globalRecommend";
   const body = new URLSearchParams();
 

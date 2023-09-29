@@ -1,19 +1,17 @@
-import React, { Dispatch, MutableRefObject,SetStateAction } from "react";
+import { useSetAtom } from "jotai";
+import React from "react";
 import useSWR from "swr";
 
-import { DetailedPost } from "../../backend/db/models/post";
 import fetcher from "../lib/common/fetcher";
+import { afterCursorAtom, postsAtom, queryAtom, tagsAtom } from "../lib/hooks/use_fetch_posts";
 import styles from "../public/styles/pages/hot_tags.module.sass";
 import Tag from "./common/tag";
 
-interface Props {
-  setSearchAfterCursor: Dispatch<SetStateAction<string | undefined>>
-  setTags: Dispatch<SetStateAction<string | undefined>>
-  searchResults: MutableRefObject<DetailedPost[]>
-  tags: string | undefined
-}
-
-export default function HotTags(props: Props): React.JSX.Element {
+export default function HotTags(): React.JSX.Element {
+  const setAfterCursor = useSetAtom(afterCursorAtom);
+  const setPosts = useSetAtom(postsAtom);
+  const setQuery = useSetAtom(queryAtom);
+  const setTags = useSetAtom(tagsAtom);
   const hotTagsResponse = useSWR(
     "recommendation/getHotTags",
     fetcher<{ result: { tag: string, postCount: string }[] }>({})
@@ -49,9 +47,10 @@ export default function HotTags(props: Props): React.JSX.Element {
       broken={hotTagsResponse.error ? true : false}
       loading={hotTagsResponse.isLoading}
       onClick={(): void => {
-        props.searchResults.current = [];
-        props.setSearchAfterCursor(undefined);
-        props.setTags(value.tag);
+        setPosts([]);
+        setAfterCursor(undefined);
+        setTags(value.tag);
+        setQuery("");
       }}
     />
   ));

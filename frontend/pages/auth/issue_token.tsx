@@ -1,11 +1,12 @@
 import axios from "axios";
+import { useSetAtom } from "jotai";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import React, { FormEvent, useState } from "react";
 import useSWR from "swr";
 
 import axiosConfig from "../../axios.config";
-import Errors from "../../components/common/errors";
+import Errors, { errorsAtom } from "../../components/common/errors";
 import Header from "../../components/common/header";
 import Loader from "../../components/common/loader";
 import fetcher from "../../lib/common/fetcher";
@@ -16,7 +17,7 @@ import styles from "../../public/styles/pages/auth/issue_token.module.sass";
 export default function App(): React.JSX.Element {
   const authToken = useAuthToken();
   const router = useRouter();
-  const [ errors, setErrors ] = useState<string[]>([]);
+  const setErrors = useSetAtom(errorsAtom);
   const [ newToken, setNewToken ] = useState<string | undefined>();
 
   const dataResponse = useSWR(
@@ -56,8 +57,7 @@ export default function App(): React.JSX.Element {
     }
 
     if (data.get("setAsSessionToken")) {
-      const payload = JSON.parse(atob(response.token.split(".")[1]));
-      authToken.update(response.token, { expires: new Date(payload.exp*1000), path: "/" });
+      authToken.update(response.token);
       window.location.replace("/");
     }
 
@@ -145,6 +145,6 @@ export default function App(): React.JSX.Element {
       </div>
     </div>
 
-    <Errors errors={errors} />
+    <Errors />
   </>;
 }

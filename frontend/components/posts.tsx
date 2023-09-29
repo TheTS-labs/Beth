@@ -1,35 +1,22 @@
 import { faker } from "@faker-js/faker";
+import { useAtom, useSetAtom } from "jotai";
+import dynamic from "next/dynamic";
 import React, { useEffect, useRef, useState } from "react";
-import useSWR from "swr";
 
-import { RequestErrorObject } from "../../backend/common/types";
 import { DetailedPosts } from "../../backend/db/models/post";
-import fetcher from "../lib/common/fetcher";
 import observer from "../lib/common/observer";
-import FetchPosts from "../lib/home/fetch_posts";
+import { authTokenAtom } from "../lib/common/token";
 import voteOnClick from "../lib/home/vote_on_click";
+import useFetchPosts, { afterCursorAtom, postsAtom, queryAtom, tagsAtom } from "../lib/hooks/use_fetch_posts";
 import styles from "../public/styles/pages/posts.module.sass";
-import Errors from "./common/errors";
+import { errorsAtom } from "./common/errors";
 import Loader from "./common/loader";
 import { Write } from "./common/write";
 import { ExpandedPost } from "./expanded_post";
 
-export default function Posts(props: { token: string | undefined }): React.JSX.Element {
-  const postsResponse = useSWR(
-    props.token ? "recommendation/recommend" : "recommendation/globalRecommend",
-    //? If I leave the type definition as `DetailedPosts|RequestErrorObject`,
-    //? I put myself in a position where I first need to be sure of the type
-    //? before I start working, because there is no overlap between the types.
-    //? On the other hand, if I set the type to `Partial<DetailedPosts&RequestErrorObject>`,
-    //? it will allow me to use errorMessage on the assumption that both non-required variants
-    //? can exist and if one doesn't exist, the other does, without having to prove it directly.
-    // I hope I've made myself clear
-    // Big brain move, I know
-    fetcher<Partial<DetailedPosts&RequestErrorObject>>(
-      props.token ? { headers: { "Authorization": `Bearer ${props.token}` } } : {}
-    )
-  );
-  const [defaultPosts] = useState<DetailedPosts["results"]>([...Array(10)].map((_, i) => ({
+function Posts(): React.JSX.Element {
+  const [ token ] = useAtom(authTokenAtom);
+  const [ defaultPosts ] = useState<DetailedPosts["results"]>([...Array(10)].map((_, i) => ({
     //? I used `any` instead of `DBBool` just because I can't import it
     //? But, interestingly enough, I can import and use types as long as
     //? they don't go into the JS code, which means they can be used in type definitions.
@@ -59,56 +46,67 @@ export default function Posts(props: { token: string | undefined }): React.JSX.E
     // eslint-disable-next-line camelcase
     _cursor_0: i
   })));
-  const [ afterCursor, setAfterCursor ] = useState<string | undefined>();
-  const [ errors, setErrors ] = useState<string[]>([]);
-  const [isClient, setIsClient] = useState(false);
-  const posts = useRef<DetailedPosts["results"]>(defaultPosts);
+  const setErrors = useSetAtom(errorsAtom);
+  const [ afterCursor, setAfterCursor ] = useAtom(afterCursorAtom);
+  const [ posts, setPosts ] = useAtom(postsAtom);
+  const [ query, setQuery ] = useAtom(queryAtom);
+  const [ tags, setTags ] = useAtom(tagsAtom);
   const observerTarget = useRef(null);
+  const { callback, error } = useFetchPosts();
+
   const postElements: React.JSX.Element[] = [];
-  const fetch = new FetchPosts(afterCursor, setErrors, setAfterCursor, props.token);
+  const reset = (): void => {
+    setPosts([]);
+    setAfterCursor(undefined);
+    setTags("");
+    setQuery("");
+  };
 
-  useEffect(() => setIsClient(true), []);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(observer(observerTarget, async (posts) => fetch.request(posts), [ posts ]), [afterCursor]);
+  useEffect(() => { callback(); }, [query, tags]);
 
-  if (isClient) {
-    if (postsResponse.data?.results && posts.current == defaultPosts) {
-      posts.current = postsResponse.data?.results;
-    }
-    if (!afterCursor && postsResponse.data?.endCursor) {
-      setAfterCursor(postsResponse.data?.endCursor);
-    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(observer(observerTarget, callback, []), [afterCursor, query, tags]);
 
-    if (postsResponse.error || postsResponse.data?.hasOwnProperty("errorMessage")) {
-      postElements.push(<div className={styles.posts_broken_container} key={-1}>
-        <p className={styles.broken_text}>Feed unavailable</p>
-        <p className={styles.broken_explain}>{
-          postsResponse.data?.errorMessage||[
-            "The feed is not available right now,",
-            "maybe the server is overloaded and therefore cannot respond to the request,",
-            "try again sometime later"
-          ].join(" ")
-        }</p>
-      </div>);
-    }
-  
-    postElements.push(...posts.current.map((post, i) => 
-      <ExpandedPost
-        key={i}
-        post={post}
-        broken={Boolean(postsResponse.error || postsResponse.data?.hasOwnProperty("errorMessage"))}
-        loading={postsResponse.isLoading}
-        voteOnClick={voteOnClick(props.token, setErrors)}
-      />
-    ));
+  const postsSrc = posts.length == 0 ? defaultPosts : posts;
+
+  if (error && posts.length == 0) {
+    postElements.push(<div className={styles.posts_broken_container} key={-1}>
+      <p className={styles.broken_text}>Feed unavailable</p>
+      <p className={styles.broken_explain}>{
+        typeof error === "string" ? error : [
+          "The feed is not available right now,",
+          "maybe the server is overloaded and therefore cannot respond to the request,",
+          "try again sometime later"
+        ].join(" ")
+      }</p>
+    </div>);
   }
 
+  postElements.push(...postsSrc.map((post, i) => 
+    <ExpandedPost
+      key={i}
+      post={post}
+      broken={Boolean(error) && posts.length == 0}
+      loading={posts.length == 0 && !error}
+      voteOnClick={voteOnClick(token, setErrors)}
+    />
+  ));
+
   return <div className={styles.posts}>
-    <p className={styles.text}>Feed</p>
-    { isClient && <Write setErrors={setErrors} placeholder="Your definitely important opinion..." /> }
+    {
+      query || tags ? 
+      <p className={styles.text} key="search" onClick={reset} style={{ cursor: "pointer" }}>⬅ Search results</p> :
+      <p className={styles.text} key="feed">Feed</p>
+    }
+    { token && <Write placeholder="Your definitely important opinion..." /> }
     {...postElements}
 
-    <div className={styles.loader} ref={observerTarget}><Loader /></div>
-    <Errors errors={errors} />
+    {/* TODO: Add retry */}
+    { !error && <div className={styles.loader} ref={observerTarget}><Loader /></div> }
   </div>;
 }
+
+export default dynamic(async () => Promise.resolve(Posts), {
+  ssr: false
+});

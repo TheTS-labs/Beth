@@ -1,9 +1,10 @@
 import axios from "axios";
+import { useSetAtom } from "jotai";
 import Link from "next/link";
-import React, { MouseEvent, useState } from "react";
+import React, { MouseEvent } from "react";
 
 import axiosConfig from "../../axios.config";
-import Errors from "../../components/common/errors";
+import Errors, { errorsAtom } from "../../components/common/errors";
 import Header from "../../components/common/header";
 import useAuthToken from "../../lib/common/token";
 import styles from "../../public/styles/pages/auth/common.module.sass";
@@ -11,7 +12,7 @@ import headerStyles from "../../public/styles/pages/auth/header.module.sass";
 
 export default function Froze(): React.JSX.Element {
   const authToken = useAuthToken();
-  const [ errors, setErrors ] = useState<string[]>([]);
+  const setErrors = useSetAtom(errorsAtom);
 
   const froze = async (_event: MouseEvent<HTMLButtonElement>): Promise<void> => {
     const confirmed = confirm([
@@ -73,6 +74,6 @@ export default function Froze(): React.JSX.Element {
       <button className={styles.logout} onClick={froze}>Froze account</button>
     </div>
 
-    <Errors errors={errors} />
+    <Errors />
   </>;
 }

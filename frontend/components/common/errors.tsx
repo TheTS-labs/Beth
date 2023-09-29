@@ -1,8 +1,12 @@
+import { atom, useAtomValue } from "jotai";
 import React, { useEffect, useRef } from "react";
 
 import styles from "../../public/styles/components/common/errors.module.sass";
 
-export default function Errors(props: { errors: string[] }): React.JSX.Element {
+export const errorsAtom = atom<string[]>([]);
+
+export default function Errors(): React.JSX.Element {
+  const errors = useAtomValue(errorsAtom);
   const errorsRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -14,10 +18,10 @@ export default function Errors(props: { errors: string[] }): React.JSX.Element {
         setTimeout(() => { element.dataset.done = "true"; }, 5000+i*150);
       });
     }
-  }, [props.errors]);
+  }, [errors]);
 
   return <div className={styles.errors} ref={errorsRef}>
-    {props.errors.map((error, i) => {
+    {errors.map((error, i) => {
       return (
         <div className={styles.error_message} key={i} data-done="false">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 14 14">

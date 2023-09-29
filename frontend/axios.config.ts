@@ -3,7 +3,7 @@ import { AxiosRequestConfig } from "axios";
 
 const axiosConfig: AxiosRequestConfig = {
   method: "post",
-  baseURL: "http://192.168.0.4:8081/",
+  baseURL: "http://localhost:8081/",
   headers: {
     "Content-Type": "application/x-www-form-urlencoded"
   },

@@ -1,4 +1,5 @@
 import axios from "axios";
+import { useSetAtom } from "jotai";
 import React, { MouseEvent, useRef, useState } from "react";
 
 import { RequestErrorObject } from "../../backend/common/types";
@@ -8,7 +9,7 @@ import useKeyPress from "../lib/hooks/use_key_press";
 import useOutside from "../lib/hooks/use_outside";
 import styles from "../public/styles/components/expanded_post.module.sass";
 import modalStyles from "../public/styles/components/modal.module.sass";
-import Errors from "./common/errors";
+import { errorsAtom } from "./common/errors";
 import Post from "./common/post";
 import { Write } from "./common/write";
 import { ExpandedUser } from "./expanded_user";
@@ -29,7 +30,7 @@ export function ExpandedPost(props: Props): React.JSX.Element {
   useOutside(modal, () => { setIsOpen(false); setUserIsOpen(false); }, []);
   useKeyPress("Escape", () => { setIsOpen(false); setUserIsOpen(false); }, []);
   const [ replies, setReplies ] = useState<React.JSX.Element[]>([]);
-  const [ errors, setErrors ] = useState<string[]>([]);
+  const setErrors = useSetAtom(errorsAtom);
 
   if (isOpen && doRequest) {
     (async (): Promise<void> => {
@@ -77,7 +78,6 @@ export function ExpandedPost(props: Props): React.JSX.Element {
         <Write
           replyTo={props.post.id}
           setDoRequest={setDoRequest}
-          setErrors={setErrors}
           placeholder="Your comment..."
         />
         {...replies}
@@ -106,7 +106,5 @@ export function ExpandedPost(props: Props): React.JSX.Element {
         Of course, you can scroll this window
       </p>
     </div>}
-
-    <Errors errors={errors} />
   </>;
 }

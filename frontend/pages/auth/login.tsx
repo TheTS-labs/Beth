@@ -1,9 +1,10 @@
 import axios from "axios";
+import { useSetAtom } from "jotai";
 import Link from "next/link";
-import React, { FormEvent, useState } from "react";
+import React, { FormEvent } from "react";
 
 import axiosConfig from "../../axios.config";
-import Errors from "../../components/common/errors";
+import Errors, { errorsAtom } from "../../components/common/errors";
 import Header from "../../components/common/header";
 import useAuthToken from "../../lib/common/token";
 import styles from "../../public/styles/pages/auth/common.module.sass";
@@ -25,7 +26,7 @@ interface Event extends FormEvent<HTMLFormElement> {
 }
 
 export default function LogIn(): React.JSX.Element {
-  const [ errors, setErrors ] = useState<string[]>([]);
+  const setErrors = useSetAtom(errorsAtom);
   const authToken = useAuthToken();
 
   const onsubmit = async (e: Event): Promise<void> => {
@@ -52,9 +53,7 @@ export default function LogIn(): React.JSX.Element {
       return;
     }
 
-    const payload = JSON.parse(atob(response.data.token.split(".")[1]));
-
-    authToken.update(response.data.token, { expires: new Date(payload.exp*1000), path: "/" });
+    authToken.update(response.data.token);
 
     e.target.submit.value = "done, redirecting...";
     window.location.replace("/");
@@ -74,7 +73,13 @@ export default function LogIn(): React.JSX.Element {
                   strokeLinejoin="round" 
                   d="M.5 9.5h9a4 4 0 1 0 0-8h-3" 
                 />
-                <path id="Vector_2" stroke="#3e3e3e" strokeLinecap="round" strokeLinejoin="round" d="m3.5 6.5-3 3 3 3" />
+                <path
+                  id="Vector_2" 
+                  stroke="#3e3e3e" 
+                  strokeLinecap="round" 
+                  strokeLinejoin="round" 
+                  d="m3.5 6.5-3 3 3 3"
+                />
               </g>
             </svg>
           </button>
@@ -109,6 +114,6 @@ export default function LogIn(): React.JSX.Element {
       </form>
     </div>
 
-    <Errors errors={errors} />
+    <Errors />
   </>;
 }

@@ -1,11 +1,12 @@
 import axios from "axios";
+import { useSetAtom } from "jotai";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import React, { FormEvent, useState } from "react";
+import React, { FormEvent } from "react";
 import useSWR from "swr";
 
 import axiosConfig from "../../axios.config";
-import Errors from "../../components/common/errors";
+import Errors, { errorsAtom } from "../../components/common/errors";
 import Header from "../../components/common/header";
 import fetcher from "../../lib/common/fetcher";
 import useAuthToken from "../../lib/common/token";
@@ -36,7 +37,7 @@ export default function App(): React.JSX.Element {
       data: router.query
     })
   );
-  const [ errors, setErrors ] = useState<string[]>([]);
+  const setErrors = useSetAtom(errorsAtom);
 
   const onsubmit = async (e: Event): Promise<void> => {
     e.preventDefault();
@@ -190,6 +191,6 @@ export default function App(): React.JSX.Element {
     </div>
     </div>
 
-    <Errors errors={errors} />
+    <Errors />
   </>;
 }

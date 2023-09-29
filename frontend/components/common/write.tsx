@@ -1,8 +1,10 @@
+import { useSetAtom } from "jotai";
 import React, { Dispatch, FormEvent, SetStateAction } from "react";
 
 import useAuthToken from "../../lib/common/token";
 import WritePost from "../../lib/home/write_post";
 import styles from "../../public/styles/components/common/write.module.sass";
+import { errorsAtom } from "./errors";
 
 interface Event extends FormEvent<HTMLFormElement> {
   target: EventTarget & {
@@ -13,7 +15,6 @@ interface Event extends FormEvent<HTMLFormElement> {
 }
 
 interface Props {
-  setErrors: Dispatch<SetStateAction<string[]>>
   placeholder: string
   setDoRequest?: Dispatch<SetStateAction<boolean>>
   replyTo?: number
@@ -23,7 +24,8 @@ const tagsRegex = /\b([a-zA-Z0-9])\w+,/gm;
 
 export function Write(props: Props): React.JSX.Element {
   const authToken = useAuthToken();
-  const write = new WritePost(props.setErrors, authToken.value || "", props.replyTo);
+  const setErrors = useSetAtom(errorsAtom);
+  const write = new WritePost(setErrors, authToken.value || "", props.replyTo);
 
   const onSubmit = (event: Event): void => {
     event.preventDefault();
@@ -32,7 +34,7 @@ export function Write(props: Props): React.JSX.Element {
     tagsRegex.lastIndex = 0;
     const regexMatches = tagsRegex.exec(event.target.tags.value);
     if (!regexMatches) {
-      props.setErrors(prevErrors => [...prevErrors, "Tags must be written like this example: tag1,tag2"]);
+      setErrors(prevErrors => [...prevErrors, "Tags must be written like this example: tag1,tag2"]);
       return;
     }
   

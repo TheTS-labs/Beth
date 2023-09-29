@@ -3,7 +3,7 @@ import React, { Dispatch, MouseEvent,SetStateAction, useEffect, useRef, useState
 
 import { DetailedPost, DetailedPosts } from "../../backend/db/models/post";
 import observer from "../lib/common/observer";
-import FetchPosts from "../lib/home/fetch_posts";
+import FetchPosts from "../lib/home/fetch_posts_";
 import Loader from "./common/loader";
 
 interface SelfProps {

@@ -1,9 +1,10 @@
 import axios from "axios";
+import { useSetAtom } from "jotai";
 import Link from "next/link";
-import React, { FormEvent, useState } from "react";
+import React, { FormEvent } from "react";
 
 import axiosConfig from "../../axios.config";
-import Errors from "../../components/common/errors";
+import Errors, { errorsAtom } from "../../components/common/errors";
 import Header from "../../components/common/header";
 import styles from "../../public/styles/pages/auth/common.module.sass";
 import headerStyles from "../../public/styles/pages/auth/header.module.sass";
@@ -24,7 +25,7 @@ interface Event extends FormEvent<HTMLFormElement> {
 }
 
 export default function Singup(): React.JSX.Element {
-  const [ errors, setErrors ] = useState<string[]>([]);
+  const setErrors = useSetAtom(errorsAtom);
 
   const onsubmit = async (e: Event): Promise<void> => {
     e.preventDefault();
@@ -122,6 +123,6 @@ export default function Singup(): React.JSX.Element {
       </form>
     </div>
 
-    <Errors errors={errors} />
+    <Errors />
   </>;
 }

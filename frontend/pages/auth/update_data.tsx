@@ -1,15 +1,14 @@
 import axios from "axios";
 import { useSetAtom } from "jotai";
 import Link from "next/link";
-import { useRouter } from "next/router";
-import React, { FormEvent } from "react";
-import useSWR from "swr";
+import React, { FormEvent, useEffect } from "react";
 
+import { User } from "../../../backend/db/models/user";
 import axiosConfig from "../../axios.config";
 import Errors, { errorsAtom } from "../../components/common/errors";
 import Header from "../../components/common/header";
-import fetcher from "../../lib/common/fetcher";
 import useAuthToken from "../../lib/common/token";
+import useRequest from "../../lib/hooks/use_request";
 import headerStyles from "../../public/styles/pages/auth/header.module.sass";
 import styles from "../../public/styles/pages/auth/update_data.module.sass";
 
@@ -27,17 +26,12 @@ interface Event extends FormEvent<HTMLFormElement> {
   }
 }
 
-export default function App(): React.JSX.Element {
+export default function UpdateData(): React.JSX.Element {
   const authToken = useAuthToken();
-  const router = useRouter();
-  const dataResponse = useSWR(
-    "user/view",
-    fetcher({
-      headers: { "Authorization": `Bearer ${authToken.value}` },
-      data: router.query
-    })
-  );
+  const { result, request } = useRequest<User>("user/view", { email: authToken?.payload?.email }, false, true);
   const setErrors = useSetAtom(errorsAtom);
+
+  useEffect(() => request(), [authToken?.payload?.email]);
 
   const onsubmit = async (e: Event): Promise<void> => {
     e.preventDefault();
@@ -114,7 +108,7 @@ export default function App(): React.JSX.Element {
         <Link href="/auth/froze" className={styles.froze_account}>
           <button>Froze account</button>
         </Link>
-        <Link href={{ pathname: "/auth/issue_token", query: router.query }} className={styles.froze_account}>
+        <Link href="/auth/issue_token" className={styles.froze_account}>
           <button>Issue new token</button>
         </Link>
       </div>
@@ -171,7 +165,7 @@ export default function App(): React.JSX.Element {
             type="text" 
             name="username" 
             id="username" 
-            value={`@${dataResponse.data?.username || "..."}`} 
+            value={`@${result?.username || "..."}`} 
             readOnly
           />
           <br />
@@ -180,7 +174,7 @@ export default function App(): React.JSX.Element {
             type="text"
             name="displayName"
             id="displayName"
-            value={dataResponse.data?.displayName || "..."}
+            value={result?.displayName || "..."}
             readOnly
           />
           <br />

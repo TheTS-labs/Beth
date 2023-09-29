@@ -1,9 +1,8 @@
 import { useSetAtom } from "jotai";
 import React from "react";
-import useSWR from "swr";
 
-import fetcher from "../lib/common/fetcher";
 import { afterCursorAtom, postsAtom, queryAtom, tagsAtom } from "../lib/hooks/use_fetch_posts";
+import useRequest from "../lib/hooks/use_request";
 import styles from "../public/styles/pages/hot_tags.module.sass";
 import Tag from "./common/tag";
 
@@ -12,11 +11,13 @@ export default function HotTags(): React.JSX.Element {
   const setPosts = useSetAtom(postsAtom);
   const setQuery = useSetAtom(queryAtom);
   const setTags = useSetAtom(tagsAtom);
-  const hotTagsResponse = useSWR(
+
+  const { result, error, loading } = useRequest<{ result: { tag: string, postCount: string }[] }>(
     "recommendation/getHotTags",
-    fetcher<{ result: { tag: string, postCount: string }[] }>({})
+    {}
   );
-  const hotTags = hotTagsResponse.data?.result || [
+
+  const hotTags = result?.result || [
     { tag: "#Hot", postCount: "767027" },
     { tag: "#Tags", postCount: "2756" },
     { tag: "#Unavailable", postCount: "26363" },
@@ -28,7 +29,7 @@ export default function HotTags(): React.JSX.Element {
   ];
   const hotTagsElements: React.JSX.Element[] = [];
 
-  if (hotTagsResponse.error) {
+  if (error) {
     //? Add `div` with error if needed
     hotTagsElements.push(
       <div className={styles.broken_container} key={-1}>
@@ -44,8 +45,8 @@ export default function HotTags(): React.JSX.Element {
       key={i}
       hotTagName={value.tag}
       posts={value.postCount}
-      broken={hotTagsResponse.error ? true : false}
-      loading={hotTagsResponse.isLoading}
+      broken={Boolean(error)}
+      loading={loading}
       onClick={(): void => {
         setPosts([]);
         setAfterCursor(undefined);
@@ -55,7 +56,7 @@ export default function HotTags(): React.JSX.Element {
     />
   ));
 
-  return <div className={`${styles.hot_tags_container} ${hotTagsResponse.error ? styles.broken_hot_tags : ""}`}>
+  return <div className={`${styles.hot_tags_container} ${error ? styles.broken_hot_tags : ""}`}>
     <p className={styles.text}>Hot Tags</p>
     <div className={styles.hot_tags}>
       {...hotTagsElements}

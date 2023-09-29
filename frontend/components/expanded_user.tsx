@@ -27,7 +27,6 @@ export function ExpandedUser(props: Props): React.JSX.Element {
   const observerTarget = useRef(null);
   const fetch = new FetchPosts(afterCursor, props.setErrors, setAfterCursor, undefined, props.username);
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(observer(
     observerTarget,
     async (posts) => fetch.request(posts),
@@ -41,7 +40,6 @@ export function ExpandedUser(props: Props): React.JSX.Element {
     if (!afterCursor) {
       fetch.request(posts, true);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const postElements: React.JSX.Element[] = posts.current.map((post, i) => 

@@ -62,10 +62,8 @@ function Posts(): React.JSX.Element {
     setQuery("");
   };
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { callback(); }, [query, tags]);
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(observer(observerTarget, callback, []), [afterCursor, query, tags]);
 
   const postsSrc = posts.length == 0 ? defaultPosts : posts;

@@ -1,32 +1,29 @@
 import axios from "axios";
 import { useSetAtom } from "jotai";
 import Link from "next/link";
-import { useRouter } from "next/router";
-import React, { FormEvent, useState } from "react";
-import useSWR from "swr";
+import React, { FormEvent, useEffect, useState } from "react";
 
 import axiosConfig from "../../axios.config";
 import Errors, { errorsAtom } from "../../components/common/errors";
 import Header from "../../components/common/header";
 import Loader from "../../components/common/loader";
-import fetcher from "../../lib/common/fetcher";
 import useAuthToken from "../../lib/common/token";
+import useRequest from "../../lib/hooks/use_request";
 import headerStyles from "../../public/styles/pages/auth/header.module.sass";
 import styles from "../../public/styles/pages/auth/issue_token.module.sass";
 
-export default function App(): React.JSX.Element {
+export default function IssueToken(): React.JSX.Element {
   const authToken = useAuthToken();
-  const router = useRouter();
   const setErrors = useSetAtom(errorsAtom);
   const [ newToken, setNewToken ] = useState<string | undefined>();
 
-  const dataResponse = useSWR(
+  const { result, loading, error, request } = useRequest(
     "permission/view",
-    fetcher({
-      headers: { "Authorization": `Bearer ${authToken.value}` },
-      data: router.query
-    })
+    { email: authToken?.payload?.email },
+    false
   );
+
+  useEffect(() => request(), [authToken?.payload?.email]);
 
   const onsubmit = async (e: FormEvent<HTMLFormElement>): Promise<void> => {
     e.preventDefault();
@@ -39,7 +36,7 @@ export default function App(): React.JSX.Element {
     const response = await axios.request({...axiosConfig, ...{
       url: "user/issueToken",
       data: {
-        email: router.query.email,
+        email: authToken?.payload?.email,
         password: data.get("currentPassword"),
         scope
       }
@@ -100,15 +97,15 @@ export default function App(): React.JSX.Element {
             <p><i>choose permissions for new token</i></p>
             <form onSubmit={onsubmit}>
               {((): JSX.Element => {
-                if (dataResponse.isLoading) {
+                if (loading) {
                   return <span className={styles.loader_wrapper}><Loader /></span>;
                 }
 
-                if (dataResponse.error || dataResponse.data.hasOwnProperty("errorMessage")) {
-                  return <p className={styles.error}>{dataResponse.data?.errorMessage || dataResponse.error}</p>;
+                if (error || result?.hasOwnProperty("errorMessage")) {
+                  return <p className={styles.error}>{result?.errorMessage || error}</p>;
                 }
 
-                const permissions = Object.entries(dataResponse.data).map(([key, value]) => {
+                const permissions = Object.entries(result || {}).map(([key, value]) => {
                   if (key == "email" || key == "id" || !value) {
                     return <></>;
                   }

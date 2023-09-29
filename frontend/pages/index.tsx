@@ -15,7 +15,7 @@ export default function App(): React.JSX.Element {
     <Header>
       <span className={styles.logo}>✨Beth✨</span>
       <SearchBar />
-      <Link href={{ pathname: "/auth/update_data", query: { email: authToken.payload?.email } }} key="update_data">
+      <Link href="/auth/update_data" key="update_data">
         <p style={{ color: "white", textDecoration: "underline" }}>{authToken.payload?.email}</p>
       </Link>
       <div className={styles.account_buttons}>

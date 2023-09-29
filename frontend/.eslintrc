@@ -2,6 +2,7 @@
   "extends": ["../.eslintrc", "next/core-web-vitals", "plugin:react/recommended"],
   "rules": {
     "@typescript-eslint/semi": [2, "always"],
-    "@next/next/no-html-link-for-pages": ["error", "frontend/pages"]
+    "@next/next/no-html-link-for-pages": ["error", "frontend/pages"],
+    "react-hooks/exhaustive-deps": "off"
   }
 }

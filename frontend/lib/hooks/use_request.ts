@@ -9,13 +9,13 @@ interface ReturnType<ResultType=any> {
   loading: boolean
   error: boolean | string
   result: ResultType | undefined
-  request: () => void
+  request: (newData?: object) => void
   setResult: Dispatch<SetStateAction<ResultType | undefined>>
 }
 
 export default function useRequest<ResultType=any>(
   url: string,
-  data: unknown,
+  data: object,
   doRequest=true
 ): ReturnType<ResultType> {
   const authToken = useAuthToken();
@@ -23,13 +23,13 @@ export default function useRequest<ResultType=any>(
   const [ error, setError ] = useState<boolean | string>(false);
   const [ result, setResult ] = useState<ResultType | undefined>(undefined);
 
-  const request = (): void => {
+  const request = (newData?: object): void => {
     setError(false);
     setLoading(true);
 
     axios.request({...axiosConfig, ...{
       url,
-      data,
+      data: { ...data, ...newData || {} },
       headers: authToken.value ? { "Authorization": `Bearer ${authToken.value}` } : {}
     }}).then(response => response.data).then(responseData => {
       setResult(responseData);

@@ -1,19 +1,16 @@
 import { faker } from "@faker-js/faker";
-import { useAtom, useSetAtom } from "jotai";
+import { useAtom } from "jotai";
 import dynamic from "next/dynamic";
 import React, { useEffect, useRef, useState } from "react";
 
 import { DetailedPosts } from "../../backend/db/models/post";
 import observer from "../lib/common/observer";
 import { authTokenAtom } from "../lib/common/token";
-import voteOnClick from "../lib/home/vote_on_click";
 import useFetchPosts, { afterCursorAtom, postsAtom, queryAtom, tagsAtom } from "../lib/hooks/use_fetch_posts";
 import styles from "../public/styles/pages/posts.module.sass";
-import { errorsAtom } from "./common/errors";
 import Loader from "./common/loader";
 import Post from "./common/post";
 import { Write } from "./common/write";
-import { modalPostAtom } from "./modal_post";
 
 function Posts(): React.JSX.Element {
   const [ token ] = useAtom(authTokenAtom);
@@ -47,14 +44,12 @@ function Posts(): React.JSX.Element {
     // eslint-disable-next-line camelcase
     _cursor_0: i
   })));
-  const setErrors = useSetAtom(errorsAtom);
   const [ afterCursor, setAfterCursor ] = useAtom(afterCursorAtom);
   const [ posts, setPosts ] = useAtom(postsAtom);
   const [ query, setQuery ] = useAtom(queryAtom);
   const [ tags, setTags ] = useAtom(tagsAtom);
   const observerTarget = useRef(null);
   const { callback, error } = useFetchPosts();
-  const setModalPost = useSetAtom(modalPostAtom);
 
   const postElements: React.JSX.Element[] = [];
   const reset = (): void => {
@@ -89,8 +84,6 @@ function Posts(): React.JSX.Element {
       post={post}
       broken={Boolean(error) && posts.length == 0}
       loading={posts.length == 0 && !error}
-      onVoteClick={voteOnClick(token, setErrors)}
-      onPostClick={(): void => setModalPost(post.id)}
     />
   ));
 

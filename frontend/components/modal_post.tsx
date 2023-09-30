@@ -4,14 +4,15 @@ import dynamic from "next/dynamic";
 import React, { useEffect, useRef, useState } from "react";
 
 import { DetailedPost } from "../../backend/db/models/post";
-import { atomWithHash } from "../lib/common/atomWithHash";
 import useKeyPress from "../lib/hooks/use_key_press";
 import useOutside from "../lib/hooks/use_outside";
 import useRequest from "../lib/hooks/use_request";
 import styles from "../public/styles/components/expanded_post.module.sass";
 import modalStyles from "../public/styles/components/modal.module.sass";
-import PostComponent from "./common/post";
+import PostComponent, { modalPostAtom } from "./common/post";
 import { Write } from "./common/write";
+
+// TODO: Will crash if id not found
 
 function ModalPost(): React.JSX.Element {
   const [ modalPost, setModalPost ] = useAtom(modalPostAtom);
@@ -95,8 +96,6 @@ function ModalPost(): React.JSX.Element {
     </div>}
   </>;
 }
-
-export const modalPostAtom = atomWithHash<null | number>("modalPost", null);
 
 export default dynamic(async () => Promise.resolve(ModalPost), {
   ssr: false

@@ -1,6 +1,9 @@
+import { useSetAtom } from "jotai";
 import React, { MouseEvent } from "react";
 
 import { DetailedPost, Post } from "../../../backend/db/models/post";
+import { atomWithHash } from "../../lib/common/atomWithHash";
+import useVote from "../../lib/hooks/use_vote";
 import defaultStyles from "../../public/styles/components/common/post.module.sass";
 import expandedStyles from "../../public/styles/components/expanded_post.module.sass";
 import Loading from "./loading";
@@ -11,12 +14,15 @@ interface Props {
   loading: boolean
   isReply?: boolean
   expanded?: boolean
-  onVoteClick?: (event: MouseEvent<unknown, unknown>) => Promise<void> | void
-  onPostClick?: (event: MouseEvent<unknown, unknown>) => Promise<void> | void
   onUsernameClick?: (event: MouseEvent<unknown, unknown>) => Promise<void> | void
 }
 
+export const modalPostAtom = atomWithHash<null | number>("modalPost", null);
+
 export default function Post(props: Props): React.JSX.Element {
+  const { callback } = useVote(props.post.id);
+  const setModalPost = useSetAtom(modalPostAtom);
+
   const styles = props.expanded ? expandedStyles : defaultStyles;
   const userCheckmark = props.post.verified ? <span className={styles.checkmark}>✓</span> : <></>;
   const postText = props.post.text.split("\n").map(line => <><br/>{line}</>);
@@ -40,31 +46,31 @@ export default function Post(props: Props): React.JSX.Element {
           if (props.loading) {
             return <>
               <br/>
-              <p className={styles.post_text} onClick={props.onPostClick}>
+              <p className={styles.post_text} onClick={(): void => setModalPost(props.post.id)}>
                 <Loading length={Math.random() * (90 - 20) + 20+"%"}/>
               </p>
-              <p className={styles.post_text} onClick={props.onPostClick}>
+              <p className={styles.post_text} onClick={(): void => setModalPost(props.post.id)}>
                 <Loading length={Math.random() * (90 - 20) + 20+"%"}/>
               </p>
-              <p className={styles.post_text} onClick={props.onPostClick}>
+              <p className={styles.post_text} onClick={(): void => setModalPost(props.post.id)}>
                 <Loading length={Math.random() * (90 - 20) + 20+"%"}/>
               </p>
-              <p className={styles.post_text} onClick={props.onPostClick}>
+              <p className={styles.post_text} onClick={(): void => setModalPost(props.post.id)}>
                 <Loading length={Math.random() * (90 - 20) + 20+"%"}/>
               </p>
-              <p className={styles.post_text} onClick={props.onPostClick}>
+              <p className={styles.post_text} onClick={(): void => setModalPost(props.post.id)}>
                 <Loading length={Math.random() * (90 - 20) + 20+"%"}/>
               </p>
             </>;
           }
 
-          return <p className={styles.post_text} onClick={props.onPostClick}>{postText}</p>;
+          return <p className={styles.post_text} onClick={(): void => setModalPost(props.post.id)}>{postText}</p>;
         })()}
         <div className={styles.voting}>
           <button 
             className={styles.voting_button}
             data-type="dislike"
-            onClick={props.onVoteClick}
+            onClick={callback}
             data-vote-type="0"
             data-post-id={props.post.id}
             disabled={props.loading || props.broken}
@@ -78,7 +84,7 @@ export default function Post(props: Props): React.JSX.Element {
           <button 
             className={styles.voting_button}
             data-type="like"
-            onClick={props.onVoteClick}
+            onClick={callback}
             data-vote-type="1"
             data-post-id={props.post.id}
             disabled={props.loading || props.broken}

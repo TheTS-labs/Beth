@@ -1,8 +1,9 @@
 import { useSetAtom } from "jotai";
-import React, { MouseEvent } from "react";
+import React from "react";
 
 import { DetailedPost, Post } from "../../../backend/db/models/post";
 import { atomWithHash } from "../../lib/common/atomWithHash";
+import { modalUserAtom } from "../../lib/hooks/use_fetch_posts";
 import useVote from "../../lib/hooks/use_vote";
 import defaultStyles from "../../public/styles/components/common/post.module.sass";
 import expandedStyles from "../../public/styles/components/expanded_post.module.sass";
@@ -14,7 +15,6 @@ interface Props {
   loading: boolean
   isReply?: boolean
   expanded?: boolean
-  onUsernameClick?: (event: MouseEvent<unknown, unknown>) => Promise<void> | void
 }
 
 export const modalPostAtom = atomWithHash<null | number>("modalPost", null);
@@ -22,6 +22,7 @@ export const modalPostAtom = atomWithHash<null | number>("modalPost", null);
 export default function Post(props: Props): React.JSX.Element {
   const { callback } = useVote(props.post.id);
   const setModalPost = useSetAtom(modalPostAtom);
+  const setModalUser = useSetAtom(modalUserAtom);
 
   const styles = props.expanded ? expandedStyles : defaultStyles;
   const userCheckmark = props.post.verified ? <span className={styles.checkmark}>✓</span> : <></>;
@@ -30,12 +31,12 @@ export default function Post(props: Props): React.JSX.Element {
   return <>
     <div className={styles.post} data-key={props.post.id} data-broken={props.broken} data-reply={props.isReply}>
       {/* User information */}
-      <div className={styles.user}>
+      <div className={styles.user} onClick={(): void => setModalUser(props.post.username)}>
         <div className={styles.username_and_checkmark}>
           <span className={styles.username}>{props.loading ? <Loading /> : props.post.displayName}</span>
           {userCheckmark}
         </div>
-        <span className={styles.email} onClick={props.onUsernameClick}>
+        <span className={styles.email} onClick={(): void => setModalUser(props.post.username)}>
           @{props.loading ? <Loading /> : props.post.username}
         </span>
       </div>

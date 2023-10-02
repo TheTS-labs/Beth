@@ -1,5 +1,5 @@
 import axios from "axios";
-import { atom, useAtom, useAtomValue, useSetAtom } from "jotai";
+import { atom, PrimitiveAtom, useAtom, useAtomValue, useSetAtom } from "jotai";
 import { useState } from "react";
 
 import { DetailedPost } from "../../../backend/db/models/post";
@@ -16,22 +16,31 @@ interface ReturnType {
 
 export const queryAtom = atomWithHash<string | undefined>("q", undefined);
 export const tagsAtom = atomWithHash<string | undefined>("tags", undefined);
+export const modalUserAtom = atomWithHash<null | string>("modalUser", null);
 
 export const afterCursorAtom = atom<string | undefined>(undefined);
 export const postsAtom = atom<DetailedPost[]>([]);
 
-export default function useFetchPosts(): ReturnType {
+// TODO: When you load a new page with a `modalUser` hash value, it sets the posts in the feed to custom posts
+
+export default function useFetchPosts(options?: {
+  customQueryAtom?: PrimitiveAtom<string | undefined>
+  customTagsAtom?: PrimitiveAtom<string | undefined>
+  customAfterCursorAtom?: PrimitiveAtom<string | undefined>
+  customPostsAtom?: PrimitiveAtom<DetailedPost[]>
+}): ReturnType {
   const token = useAtomValue(authTokenAtom);
-  const query = useAtomValue(queryAtom);
-  const tags = useAtomValue(tagsAtom);
+  const query = useAtomValue(options?.customQueryAtom || queryAtom);
+  const tags = useAtomValue(options?.customTagsAtom || tagsAtom);
+  const username = useAtomValue(modalUserAtom);
 
   const setErrors = useSetAtom(errorsAtom);
-  const setPosts = useSetAtom(postsAtom);
+  const setPosts = useSetAtom(options?.customPostsAtom || postsAtom);
 
   const [ loading, setLoading ] = useState(false);
   const [ error, setError ] = useState<boolean | string>(false);
 
-  const [ afterCursor, setAfterCursor ] = useAtom(afterCursorAtom);
+  const [ afterCursor, setAfterCursor ] = useAtom(options?.customAfterCursorAtom || afterCursorAtom);
   
   let requestUrl = token ? "recommendation/recommend" : "recommendation/globalRecommend";
   const body = new URLSearchParams();
@@ -48,6 +57,11 @@ export default function useFetchPosts(): ReturnType {
   if (query) {
     requestUrl = "post/search";
     body.append("query", query);
+  }
+
+  if (username) {
+    requestUrl = "post/getUserPosts";
+    body.append("username", username);
   }
 
   return {

@@ -11,6 +11,7 @@ import styles from "../public/styles/components/expanded_post.module.sass";
 import modalStyles from "../public/styles/components/modal.module.sass";
 import Loader from "./common/loader";
 import PostComponent from "./common/post";
+import ModalUserAdmins from "./modal_user_admins";
 
 const afterCursorAtom = atom<string | undefined>(undefined);
 const postsAtom = atom<DetailedPost[]>([]);
@@ -38,6 +39,7 @@ function ModalUser(): React.JSX.Element {
   return <>
     {modalUser && <div className={modalStyles.overlay}>
       <div className={modalStyles.modal} ref={modal}>
+        <ModalUserAdmins />
         {posts.map(post => 
           <PostComponent
             key={post.id}

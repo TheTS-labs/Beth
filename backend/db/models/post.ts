@@ -361,15 +361,15 @@ export default class PostModel implements ICRUDModel<
   }
 
   public async getUserPosts(
-    username: string,
+    email: string,
     afterCursor?: string,
     numberRecords?: number
   ): Promise<DetailedPosts> {
     this.logger.log({
       level: "trying",
-      message: `To get posts made by @${username}`,
+      message: `To get posts made by ${email}`,
       path: module.filename,
-      context: { username, afterCursor, numberRecords }
+      context: { email, afterCursor, numberRecords }
     });
 
     const results = await knexCursorPagination(this.db.queryBuilder()
@@ -388,7 +388,7 @@ export default class PostModel implements ICRUDModel<
       .whereNull("post.repliesTo")
       .whereNull("post.frozenAt")
       .where("user.isFrozen", false)
-      .where("user.username", username)
+      .where("post.author", email)
       .orderBy("post.id", "desc"), { after: afterCursor, first: numberRecords });
     const endCursor = getCursor(results[results.length - 1]);
 

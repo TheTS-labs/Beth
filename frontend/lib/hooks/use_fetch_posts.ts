@@ -32,7 +32,7 @@ export default function useFetchPosts(options?: {
   const token = useAtomValue(authTokenAtom);
   const query = useAtomValue(options?.customQueryAtom || queryAtom);
   const tags = useAtomValue(options?.customTagsAtom || tagsAtom);
-  const username = useAtomValue(modalUserAtom);
+  const email = useAtomValue(modalUserAtom);
 
   const setErrors = useSetAtom(errorsAtom);
   const setPosts = useSetAtom(options?.customPostsAtom || postsAtom);
@@ -59,9 +59,9 @@ export default function useFetchPosts(options?: {
     body.append("query", query);
   }
 
-  if (username) {
+  if (email) {
     requestUrl = "post/getUserPosts";
-    body.append("username", username);
+    body.append("email", email);
   }
 
   return {

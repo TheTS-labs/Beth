@@ -28,15 +28,25 @@ export default function Post(props: Props): React.JSX.Element {
   const userCheckmark = props.post.verified ? <span className={styles.checkmark}>✓</span> : <></>;
   const postText = props.post.text.split("\n").map(line => <><br/>{line}</>);
 
+  const openModalPost = (): void => {
+    setModalUser(null);
+    setModalPost(props.post.id);
+  };
+
+  const openModalUser = (): void => {
+    setModalPost(null);
+    setModalUser(props.post.author);
+  };
+
   return <>
     <div className={styles.post} data-key={props.post.id} data-broken={props.broken} data-reply={props.isReply}>
       {/* User information */}
-      <div className={styles.user} onClick={(): void => setModalUser(props.post.username)}>
+      <div className={styles.user} onClick={openModalUser}>
         <div className={styles.username_and_checkmark}>
           <span className={styles.username}>{props.loading ? <Loading /> : props.post.displayName}</span>
           {userCheckmark}
         </div>
-        <span className={styles.email} onClick={(): void => setModalUser(props.post.username)}>
+        <span className={styles.email} onClick={openModalUser}>
           @{props.loading ? <Loading /> : props.post.username}
         </span>
       </div>
@@ -47,25 +57,25 @@ export default function Post(props: Props): React.JSX.Element {
           if (props.loading) {
             return <>
               <br/>
-              <p className={styles.post_text} onClick={(): void => setModalPost(props.post.id)}>
+              <p className={styles.post_text} onClick={openModalPost}>
                 <Loading length={Math.random() * (90 - 20) + 20+"%"}/>
               </p>
-              <p className={styles.post_text} onClick={(): void => setModalPost(props.post.id)}>
+              <p className={styles.post_text} onClick={openModalPost}>
                 <Loading length={Math.random() * (90 - 20) + 20+"%"}/>
               </p>
-              <p className={styles.post_text} onClick={(): void => setModalPost(props.post.id)}>
+              <p className={styles.post_text} onClick={openModalPost}>
                 <Loading length={Math.random() * (90 - 20) + 20+"%"}/>
               </p>
-              <p className={styles.post_text} onClick={(): void => setModalPost(props.post.id)}>
+              <p className={styles.post_text} onClick={openModalPost}>
                 <Loading length={Math.random() * (90 - 20) + 20+"%"}/>
               </p>
-              <p className={styles.post_text} onClick={(): void => setModalPost(props.post.id)}>
+              <p className={styles.post_text} onClick={openModalPost}>
                 <Loading length={Math.random() * (90 - 20) + 20+"%"}/>
               </p>
             </>;
           }
 
-          return <p className={styles.post_text} onClick={(): void => setModalPost(props.post.id)}>{postText}</p>;
+          return <p className={styles.post_text} onClick={openModalPost}>{postText}</p>;
         })()}
         <div className={styles.voting}>
           <button 

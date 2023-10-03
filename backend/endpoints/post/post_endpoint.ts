@@ -217,7 +217,7 @@ export default class PostEndpoint extends BaseEndpoint<type.PostRequestArgs, Cal
     args = await this.validate(type.GetUserPostsArgsSchema, args);
 
     const results = await this.postModel.getUserPosts(
-      args.username,
+      args.email,
       args.afterCursor,
       args.numberRecords
     ).catch((err: { message: string }) => {

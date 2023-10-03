@@ -9,7 +9,7 @@ export async function up(knex: Knex): Promise<void> {
     table.string("owner").notNullable();
     table.boolean("revoked").defaultTo(DBBool.No);
     table.timestamp("iat").defaultTo(knex.fn.now());
-    table.string("scope").notNullable();
+    table.string("scope", 2048).notNullable();
   });
 }
 

@@ -102,13 +102,13 @@ export const SearchArgsSchema = Joi.object({
 
 // >>> Get User Posts >>>
 export interface GetUserPostsArgs {
-  username: string
+  email: string
   afterCursor: string | undefined
   numberRecords: number
 }
 
 export const GetUserPostsArgsSchema = Joi.object({
-  username: Joi.string().required(),
+  email: Joi.string().email().required(),
   afterCursor: Joi.string().default(() => undefined),
   numberRecords: Joi.number().positive().default(10)
 });

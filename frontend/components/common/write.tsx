@@ -11,6 +11,7 @@ interface Event extends FormEvent<HTMLFormElement> {
     text: { value: string }
     tags: { value: string }
     submit: { value: string }
+    reset: () => void
   }
 }
 
@@ -40,7 +41,7 @@ export function Write(props: Props): React.JSX.Element {
   
     write.request(event.target.text.value, event.target.tags.value).then(result => {
       if (result) {
-        event.target.text.value = "";
+        event.target.reset();
         event.target.submit.value = "Done!";
 
         if (props.setDoRequest) {

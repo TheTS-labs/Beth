@@ -11,6 +11,7 @@ import styles from "../public/styles/components/expanded_post.module.sass";
 import modalStyles from "../public/styles/components/modal.module.sass";
 import PostComponent, { modalPostAtom } from "./common/post";
 import { Write } from "./common/write";
+import ModalPostAdmins from "./modal_post_admins";
 
 // TODO: Will crash if id not found
 
@@ -68,6 +69,10 @@ function ModalPost(): React.JSX.Element {
           broken={Boolean(fetchPost.error)}
           expanded={true}
         />
+        {
+          !fetchPost.result || Object.keys(fetchPost.result).length == 0 ?
+          <></> : <ModalPostAdmins post={fetchPost.result as DetailedPost} />
+        }
         <p className={styles.tags}>#{(fetchPost.result as DetailedPost)?.tags.replaceAll(",", " #")}</p>
         <hr className={styles.hr}/>
         <Write

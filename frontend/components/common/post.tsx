@@ -1,12 +1,14 @@
-import { useSetAtom } from "jotai";
+import { PrimitiveAtom, useSetAtom } from "jotai";
 import React from "react";
 
 import { DetailedPost, Post } from "../../../backend/db/models/post";
 import { atomWithHash } from "../../lib/common/atomWithHash";
+import useAuthToken from "../../lib/common/token";
 import { modalUserAtom } from "../../lib/hooks/use_fetch_posts";
 import useVote from "../../lib/hooks/use_vote";
 import defaultStyles from "../../public/styles/components/common/post.module.sass";
 import expandedStyles from "../../public/styles/components/expanded_post.module.sass";
+import EditableField from "./editable_field";
 import Loading from "./loading";
 
 interface Props {
@@ -15,11 +17,13 @@ interface Props {
   loading: boolean
   isReply?: boolean
   expanded?: boolean
+  editablePostTextAtom?: PrimitiveAtom<string | undefined>
 }
 
 export const modalPostAtom = atomWithHash<null | number>("modalPost", null);
 
 export default function Post(props: Props): React.JSX.Element {
+  const authToken = useAuthToken();
   const { callback } = useVote(props.post.id);
   const setModalPost = useSetAtom(modalPostAtom);
   const setModalUser = useSetAtom(modalUserAtom);
@@ -73,6 +77,15 @@ export default function Post(props: Props): React.JSX.Element {
                 <Loading length={Math.random() * (90 - 20) + 20+"%"}/>
               </p>
             </>;
+          }
+
+          if (props.expanded && props.editablePostTextAtom) {
+            if (
+              props.post.author == authToken?.payload?.email ||
+              authToken?.payload?.scope?.includes("PostSuperEdit")
+            ) {
+              return <p className={styles.post_text}><EditableField valueAtom={props.editablePostTextAtom} /></p>;
+            }
           }
 
           return <p className={styles.post_text} onClick={openModalPost}>{postText}</p>;

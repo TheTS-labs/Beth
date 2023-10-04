@@ -13,7 +13,7 @@ import modalStyles from "../public/styles/components/modal.module.sass";
 import EditableField from "./common/editable_field";
 import PostComponent, { modalPostAtom } from "./common/post";
 import { Write } from "./common/write";
-import ModalPostAdmins from "./modal_post_admins";
+import ModalPostActions from "./modal_post_actions";
 
 // TODO: Will crash if id not found
 
@@ -118,7 +118,7 @@ function ModalPost(): React.JSX.Element {
         />
         {
           !fetchPost.result || Object.keys(fetchPost.result).length == 0 ?
-          <></> : <ModalPostAdmins post={fetchPost.result } />
+          <></> : <ModalPostActions post={fetchPost.result } />
         }
         {((): React.JSX.Element => {
           if (

@@ -16,5 +16,12 @@
     cursor: pointer
     transition: all 150ms
 
-  button:hover
-    background-color: hsl(0deg 45.14% 46.55%)
+    &:hover
+      background-color: hsl(0deg 45.14% 46.55%)
+    
+    &[data-type="green"]
+      border: solid 2px primary-color()
+
+      &:hover
+        background-color: primary-color()
+        color: #000000

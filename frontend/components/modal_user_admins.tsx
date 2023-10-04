@@ -4,7 +4,7 @@ import React from "react";
 import useAuthToken from "../lib/common/token";
 import { modalUserAtom } from "../lib/hooks/use_fetch_posts";
 import useRequest from "../lib/hooks/use_request";
-import styles from "../public/styles/components/admins.module.sass";
+import styles from "../public/styles/components/actions.module.sass";
 
 // TODO: Refactor
 

@@ -14,7 +14,8 @@ export default function HotTags(): React.JSX.Element {
 
   const { result, error, loading } = useRequest<{ result: { tag: string, postCount: string }[] }>(
     "recommendation/getHotTags",
-    {}
+    {},
+    true
   );
 
   const hotTags = result?.result || [

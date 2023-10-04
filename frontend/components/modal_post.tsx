@@ -20,10 +20,10 @@ import ModalPostAdmins from "./modal_post_admins";
 function ModalPost(): React.JSX.Element {
   const authToken = useAuthToken();
   const [ modalPost, setModalPost ] = useAtom(modalPostAtom);
-  const fetchPost = useRequest<DetailedPost>("post/view", { id: modalPost }, false);
-  const editPost = useRequest<DetailedPost>("post/edit", { id: modalPost }, false);
-  const editPostTags = useRequest<DetailedPost>("post/editTags", { id: modalPost }, false);
-  const fetchReplies = useRequest<DetailedPost[]>("post/viewReplies", { repliesTo: modalPost }, false);
+  const fetchPost = useRequest<DetailedPost>("post/view", { id: modalPost });
+  const editPost = useRequest<DetailedPost>("post/edit", { id: modalPost });
+  const editPostTags = useRequest<DetailedPost>("post/editTags", { id: modalPost });
+  const fetchReplies = useRequest<DetailedPost[]>("post/viewReplies", { repliesTo: modalPost });
   const editablePostTextAtom = useMemo(() => atom(fetchPost.result?.text), [fetchPost.result?.text]);
   const editablePostText = useAtomValue(editablePostTextAtom);
 

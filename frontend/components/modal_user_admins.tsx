@@ -12,11 +12,11 @@ export default function ModalUserAdmins(): React.JSX.Element {
   const authToken = useAuthToken();
   const modalUser = useAtomValue(modalUserAtom);
 
-  const userVerify = useRequest("user/verify", { email: modalUser }, false);
-  const userFroze = useRequest("user/froze", { email: modalUser }, false);
-  const userEditTags = useRequest("user/editTags", { email: modalUser }, false);
-  const userGrantPermission = useRequest("permission/grant", { grantTo: modalUser }, false);
-  const userRescindPermission = useRequest("permission/rescind", { rescindFrom: modalUser }, false);
+  const userVerify = useRequest("user/verify", { email: modalUser });
+  const userFroze = useRequest("user/froze", { email: modalUser });
+  const userEditTags = useRequest("user/editTags", { email: modalUser });
+  const userGrantPermission = useRequest("permission/grant", { grantTo: modalUser });
+  const userRescindPermission = useRequest("permission/rescind", { rescindFrom: modalUser });
 
   const editTags = (): void => {
     const tags = prompt("Type new tags separating them by comma \n\n Example: tag1,tag2,tag3");

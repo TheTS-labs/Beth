@@ -29,7 +29,7 @@ export default function EditableField(props: Props): React.JSX.Element {
       setEditing(true);
     }}>{(value || "").split("\n").map(line => <>{line}<br/></>)}</p> }
     { editing && <>
-      <textarea defaultValue={value} ref={textAreaRef} onChange={(e): void => setTempValue(e.target.value)} />
+      <textarea autoFocus defaultValue={value} ref={textAreaRef} onChange={(e): void => setTempValue(e.target.value)} />
       <button onClick={(): void => {
         setEditing(false);
         setValue(tempValue);

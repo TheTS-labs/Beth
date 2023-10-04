@@ -28,7 +28,7 @@ interface Event extends FormEvent<HTMLFormElement> {
 
 export default function UpdateData(): React.JSX.Element {
   const authToken = useAuthToken();
-  const { result, request } = useRequest<User>("user/view", { email: authToken?.payload?.email }, false, true);
+  const { result, request } = useRequest<User>("user/view", { email: authToken?.payload?.email });
   const setErrors = useSetAtom(errorsAtom);
 
   useEffect(() => request(), [authToken?.payload?.email]);

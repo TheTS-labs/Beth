@@ -19,8 +19,7 @@ export default function IssueToken(): React.JSX.Element {
 
   const { result, loading, error, request } = useRequest(
     "permission/view",
-    { email: authToken?.payload?.email },
-    false
+    { email: authToken?.payload?.email }
   );
 
   useEffect(() => request(), [authToken?.payload?.email]);

@@ -10,8 +10,8 @@ import styles from "../public/styles/components/admins.module.sass";
 export default function ModalPostAdmins(props: { post: DetailedPost }): React.JSX.Element {
   const authToken = useAuthToken();
 
-  const postDelete = useRequest("post/delete", { id: props.post.id }, false);
-  const postForceDelete = useRequest("post/forceDelete", { id: props.post.id }, false);
+  const postDelete = useRequest("post/delete", { id: props.post.id });
+  const postForceDelete = useRequest("post/forceDelete", { id: props.post.id });
 
   return <div className={styles.buttons}>
     {

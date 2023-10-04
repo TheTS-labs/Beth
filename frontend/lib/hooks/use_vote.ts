@@ -5,10 +5,9 @@ import useRequest from "./use_request";
 export default function useVote(postId: number): { callback: (event: MouseEvent<unknown, unknown>) => void } {
   const vote = useRequest<{ success: true, action: "create" | "update" | "delete" }>(
     "/voting/vote",
-    { postId },
-    false
+    { postId }
   );
-  const voteCount = useRequest("voting/voteCount", { postId }, false);
+  const voteCount = useRequest("voting/voteCount", { postId });
   const [ voteType, setVoteType ] = useState<string | null>(null);
 
   useEffect(() => {

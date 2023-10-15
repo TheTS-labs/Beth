@@ -9,6 +9,7 @@ export async function up(knex: Knex): Promise<void> {
 
     // Permissions
     table.boolean("UserView"               ).defaultTo(PermissionStatus.Has  );
+    table.boolean("UserSuperView"          ).defaultTo(PermissionStatus.Hasnt);
     table.boolean("UserEditPassword"       ).defaultTo(PermissionStatus.Has  );
     table.boolean("UserFroze"              ).defaultTo(PermissionStatus.Has  );
     table.boolean("UserSuperFroze"         ).defaultTo(PermissionStatus.Hasnt);

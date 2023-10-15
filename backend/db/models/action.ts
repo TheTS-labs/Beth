@@ -1,4 +1,5 @@
 import { Knex } from "knex";
+import { IWithPagination } from "knex-paginate";
 import { RedisClientType } from "redis";
 import winston from "winston";
 
@@ -81,19 +82,33 @@ export default class ActionModel implements ICRUDModel<Omit<Action, "id" | "crea
     key: string,
     operator: string,
     value: string,
-    select: string[] | string
-  ): Promise<Action[]> {
+    currentPage: number,
+    perPage: number
+  ): Promise<
+    IWithPagination<
+      Action,
+      {
+        perPage: number
+        currentPage: number
+        isLengthAware: true
+      }
+    >
+  > {
     this.logger.log({
       level: "trying",
       message: "To preform a simple action(s) search",
       path: module.filename,
-      context: { key, operator, value, select }
+      context: { key, operator, value, currentPage, perPage }
     });
 
-    const where = this.db<Action>("action").where(key, operator, value);
-    const result: Action[] =  Array.isArray(select) ? await where.select(...select) : await where.select(select);
+    const results = await this.db<Action>("action").select("*").where(key, operator, value).paginate({
+      perPage,
+      currentPage,
+      isLengthAware: true
+    });
+    
 
-    return result;
+    return results;
   }
 
   public async chainWhereSearch(chain: ChainWhereSearchArgs): Promise<Action[]> {

@@ -5,14 +5,18 @@ export interface SimpleSearchArgs {
   key: string
   operator: string
   value: string
-  select: string[] | string
+  // select: string[]
+  currentPage: number
+  perPage: number
 }
 
 export const SimpleSearchArgsSchema = Joi.object().keys({
   key: Joi.string().required(),
   operator: Joi.string().required(),
   value: Joi.string().required(),
-  select: Joi.alternatives().try(Joi.array().items(Joi.string()), Joi.string()).default("*")
+  // select: Joi.array().items(Joi.string()).default(["*"]),
+  currentPage: Joi.number().positive().default(0),
+  perPage: Joi.number().positive().default(10),
 });
 // <<< Simple Search <<<
 

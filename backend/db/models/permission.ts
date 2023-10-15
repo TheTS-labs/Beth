@@ -14,6 +14,7 @@ export interface Permissions {
   id: number
   email: string
   UserView: PermissionStatus
+  UserSuperView: PermissionStatus
   UserEditPassword: PermissionStatus
   UserFroze: PermissionStatus
   UserSuperFroze: PermissionStatus

@@ -1,5 +1,5 @@
 import { useAtomValue } from "jotai";
-import React from "react";
+import React, { useEffect } from "react";
 
 import useAuthToken from "../lib/common/token";
 import { modalUserAtom } from "../lib/hooks/use_fetch_posts";
@@ -12,11 +12,14 @@ export default function ModalUserAdmins(): React.JSX.Element {
   const authToken = useAuthToken();
   const modalUser = useAtomValue(modalUserAtom);
 
+  const userSuperView = useRequest("user/superView", { email: modalUser });
   const userVerify = useRequest("user/verify", { email: modalUser });
   const userFroze = useRequest("user/froze", { email: modalUser });
   const userEditTags = useRequest("user/editTags", { email: modalUser });
   const userGrantPermission = useRequest("permission/grant", { grantTo: modalUser });
   const userRescindPermission = useRequest("permission/rescind", { rescindFrom: modalUser });
+
+  useEffect(() => userSuperView.request(), [modalUser]);
 
   const editTags = (): void => {
     const tags = prompt("Type new tags separating them by comma \n\n Example: tag1,tag2,tag3");
@@ -49,6 +52,13 @@ export default function ModalUserAdmins(): React.JSX.Element {
   };
 
   return <div className={styles.buttons}>
+    {
+      authToken.payload?.scope?.includes("UserSuperView") && <div>
+        {Object.entries(userSuperView.result || {}).map(([key, value]) => <p key={key}>
+          {key}: {value as string | number}
+        </p>)}
+      </div>
+    }
     {
       authToken.payload?.scope?.includes("UserVerify") && <>
         <button onClick={(): void => userVerify.request({ verify: 1 })}>Verify</button>

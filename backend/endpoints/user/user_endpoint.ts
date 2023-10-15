@@ -21,7 +21,7 @@ export default class UserEndpoint extends BaseEndpoint<type.UserRequestArgs, Cal
   allowNames: Array<string> = [
     "create", "view", "edit",
     "froze", "editTags", "verify",
-    "issueToken"
+    "issueToken", "superView"
   ];
   userModel: UserModel | CachingUserModel;
   permissionModel: PermissionModel;
@@ -67,6 +67,21 @@ export default class UserEndpoint extends BaseEndpoint<type.UserRequestArgs, Cal
     args = await this.validate(type.ViewArgsSchema, args);
 
     const requestedUser = await this.userModel.read(args.email);
+
+    return requestedUser || {};
+  }
+
+  async superView(args: type.ViewArgs, _auth: Auth): Promise<CallEndpointReturnType> {
+    args = await this.validate(type.ViewArgsSchema, args);
+
+    const requestedUser = await this.userModel.read(args.email, [
+      "id",
+      "username",
+      "displayName",
+      "isFrozen",
+      "tags",
+      "verified"
+    ]);
 
     return requestedUser || {};
   }

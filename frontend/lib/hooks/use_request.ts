@@ -40,7 +40,7 @@ export default function useRequest<ResultType=any>(
     axios.request({...axiosConfig, ...{
       url,
       data: { ...data, ...newData || {} },
-      headers: authToken.value ? { "Authorization": `Bearer ${authToken.value}` } : {}
+      headers: { "Authorization": `Bearer ${authToken.value}` }
     }}).then(response => response.data).then(responseData => {
       if (responseData.hasOwnProperty("errorMessage")) {
         setError(responseData.errorMessage);

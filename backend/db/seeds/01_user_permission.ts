@@ -44,6 +44,7 @@ export async function seed(knex: Knex): Promise<void> {
   await knex<Permissions>("permission").insert({
     email: "admin@example.com",
     UserView: PermissionStatus.Has,
+    UserSuperView: PermissionStatus.Has,
     UserEditPassword: PermissionStatus.Has,
     UserFroze: PermissionStatus.Has,
     UserSuperFroze: PermissionStatus.Has,

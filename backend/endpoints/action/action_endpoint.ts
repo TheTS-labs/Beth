@@ -1,4 +1,5 @@
 import { Knex } from "knex";
+import { IWithPagination } from "knex-paginate";
 import { RedisClientType } from "redis";
 import winston from "winston";
 
@@ -25,16 +26,29 @@ export default class ActionEndpoint extends BaseEndpoint<type.ActionRequestArgs,
     super(db, redisClient, logger, config, "action");
   }
 
-  public async simpleSearch(args: type.SimpleSearchArgs, _auth: Auth): Promise<Action[]> {
+  public async simpleSearch(
+    args: type.SimpleSearchArgs,
+    _auth: Auth
+  ): Promise<
+    IWithPagination<
+      Action,
+      {
+        perPage: number
+        currentPage: number
+        isLengthAware: true
+      }
+    >
+  > {
     args = await this.validate(type.SimpleSearchArgsSchema, args);
 
     const result = this.actionModel.simpleSearch(
       args.key,
       args.operator,
       args.value,
-      args.select
+      args.currentPage,
+      args.perPage
     ).catch((err: Error) => {
-      throw new RequestError("DatabaseError",[ err.message]);
+      throw new RequestError("DatabaseError", [err.message]);
     });
 
     return result;

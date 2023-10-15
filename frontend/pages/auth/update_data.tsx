@@ -5,7 +5,7 @@ import React, { FormEvent, useEffect } from "react";
 
 import { User } from "../../../backend/db/models/user";
 import axiosConfig from "../../axios.config";
-import Errors, { errorsAtom } from "../../components/common/errors";
+import { errorsAtom } from "../../components/common/errors";
 import Header from "../../components/common/header";
 import useAuthToken from "../../lib/common/token";
 import useRequest from "../../lib/hooks/use_request";
@@ -105,6 +105,11 @@ export default function UpdateData(): React.JSX.Element {
         </Link>
       </div>
       <div className={styles.froze_account}>
+        { authToken?.payload?.scope?.includes("ActionSimpleSearch") && (
+          <Link href="/admin/actions/simple_search" className={styles.froze_account}>
+            <button>Simple Search</button>
+          </Link>
+        ) }
         <Link href="/auth/froze" className={styles.froze_account}>
           <button>Froze account</button>
         </Link>
@@ -184,7 +189,5 @@ export default function UpdateData(): React.JSX.Element {
       </div>
     </div>
     </div>
-
-    <Errors />
   </>;
 }

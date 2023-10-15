@@ -1274,6 +1274,25 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@tanstack/react-table@npm:^8.10.6":
+  version: 8.10.6
+  resolution: "@tanstack/react-table@npm:8.10.6"
+  dependencies:
+    "@tanstack/table-core": 8.10.6
+  peerDependencies:
+    react: ">=16"
+    react-dom: ">=16"
+  checksum: 4b920fa36c70ed2de356c8c0e99f497f6ee8ab5bc74bc57f1f9aa8cc5d580ea3eb4a7743a03ad149fc43629efb157c592aba620141fb230d5529646dd6c7c002
+  languageName: node
+  linkType: hard
+
+"@tanstack/table-core@npm:8.10.6":
+  version: 8.10.6
+  resolution: "@tanstack/table-core@npm:8.10.6"
+  checksum: 05e7f15171f02053d1a9e552a7877e878a827635d3d4ed50387fa3d0e4ede9eb325eae758a4faa921dc2dd552302f4b49bb3b540e3511bff16b6a2b92d450429
+  languageName: node
+  linkType: hard
+
 "@tootallnate/once@npm:2":
   version: 2.0.0
   resolution: "@tootallnate/once@npm:2.0.0"
@@ -2263,6 +2282,7 @@ __metadata:
     jsonwebtoken: ^9.0.1
     knex: ^2.5.1
     knex-cursor-pagination: ^0.3.0
+    knex-paginate: ^3.1.1
     merge: ^2.1.1
     middleware-async: ^1.4.0
     node-cron: ^3.0.2
@@ -3905,6 +3925,7 @@ __metadata:
   resolution: "frontend@workspace:frontend"
   dependencies:
     "@faker-js/faker": ^8.0.2
+    "@tanstack/react-table": ^8.10.6
     "@types/react": 18.2.6
     axios: ^1.4.0
     buffer: ^6.0.3
@@ -3916,6 +3937,7 @@ __metadata:
     next: ^13.4.2
     react: ^18.2.0
     react-dom: ^18.2.0
+    react-json-view-lite: ^1.1.0
     sass: ^1.62.1
   languageName: unknown
   linkType: soft
@@ -5513,6 +5535,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"knex-paginate@npm:^3.1.1":
+  version: 3.1.1
+  resolution: "knex-paginate@npm:3.1.1"
+  peerDependencies:
+    knex: ">= 0.95.0"
+  checksum: 685fd13b8cc4d507eeedce55cd7afb12d89e884dd8a05d2388be89f95ec082f08a3d09988eac5fcb74bcc0a6cdb8b14c658cc5ff264ae478bc9bee760f434d81
+  languageName: node
+  linkType: hard
+
 "knex@npm:^2.5.1":
   version: 2.5.1
   resolution: "knex@npm:2.5.1"
@@ -6831,6 +6862,15 @@ __metadata:
   version: 18.2.0
   resolution: "react-is@npm:18.2.0"
   checksum: e72d0ba81b5922759e4aff17e0252bd29988f9642ed817f56b25a3e217e13eea8a7f2322af99a06edb779da12d5d636e9fda473d620df9a3da0df2a74141d53e
+  languageName: node
+  linkType: hard
+
+"react-json-view-lite@npm:^1.1.0":
+  version: 1.1.0
+  resolution: "react-json-view-lite@npm:1.1.0"
+  peerDependencies:
+    react: ^16.13.1 || ^17.0.0 || ^18.0.0
+  checksum: 6cea282a40b91177e6d5daa5a98ada51f56d226c9368dd2a9c6f3ecfc3a47c168b11de43241ebeb79d0b6570b1158ef2e043db7c08b1f71dc7b215417331e598
   languageName: node
   linkType: hard
 

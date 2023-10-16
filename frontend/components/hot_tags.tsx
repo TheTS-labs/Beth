@@ -1,11 +1,11 @@
 import { useSetAtom } from "jotai";
 import React from "react";
 
-import { afterCursorAtom, postsAtom, queryAtom, tagsAtom } from "../lib/hooks/use_fetch_posts";
 import useRequest from "../lib/hooks/use_request";
 import styles from "../public/styles/pages/hot_tags.module.sass";
 import { errorsAtom } from "./common/errors";
 import Tag from "./common/tag";
+import { afterCursorAtom, postsAtom, queryAtom, tagsAtom } from "./posts";
 
 export default function HotTags(): React.JSX.Element {
   const setAfterCursor = useSetAtom(afterCursorAtom);

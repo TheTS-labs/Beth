@@ -113,11 +113,11 @@ export default function UpdateData(): React.JSX.Element {
         </Link>
       </div>
       <div className={styles.froze_account}>
-        { authToken?.payload?.scope?.includes("ActionSimpleSearch") && (
+        { authToken?.payload?.scope?.includes("ActionSimpleSearch") && 
           <Link href="/admin/actions/simple_search" className={styles.froze_account}>
             <button>Simple Search</button>
           </Link>
-        ) }
+        }
         <Link href="/auth/froze" className={styles.froze_account}>
           <button>Froze account</button>
         </Link>

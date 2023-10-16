@@ -55,7 +55,7 @@ export default function useRequest<ResultType=any>(options: {
   };
 
   useEffect(() => {
-    if (options.doSetErrors) {
+    if (options.doRequest) {
       request();
     }
   }, []);

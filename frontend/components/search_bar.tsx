@@ -1,8 +1,8 @@
 import { useAtom, useSetAtom } from "jotai";
 import React, { FormEvent } from "react";
 
-import { afterCursorAtom, postsAtom, queryAtom, tagsAtom } from "../lib/hooks/use_fetch_posts";
 import styles from "../public/styles/pages/index.module.sass";
+import { afterCursorAtom, postsAtom, queryAtom, tagsAtom } from "./posts";
 
 interface Event extends FormEvent<HTMLFormElement> {
   target: EventTarget & {

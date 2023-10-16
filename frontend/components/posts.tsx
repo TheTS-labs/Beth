@@ -1,20 +1,29 @@
+/* eslint-disable import/exports-last */
 import { faker } from "@faker-js/faker";
-import { useAtom } from "jotai";
+import { atom, useAtom, useAtomValue } from "jotai";
 import dynamic from "next/dynamic";
 import React, { useEffect, useRef, useState } from "react";
 
-import { DetailedPosts } from "../../backend/db/models/post";
+import { DetailedPost } from "../../backend/db/models/post";
+import { atomWithHash } from "../lib/common/atomWithHash";
 import observer from "../lib/common/observer";
 import { authTokenAtom } from "../lib/common/token";
-import useFetchPosts, { afterCursorAtom, postsAtom, queryAtom, tagsAtom } from "../lib/hooks/use_fetch_posts";
+import useFetchPosts from "../lib/hooks/use_fetch_posts";
 import styles from "../public/styles/pages/posts.module.sass";
+import { errorsAtom } from "./common/errors";
 import Loader from "./common/loader";
 import Post from "./common/post";
 import { Write } from "./common/write";
 
+export const queryAtom = atomWithHash<string | undefined>("q", undefined);
+export const tagsAtom = atomWithHash<string | undefined>("tags", undefined);
+
+export const afterCursorAtom = atom<string | undefined>(undefined);
+export const postsAtom = atom<DetailedPost[]>([]);
+
 function Posts(): React.JSX.Element {
-  const [ token ] = useAtom(authTokenAtom);
-  const [ defaultPosts ] = useState<DetailedPosts["results"]>([...Array(10)].map((_, i) => ({
+  const token = useAtomValue(authTokenAtom);
+  const [ defaultPosts ] = useState<DetailedPost[]>([...Array(10)].map((_, i) => ({
     //? I used `any` instead of `DBBool` just because I can't import it
     //? But, interestingly enough, I can import and use types as long as
     //? they don't go into the JS code, which means they can be used in type definitions.
@@ -49,7 +58,24 @@ function Posts(): React.JSX.Element {
   const [ query, setQuery ] = useAtom(queryAtom);
   const [ tags, setTags ] = useAtom(tagsAtom);
   const observerTarget = useRef(null);
-  const { callback, error } = useFetchPosts();
+
+  let url = token ? "recommendation/recommend" : "recommendation/globalRecommend";
+
+  if (query || tags) {
+    url = "post/search";
+  }
+  
+  const { request, error } = useFetchPosts<DetailedPost>({
+    url,
+    data: Object.assign({},
+      afterCursor ? { afterCursor } : {},
+      query ? { query } : {},
+      tags ? { tags } : {},
+    ),
+    afterCursorAtom,
+    postsAtom,
+    errorsAtom
+  });
 
   const postElements: React.JSX.Element[] = [];
   const reset = (): void => {
@@ -59,9 +85,9 @@ function Posts(): React.JSX.Element {
     setQuery("");
   };
 
-  useEffect(() => { callback(); }, [query, tags]);
+  useEffect(() => { request(); }, [query, tags]);
 
-  useEffect(observer(observerTarget, callback, []), [afterCursor, query, tags]);
+  useEffect(observer(observerTarget, request, []), [afterCursor, query, tags]);
 
   const postsSrc = posts.length == 0 ? defaultPosts : posts;
 
@@ -96,7 +122,7 @@ function Posts(): React.JSX.Element {
     { token && <Write placeholder="Your definitely important opinion..." /> }
     {...postElements}
 
-    {/* TODO: Add retry */}
+    {/* // TODO: Add retry */}
     { !error && <div className={styles.loader} ref={observerTarget}><Loader /></div> }
   </div>;
 }

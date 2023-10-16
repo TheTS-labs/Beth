@@ -9,6 +9,7 @@ import useKeyPress from "../lib/hooks/use_key_press";
 import useOutside from "../lib/hooks/use_outside";
 import styles from "../public/styles/components/expanded_post.module.sass";
 import modalStyles from "../public/styles/components/modal.module.sass";
+import { errorsAtom } from "./common/errors";
 import Loader from "./common/loader";
 import PostComponent from "./common/post";
 import ModalUserAdmins from "./modal_user_admins";
@@ -23,37 +24,46 @@ function ModalUser(): React.JSX.Element {
   useKeyPress("Escape", () => setModalUser(null), []);
 
   const observerTarget = useRef(null);
-  const { callback, error } = useFetchPosts({ customPostsAtom: postsAtom, customAfterCursorAtom: afterCursorAtom });
   const [ afterCursor, setAfterCursor ] = useAtom(afterCursorAtom);
   const [ posts, setPosts ] = useAtom(postsAtom);
+
+  const { request, error } = useFetchPosts({
+    url: "post/getUserPosts",
+    data: Object.assign({},
+      afterCursor ? { afterCursor } : {},
+      modalUser ? { email: modalUser } : {},
+    ),
+    postsAtom,
+    afterCursorAtom,
+    errorsAtom,
+    doSetErrors: true
+  });
 
   useEffect(() => {
     if (modalUser) {
       setPosts([]);
       setAfterCursor(undefined);
-      callback();
+      request();
     }
   }, [modalUser]);
-  useEffect(observer(observerTarget, callback, []), [afterCursor, modalUser]);
+  useEffect(observer(observerTarget, request, []), [afterCursor, modalUser]);
 
   return <>
     {modalUser && <div className={modalStyles.overlay}>
       <div className={modalStyles.modal} ref={modal}>
         <ModalUserAdmins />
-        {posts.map(post => 
-          <PostComponent
-            key={post.id}
-            post={post}
-            broken={false}
-            loading={false}
-          />
-        )}
+        {posts.map(post => <PostComponent
+          key={post.id}
+          post={post}
+          broken={false}
+          loading={false}
+        />)}
         { !error && <div className={styles.loader} ref={observerTarget}><Loader /></div> }
         <h3 className={styles.end}>
           That seems to be all there is, cutie~ <br/>
           <p
             style={{ cursor: "pointer", textDecoration: "underline" }}
-            onClick={(): void => { setPosts([]); setAfterCursor(undefined); callback(); }}
+            onClick={(): void => { setPosts([]); setAfterCursor(undefined); request(); }}
           >Retry</p>
         </h3>
       </div>

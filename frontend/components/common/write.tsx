@@ -1,19 +1,10 @@
 import { useSetAtom } from "jotai";
-import React, { Dispatch, FormEvent, SetStateAction } from "react";
+import React, { Dispatch, FormEvent, SetStateAction, useEffect, useRef } from "react";
 
 import useAuthToken from "../../lib/common/token";
-import WritePost from "../../lib/home/write_post";
+import useRequest from "../../lib/hooks/use_request";
 import styles from "../../public/styles/components/common/write.module.sass";
 import { errorsAtom } from "./errors";
-
-interface Event extends FormEvent<HTMLFormElement> {
-  target: EventTarget & {
-    text: { value: string }
-    tags: { value: string }
-    submit: { value: string }
-    reset: () => void
-  }
-}
 
 interface Props {
   placeholder: string
@@ -26,40 +17,60 @@ const tagsRegex = /\b([a-zA-Z0-9])\w+,/gm;
 export function Write(props: Props): React.JSX.Element {
   const authToken = useAuthToken();
   const setErrors = useSetAtom(errorsAtom);
-  const write = new WritePost(setErrors, authToken.value || "", props.replyTo);
+  const { request, result } = useRequest({
+    url: "post/create",
+    data: { replyTo: props.replyTo },
+    errorsAtom
+  });
 
-  const onSubmit = (event: Event): void => {
+  const formRef = useRef<HTMLFormElement | null>(null);
+  const textRef = useRef<HTMLTextAreaElement | null>(null);
+  const tagsRef = useRef<HTMLTextAreaElement | null>(null);
+  const submitRef = useRef<HTMLInputElement | null>(null);
+
+  useEffect(() => {
+    if (result?.success && formRef.current && submitRef.current) {
+      formRef.current.reset();
+      submitRef.current.value = "Done!";
+
+      if (props.setDoRequest) {
+        props.setDoRequest(true);
+      }
+
+      setInterval(() => {
+        if (submitRef.current) {
+          submitRef.current.value = "Looks good";
+        }
+      }, 1500);
+    }
+  }, [result]);
+
+  const onSubmit = (event: FormEvent<HTMLFormElement>): void => {
     event.preventDefault();
-    event.target.submit.value = "Sending...";
+    if (!submitRef.current || !tagsRef.current || !textRef.current) {
+      return;
+    }
+
+    submitRef.current.value = "Sending...";
 
     tagsRegex.lastIndex = 0;
-    const regexMatches = tagsRegex.exec(event.target.tags.value);
+    const regexMatches = tagsRegex.exec(tagsRef.current.value || "");
     if (!regexMatches) {
       setErrors(prevErrors => [...prevErrors, "Tags must be written like this example: tag1,tag2"]);
       return;
     }
-  
-    write.request(event.target.text.value, event.target.tags.value).then(result => {
-      if (result) {
-        event.target.reset();
-        event.target.submit.value = "Done!";
 
-        if (props.setDoRequest) {
-          props.setDoRequest(true);
-        }
-
-        setInterval(() => {
-          event.target.submit.value = "Looks good";
-        }, 1500);
-      }
+    request({
+      text: textRef.current.value,
+      tags: tagsRef.current.value
     });
   };
 
   return authToken.value ? <>
-    <form className={styles.form} onSubmit={onSubmit}>
-      <textarea name="text" id="text" rows={2} placeholder={props.placeholder} required />
-      <textarea name="tags" id="tags" rows={2} placeholder="Tags" />
-      <input type="submit" id="submit" value="Looks good" />
+    <form className={styles.form} onSubmit={onSubmit} ref={formRef}>
+      <textarea name="text" id="text" rows={2} placeholder={props.placeholder} ref={textRef} required />
+      <textarea name="tags" id="tags" rows={2} placeholder="Tags" ref={tagsRef} required />
+      <input type="submit" id="submit" value="Looks good" ref={submitRef} />
     </form>
   </> : <></>;
 }

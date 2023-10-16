@@ -1,10 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import axios from "axios";
-import { useSetAtom } from "jotai";
+import { PrimitiveAtom, useSetAtom } from "jotai";
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
 
 import axiosConfig from "../../axios.config";
-import { errorsAtom } from "../../components/common/errors";
 import useAuthToken from "../common/token";
 
 interface ReturnType<ResultType=any> {
@@ -15,31 +14,33 @@ interface ReturnType<ResultType=any> {
   setResult: Dispatch<SetStateAction<ResultType | undefined>>
 }
 
-export default function useRequest<ResultType=any>(
-  url: string,
-  data: object,
-  doRequest=false,
-  doSetErrors=true
-): ReturnType<ResultType> {
+export default function useRequest<ResultType=any>(options: {
+  url: string
+  data: object
+  errorsAtom: PrimitiveAtom<string[]>
+  doRequest?: boolean
+  doSetErrors?: boolean
+}): ReturnType<ResultType> {
   const authToken = useAuthToken();
-  const setErrors = useSetAtom(errorsAtom);
+  const setErrors = useSetAtom(options.errorsAtom);
+
   const [ loading, setLoading ] = useState(true);
   const [ error, setError ] = useState<boolean | string>(false);
   const [ result, setResult ] = useState<ResultType | undefined>(undefined);
 
   useEffect(() => {
-    if (typeof error === "string" && doSetErrors) {
+    if (typeof error === "string" && options.doSetErrors) {
       setErrors(prev => [...prev, error]);
     }
   }, [error]);
 
-  const request = (newData?: object): void => {
+  const request = (additionalData: object = {}): void => {
     setError(false);
     setLoading(true);
 
     axios.request({...axiosConfig, ...{
-      url,
-      data: { ...data, ...newData || {} },
+      url: options.url,
+      data: { ...options.data, ...additionalData || {} },
       headers: { "Authorization": `Bearer ${authToken.value}` }
     }}).then(response => response.data).then(responseData => {
       if (responseData.hasOwnProperty("errorMessage")) {
@@ -54,7 +55,7 @@ export default function useRequest<ResultType=any>(
   };
 
   useEffect(() => {
-    if (doRequest) {
+    if (options.doSetErrors) {
       request();
     }
   }, []);

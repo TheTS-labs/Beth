@@ -5,6 +5,7 @@ import useAuthToken from "../lib/common/token";
 import { modalUserAtom } from "../lib/hooks/use_fetch_posts";
 import useRequest from "../lib/hooks/use_request";
 import styles from "../public/styles/components/actions.module.sass";
+import { errorsAtom } from "./common/errors";
 
 // TODO: Refactor
 
@@ -12,12 +13,12 @@ export default function ModalUserAdmins(): React.JSX.Element {
   const authToken = useAuthToken();
   const modalUser = useAtomValue(modalUserAtom);
 
-  const userSuperView = useRequest("user/superView", { email: modalUser });
-  const userVerify = useRequest("user/verify", { email: modalUser });
-  const userFroze = useRequest("user/froze", { email: modalUser });
-  const userEditTags = useRequest("user/editTags", { email: modalUser });
-  const userGrantPermission = useRequest("permission/grant", { grantTo: modalUser });
-  const userRescindPermission = useRequest("permission/rescind", { rescindFrom: modalUser });
+  const userSuperView = useRequest({ url: "user/superView", data: { email: modalUser }, errorsAtom });
+  const userVerify = useRequest({ url: "user/verify", data: { email: modalUser }, errorsAtom });
+  const userFroze = useRequest({ url: "user/froze", data: { email: modalUser }, errorsAtom });
+  const userEditTags = useRequest({ url: "user/editTags", data: { email: modalUser }, errorsAtom });
+  const userGrantPermission = useRequest({ url: "permission/grant", data: { grantTo: modalUser }, errorsAtom });
+  const userRescindPermission = useRequest({ url: "permission/rescind", data: { rescindFrom: modalUser }, errorsAtom });
 
   useEffect(() => userSuperView.request(), [modalUser]);
 

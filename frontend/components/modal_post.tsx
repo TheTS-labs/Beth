@@ -10,6 +10,7 @@ import useRequest from "../lib/hooks/use_request";
 import styles from "../public/styles/components/expanded_post.module.sass";
 import modalStyles from "../public/styles/components/modal.module.sass";
 import EditableField from "./common/editable_field";
+import { errorsAtom } from "./common/errors";
 import PostComponent, { modalPostAtom } from "./common/post";
 import { Write } from "./common/write";
 import ModalPostActions from "./modal_post_actions";
@@ -17,10 +18,14 @@ import ModalPostActions from "./modal_post_actions";
 function ModalPost(): React.JSX.Element {
   const authToken = useAuthToken();
   const [ modalPost, setModalPost ] = useAtom(modalPostAtom);
-  const fetchPost = useRequest<DetailedPost>("post/view", { id: modalPost });
-  const editPost = useRequest<DetailedPost>("post/edit", { id: modalPost });
-  const editPostTags = useRequest<DetailedPost>("post/editTags", { id: modalPost });
-  const fetchReplies = useRequest<DetailedPost[]>("post/viewReplies", { repliesTo: modalPost });
+  const fetchPost = useRequest<DetailedPost>({ url: "post/view", data: { id: modalPost }, errorsAtom });
+  const editPost = useRequest<DetailedPost>({ url: "post/edit", data: { id: modalPost }, errorsAtom });
+  const editPostTags = useRequest<DetailedPost>({ url: "post/editTags", data: { id: modalPost }, errorsAtom });
+  const fetchReplies = useRequest<DetailedPost[]>({
+    url: "post/viewReplies",
+    data: { repliesTo: modalPost },
+    errorsAtom
+  });
   const editablePostTextAtom = useMemo(() => atom(fetchPost.result?.text), [fetchPost.result?.text]);
   const editablePostText = useAtomValue(editablePostTextAtom);
 

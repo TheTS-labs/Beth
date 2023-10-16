@@ -17,10 +17,11 @@ export default function IssueToken(): React.JSX.Element {
   const setErrors = useSetAtom(errorsAtom);
   const [ newToken, setNewToken ] = useState<string | undefined>();
 
-  const { result, loading, error, request } = useRequest(
-    "permission/view",
-    { email: authToken?.payload?.email }
-  );
+  const { result, loading, error, request } = useRequest({
+    url: "permission/view",
+    data: { email: authToken?.payload?.email },
+    errorsAtom
+  });
 
   useEffect(() => request(), [authToken?.payload?.email]);
 

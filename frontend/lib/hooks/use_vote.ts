@@ -1,13 +1,15 @@
 import { MouseEvent, useEffect, useState } from "react";
 
+import { errorsAtom } from "../../components/common/errors";
 import useRequest from "./use_request";
 
 export default function useVote(postId: number): { callback: (event: MouseEvent<unknown, unknown>) => void } {
-  const vote = useRequest<{ success: true, action: "create" | "update" | "delete" }>(
-    "/voting/vote",
-    { postId }
-  );
-  const voteCount = useRequest("voting/voteCount", { postId });
+  const vote = useRequest<{ success: true, action: "create" | "update" | "delete" }>({
+    url: "/voting/vote",
+    data: { postId },
+    errorsAtom
+  });
+  const voteCount = useRequest({ url: "voting/voteCount", data: { postId }, errorsAtom});
   const [ voteType, setVoteType ] = useState<string | null>(null);
 
   useEffect(() => {

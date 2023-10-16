@@ -15,6 +15,7 @@ import useAuthToken from "../../../lib/common/token";
 import useRequest from "../../../lib/hooks/use_request";
 import styles from "../../../public/styles/pages/admin/actions/simple_search.module.sass";
 import headerStyles from "../../../public/styles/pages/auth/header.module.sass";
+import { errorsAtom } from "../../../components/common/errors";
 
 interface Entry {
   value: string
@@ -67,7 +68,7 @@ export const highlightedRecordAtom = atomWithHash<string | undefined>("hiRec", u
 
 export default function UpdateData(): React.JSX.Element {
   const authToken = useAuthToken();
-  const { request, result } = useRequest("action/simpleSearch", {});
+  const { request, result } = useRequest({ url: "action/simpleSearch", data: {}, errorsAtom });
   const [ defaultRows ] = useState([]);
 
   const perPage = useAtomValue(perPageAtom);

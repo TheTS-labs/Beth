@@ -5,14 +5,15 @@ import { DetailedPost } from "../../backend/db/models/post";
 import useAuthToken from "../lib/common/token";
 import useRequest from "../lib/hooks/use_request";
 import styles from "../public/styles/components/actions.module.sass";
+import { errorsAtom } from "./common/errors";
 import { modalPostAtom } from "./common/post";
 
 export default function ModalPostActions(props: { post: DetailedPost }): React.JSX.Element {
   const authToken = useAuthToken();
   const setModalPost = useSetAtom(modalPostAtom);
 
-  const postDelete = useRequest("post/delete", { id: props.post.id });
-  const postForceDelete = useRequest("post/forceDelete", { id: props.post.id });
+  const postDelete = useRequest({ url: "post/delete", data: { id: props.post.id }, errorsAtom });
+  const postForceDelete = useRequest({ url: "post/forceDelete", data: { id: props.post.id }, errorsAtom });
 
   return <div className={styles.buttons}>
     {

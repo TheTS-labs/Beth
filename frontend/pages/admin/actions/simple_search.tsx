@@ -92,8 +92,6 @@ export default function UpdateData(): React.JSX.Element {
     request({ currentPage, perPage, key, operator, value });
   }, [currentPage, perPage, key, operator, value, authToken.value]);
 
-  console.log(key);
-
   const onSubmit = (event: Event): void => {
     event.preventDefault();
 

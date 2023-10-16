@@ -300,7 +300,11 @@ export default class PostModel implements ICRUDModel<
      .where("frozenAt", null)
      .andWhere("post.id", identifier)
      .andWhere("user.isFrozen", false)
-     .first() as Omit<DetailedPost, "score" | "userVote">;
+     .first() as Omit<DetailedPost, "score" | "userVote"> | undefined;
+
+    if (!result) {
+      return undefined;
+    }
 
     const votes = await this.db<Vote>("vote").select().where("vote.postId", identifier);
     const additionalInfo: Pick<DetailedPost, "score" | "userVote"> = {

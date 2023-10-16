@@ -1,7 +1,6 @@
-import { faker } from "@faker-js/faker";
 import { atom, useAtom, useAtomValue } from "jotai";
 import dynamic from "next/dynamic";
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef } from "react";
 
 import { DetailedPost } from "../../backend/db/models/post";
 import useAuthToken from "../lib/common/token";
@@ -15,8 +14,6 @@ import PostComponent, { modalPostAtom } from "./common/post";
 import { Write } from "./common/write";
 import ModalPostActions from "./modal_post_actions";
 
-// TODO: Will crash if id not found
-
 function ModalPost(): React.JSX.Element {
   const authToken = useAuthToken();
   const [ modalPost, setModalPost ] = useAtom(modalPostAtom);
@@ -28,7 +25,7 @@ function ModalPost(): React.JSX.Element {
   const editablePostText = useAtomValue(editablePostTextAtom);
 
   const editablePostTagsAtom = useMemo(() => 
-    atom<string | undefined>(`#${fetchPost.result?.tags.replaceAll(",", " #")}`
+    atom<string | undefined>(`#${(fetchPost.result?.tags || "").replaceAll(",", " #")}`
   ), [fetchPost.result?.tags]);
   const editablePostTags = useAtomValue(editablePostTagsAtom);
 
@@ -77,52 +74,29 @@ function ModalPost(): React.JSX.Element {
   useOutside(modal, () => setModalPost(null), []);
   useKeyPress("Escape", () => setModalPost(null), []);
 
-  const [ defaultPost ] = useState<DetailedPost>({
-    //? I used `any` instead of `DBBool` just because I can't import it
-    //? But, interestingly enough, I can import and use types as long as
-    //? they don't go into the JS code, which means they can be used in type definitions.
-    //? I guess the reason is that the file is located where WebPack doesn't build it
-    // TODO: Resolve it
-    // Module parse failed: Unexpected token (6:7)
-    // You may need an appropriate loader to handle this file type,
-    // currently no loaders are configured to process this file.
-    // See https://webpack.js.org/concepts#loaders
-    id: modalPost || 1,
-    text: faker.lorem.text(), 
-    score: faker.number.int({ min: -1000, max: 1000 }),
-    displayName: faker.internet.displayName(),
-    username: faker.internet.userName(),
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    verified: faker.datatype.boolean() as any,
-    userVote: faker.datatype.boolean(),
-    author: faker.internet.email(),
-    repliesTo: null,
-    tags: "123,456",
-    // eslint-disable-next-line camelcase
-    _cursor_0: modalPost || 1
-  });
-
   return <>
     {modalPost && <div className={modalStyles.overlay}>
       <div className={modalStyles.modal} ref={modal}>
-        <PostComponent
-          post={
-            !fetchPost.result || Object.keys(fetchPost.result).length == 0 ?
-            defaultPost :
-            fetchPost.result 
-          }
-          loading={fetchPost.loading}
-          broken={Boolean(fetchPost.error)}
-          expanded={true}
-          editablePostTextAtom={editablePostTextAtom}
-        />
         {
           !fetchPost.result || Object.keys(fetchPost.result).length == 0 ?
-          <></> : <ModalPostActions post={fetchPost.result } />
+          <p>An error occurred =(</p> :
+          <>
+            <PostComponent
+              post={fetchPost.result}
+              loading={fetchPost.loading}
+              broken={Boolean(fetchPost.error)}
+              expanded={true}
+              editablePostTextAtom={editablePostTextAtom}
+            />
+
+            <ModalPostActions post={fetchPost.result } />
+          </>
         }
+
         {((): React.JSX.Element => {
           if (
-            fetchPost.result && authToken?.payload?.email == fetchPost.result.author ||
+            fetchPost.result &&
+            authToken?.payload?.email == fetchPost.result.author ||
             authToken?.payload?.scope?.includes("PostSuperTagsEdit")
           ) {
             return <p className={styles.tags}><EditableField valueAtom={editablePostTagsAtom}/></p>;

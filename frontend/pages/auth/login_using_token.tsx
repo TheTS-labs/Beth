@@ -24,9 +24,7 @@ export default function LogInUsingToken(): React.JSX.Element {
     e.preventDefault();
     e.target.submit.value = "working, just wait...";
 
-    const payload = JSON.parse(atob(e.target.token.value.split(".")[1]));
-
-    authToken.update(e.target.token.value, { expires: new Date(payload.exp*1000), path: "/" });
+    authToken.update(e.target.token.value);
 
     e.target.submit.value = "done, redirecting...";
     window.location.replace("/");

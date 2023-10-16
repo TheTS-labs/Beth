@@ -81,6 +81,7 @@ export function atomWithStorage<Value>(
     (get, set, update: SetStateAction<Value>) => {
       const newValue =
         typeof update === 'function'
+          //@ts-ignore
           ? (update as (prev: Value) => Value)(get(baseAtom))
           : update
       set(baseAtom, newValue)
@@ -88,6 +89,7 @@ export function atomWithStorage<Value>(
     }
   )
 
+  //@ts-ignore
   return anAtom
 }
 

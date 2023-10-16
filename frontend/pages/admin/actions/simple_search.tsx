@@ -52,7 +52,9 @@ const columns: ColumnDef<Action>[] = [
     id: "context",
     header: "context",
     footer: props => props.column.id,
-    cell: ({ row }) => <JsonView data={row.original.context} shouldExpandNode={(): false => false} style={darkStyles} />
+    cell: ({ row }) => <div onClick={(e): void => e.stopPropagation()}>
+      <JsonView data={row.original.context} shouldExpandNode={(): false => false} style={darkStyles} />
+    </div>
   },
 ];
 

@@ -23,7 +23,11 @@ export default function IssueToken(): React.JSX.Element {
     errorsAtom
   });
 
-  useEffect(() => request(), [authToken?.payload?.email]);
+  useEffect(() => {
+    if (authToken?.payload?.email) {
+      request();
+    }
+  }, [authToken?.payload?.email]);
 
   const onsubmit = async (e: FormEvent<HTMLFormElement>): Promise<void> => {
     e.preventDefault();

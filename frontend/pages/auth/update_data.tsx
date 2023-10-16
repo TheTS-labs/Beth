@@ -35,7 +35,11 @@ export default function UpdateData(): React.JSX.Element {
   });
   const setErrors = useSetAtom(errorsAtom);
 
-  useEffect(() => request(), [authToken?.payload?.email]);
+  useEffect(() => {
+    if (authToken?.payload?.email) {
+      request();
+    }
+  }, [authToken?.payload?.email]);
 
   const onsubmit = async (e: Event): Promise<void> => {
     e.preventDefault();

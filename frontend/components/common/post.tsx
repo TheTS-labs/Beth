@@ -61,21 +61,9 @@ export default function Post(props: Props): React.JSX.Element {
           if (props.loading) {
             return <>
               <br/>
-              <p className={styles.post_text} onClick={openModalPost}>
+              {[...Array(5)].map(i => <p className={styles.post_text} onClick={openModalPost} key={i}>
                 <Loading length={Math.random() * (90 - 20) + 20+"%"}/>
-              </p>
-              <p className={styles.post_text} onClick={openModalPost}>
-                <Loading length={Math.random() * (90 - 20) + 20+"%"}/>
-              </p>
-              <p className={styles.post_text} onClick={openModalPost}>
-                <Loading length={Math.random() * (90 - 20) + 20+"%"}/>
-              </p>
-              <p className={styles.post_text} onClick={openModalPost}>
-                <Loading length={Math.random() * (90 - 20) + 20+"%"}/>
-              </p>
-              <p className={styles.post_text} onClick={openModalPost}>
-                <Loading length={Math.random() * (90 - 20) + 20+"%"}/>
-              </p>
+              </p>)}
             </>;
           }
 

@@ -104,9 +104,9 @@ function Posts(): React.JSX.Element {
     </div>);
   }
 
-  postElements.push(...postsSrc.map((post, i) => 
+  postElements.push(...postsSrc.map(post => 
     <Post
-      key={i}
+      key={post.id}
       post={post}
       broken={Boolean(error) && posts.length == 0}
       loading={posts.length == 0 && !error}

@@ -20,7 +20,11 @@ export default function ModalUserAdmins(): React.JSX.Element {
   const userGrantPermission = useRequest({ url: "permission/grant", data: { grantTo: modalUser }, errorsAtom });
   const userRescindPermission = useRequest({ url: "permission/rescind", data: { rescindFrom: modalUser }, errorsAtom });
 
-  useEffect(() => userSuperView.request(), [modalUser]);
+  useEffect(() => {
+    if (authToken.payload?.scope?.includes("UserSuperView")) {
+      userSuperView.request();
+    }
+  }, [modalUser]);
 
   const editTags = (): void => {
     const tags = prompt("Type new tags separating them by comma \n\n Example: tag1,tag2,tag3");

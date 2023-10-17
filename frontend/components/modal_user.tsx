@@ -40,11 +40,8 @@ function ModalUser(): React.JSX.Element {
   });
 
   useEffect(() => {
-    if (modalUser) {
-      setPosts([]);
-      setAfterCursor(undefined);
-      request();
-    }
+    setPosts([]);
+    setAfterCursor(undefined);
   }, [modalUser]);
   useEffect(observer(observerTarget, request, []), [afterCursor, modalUser]);
 

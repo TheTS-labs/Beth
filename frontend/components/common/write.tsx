@@ -1,7 +1,7 @@
 import { useSetAtom } from "jotai";
 import React, { Dispatch, FormEvent, SetStateAction, useEffect, useRef } from "react";
 
-import useAuthToken from "../../lib/common/token";
+import useAuthToken from "../../lib/hooks/use_auth_token";
 import useRequest from "../../lib/hooks/use_request";
 import styles from "../../public/styles/components/common/write.module.sass";
 import { errorsAtom } from "./errors";

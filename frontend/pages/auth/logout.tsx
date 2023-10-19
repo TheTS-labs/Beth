@@ -2,7 +2,7 @@ import Link from "next/link";
 import React, { MouseEvent } from "react";
 
 import Header from "../../components/common/header";
-import useAuthToken from "../../lib/common/token";
+import useAuthToken from "../../lib/hooks/use_auth_token";
 import styles from "../../public/styles/pages/auth/common.module.sass";
 import headerStyles from "../../public/styles/pages/auth/header.module.sass";
 

@@ -3,7 +3,7 @@ import dynamic from "next/dynamic";
 import React, { useEffect, useMemo, useRef } from "react";
 
 import { DetailedPost } from "../../backend/db/models/post";
-import useAuthToken from "../lib/common/token";
+import useAuthToken from "../lib/hooks/use_auth_token";
 import useKeyPress from "../lib/hooks/use_key_press";
 import useOutside from "../lib/hooks/use_outside";
 import useRequest from "../lib/hooks/use_request";

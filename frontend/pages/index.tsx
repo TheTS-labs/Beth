@@ -7,7 +7,7 @@ import ModalPost from "../components/modal_post";
 import ModalUser from "../components/modal_user";
 import Posts from "../components/posts";
 import SearchBar from "../components/search_bar";
-import useAuthToken from "../lib/common/token";
+import useAuthToken from "../lib/hooks/use_auth_token";
 import styles from "../public/styles/pages/index.module.sass";
 
 export default function App(): React.JSX.Element {

@@ -5,10 +5,10 @@ import dynamic from "next/dynamic";
 import React, { useEffect, useRef, useState } from "react";
 
 import { DetailedPost } from "../../backend/db/models/post";
-import { atomWithHash } from "../lib/common/atomWithHash";
-import observer from "../lib/common/observer";
-import { authTokenAtom } from "../lib/common/token";
+import { atomWithHash } from "../lib/atomWithHash";
+import { authTokenAtom } from "../lib/hooks/use_auth_token";
 import useFetchPosts from "../lib/hooks/use_fetch_posts";
+import observer from "../lib/observer";
 import styles from "../public/styles/pages/posts.module.sass";
 import { errorsAtom } from "./common/errors";
 import Loader from "./common/loader";

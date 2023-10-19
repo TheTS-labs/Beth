@@ -2,8 +2,8 @@ import { PrimitiveAtom, useSetAtom } from "jotai";
 import React from "react";
 
 import { DetailedPost, Post } from "../../../backend/db/models/post";
-import { atomWithHash } from "../../lib/common/atomWithHash";
-import useAuthToken from "../../lib/common/token";
+import { atomWithHash } from "../../lib/atomWithHash";
+import useAuthToken from "../../lib/hooks/use_auth_token";
 import { modalUserAtom } from "../../lib/hooks/use_fetch_posts";
 import useVote from "../../lib/hooks/use_vote";
 import defaultStyles from "../../public/styles/components/common/post.module.sass";

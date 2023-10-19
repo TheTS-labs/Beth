@@ -4,7 +4,7 @@ import { PrimitiveAtom, useSetAtom } from "jotai";
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
 
 import axiosConfig from "../../axios.config";
-import useAuthToken from "../common/token";
+import useAuthToken from "./use_auth_token";
 
 interface ReturnType<ResultType=any> {
   loading: boolean

@@ -7,7 +7,7 @@ import { User } from "../../../backend/db/models/user";
 import axiosConfig from "../../axios.config";
 import { errorsAtom } from "../../components/common/errors";
 import Header from "../../components/common/header";
-import useAuthToken from "../../lib/common/token";
+import useAuthToken from "../../lib/hooks/use_auth_token";
 import useRequest from "../../lib/hooks/use_request";
 import headerStyles from "../../public/styles/pages/auth/header.module.sass";
 import styles from "../../public/styles/pages/auth/update_data.module.sass";

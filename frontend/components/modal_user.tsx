@@ -3,10 +3,10 @@ import dynamic from "next/dynamic";
 import React, { useEffect, useRef } from "react";
 
 import { DetailedPost } from "../../backend/db/models/post";
-import observer from "../lib/common/observer";
 import useFetchPosts, { modalUserAtom } from "../lib/hooks/use_fetch_posts";
 import useKeyPress from "../lib/hooks/use_key_press";
 import useOutside from "../lib/hooks/use_outside";
+import observer from "../lib/observer";
 import styles from "../public/styles/components/expanded_post.module.sass";
 import modalStyles from "../public/styles/components/modal.module.sass";
 import { errorsAtom } from "./common/errors";

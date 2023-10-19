@@ -1,7 +1,7 @@
 import { useAtomValue } from "jotai";
 import React, { useEffect } from "react";
 
-import useAuthToken from "../lib/common/token";
+import useAuthToken from "../lib/hooks/use_auth_token";
 import { modalUserAtom } from "../lib/hooks/use_fetch_posts";
 import useRequest from "../lib/hooks/use_request";
 import styles from "../public/styles/components/actions.module.sass";

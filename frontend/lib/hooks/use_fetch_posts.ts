@@ -2,7 +2,7 @@ import { PrimitiveAtom, useSetAtom } from "jotai";
 import { useEffect } from "react";
 
 import RequestError from "../../../backend/common/request_error";
-import { atomWithHash } from "../common/atomWithHash";
+import { atomWithHash } from "../atomWithHash";
 import useRequest from "./use_request";
 
 interface ReturnType {

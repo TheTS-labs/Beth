@@ -2,7 +2,7 @@ import { useSetAtom } from "jotai";
 import React from "react";
 
 import { DetailedPost } from "../../backend/db/models/post";
-import useAuthToken from "../lib/common/token";
+import useAuthToken from "../lib/hooks/use_auth_token";
 import useRequest from "../lib/hooks/use_request";
 import styles from "../public/styles/components/actions.module.sass";
 import { errorsAtom } from "./common/errors";

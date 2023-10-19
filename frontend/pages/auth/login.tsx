@@ -6,7 +6,7 @@ import React, { FormEvent } from "react";
 import axiosConfig from "../../axios.config";
 import Errors, { errorsAtom } from "../../components/common/errors";
 import Header from "../../components/common/header";
-import useAuthToken from "../../lib/common/token";
+import useAuthToken from "../../lib/hooks/use_auth_token";
 import styles from "../../public/styles/pages/auth/common.module.sass";
 import headerStyles from "../../public/styles/pages/auth/header.module.sass";
 

@@ -66,7 +66,7 @@ export const valueAtom = atomWithHash<string | undefined>("value", undefined);
 export const perPageAtom = atomWithHash<string>("perPage", "10");
 export const highlightedRecordAtom = atomWithHash<string | undefined>("hiRec", undefined);
 
-export default function UpdateData(): React.JSX.Element {
+export default function SimpleSearch(): React.JSX.Element {
   const authToken = useAuthToken();
   const { request, result } = useRequest({ url: "action/simpleSearch", data: {}, errorsAtom });
   const [ defaultRows ] = useState([]);

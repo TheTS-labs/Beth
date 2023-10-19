@@ -35,8 +35,7 @@ function ModalUser(): React.JSX.Element {
     ),
     postsAtom,
     afterCursorAtom,
-    errorsAtom,
-    doSetErrors: true
+    errorsAtom
   });
 
   useEffect(() => {

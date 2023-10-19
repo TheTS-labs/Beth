@@ -77,7 +77,6 @@ export default class ActionModel implements ICRUDModel<Omit<Action, "id" | "crea
     await this.db<Action>("action").where({ id: identifier }).del();
   }
 
-  // TODO: Change return type with select, as in `this.read`
   public async simpleSearch(
     key: string,
     operator: string,
@@ -111,15 +110,24 @@ export default class ActionModel implements ICRUDModel<Omit<Action, "id" | "crea
     return results;
   }
 
-  public async chainWhereSearch(chain: ChainWhereSearchArgs): Promise<Action[]> {
+  public async chainWhereSearch(chain: ChainWhereSearchArgs["chain"], currentPage: number, perPage: number): Promise<
+    IWithPagination<
+      Action,
+      {
+        perPage: number
+        currentPage: number
+        isLengthAware: true
+      }
+    >
+  > {
     this.logger.log({
       level: "trying",
       message: "To preform a chained action(s) search",
       path: module.filename,
-      context: chain
+      context: { chain, currentPage, perPage }
     });
 
-    const wheres = chain.chain.map((value) => {
+    const wheres = chain.map((value) => {
       const type = value.type.toLowerCase();
       const clause = value.clause.charAt(0).toUpperCase() + value.clause.slice(1);
 
@@ -132,8 +140,11 @@ export default class ActionModel implements ICRUDModel<Omit<Action, "id" | "crea
       query[value.method](value.key, value.operator, value.value);
     });
 
-    const result: Action[] =  Array.isArray(chain.select) ? await query.select(...chain.select)
-                                                          : await query.select(chain.select);
+    const result = await query.paginate({
+      perPage,
+      currentPage,
+      isLengthAware: true
+    });
 
     return result;
   }

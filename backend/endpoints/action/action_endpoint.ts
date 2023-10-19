@@ -54,11 +54,20 @@ export default class ActionEndpoint extends BaseEndpoint<type.ActionRequestArgs,
     return result;
   }
 
-  public async chainWhereSearch(args: type.ChainWhereSearchArgs, _auth: Auth): Promise<Action[]> {
+  public async chainWhereSearch(args: type.ChainWhereSearchArgs, _auth: Auth): Promise<
+    IWithPagination<
+      Action,
+      {
+        perPage: number
+        currentPage: number
+        isLengthAware: true
+      }
+    >
+  > {
     args = await this.validate(type.ChainWhereSearchArgsSchema, args);
 
-    const result = this.actionModel.chainWhereSearch(args).catch((err: Error) => {
-      throw new RequestError("DatabaseError",[ err.message]);
+    const result = this.actionModel.chainWhereSearch(args.chain, args.currentPage, args.perPage).catch((err: Error) => {
+      throw new RequestError("DatabaseError", [err.message]);
     });
 
     return result;

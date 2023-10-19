@@ -29,7 +29,7 @@ export default function useRequest<ResultType=any>(options: {
   const [ result, setResult ] = useState<ResultType | undefined>(undefined);
 
   useEffect(() => {
-    if (typeof error === "string" && options.doSetErrors) {
+    if (typeof error === "string" && (options.doSetErrors || true)) {
       setErrors(prev => [...prev, error]);
     }
   }, [error]);

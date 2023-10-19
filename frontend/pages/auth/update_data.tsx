@@ -113,8 +113,13 @@ export default function UpdateData(): React.JSX.Element {
         </Link>
       </div>
       <div className={styles.froze_account}>
+        { authToken?.payload?.scope?.includes("ActionChainWhereSearch") && 
+          <Link href="/admin/action/chain_search" className={styles.froze_account}>
+            <button>Chain Search</button>
+          </Link>
+        }
         { authToken?.payload?.scope?.includes("ActionSimpleSearch") && 
-          <Link href="/admin/actions/simple_search" className={styles.froze_account}>
+          <Link href="/admin/action/simple_search" className={styles.froze_account}>
             <button>Simple Search</button>
           </Link>
         }

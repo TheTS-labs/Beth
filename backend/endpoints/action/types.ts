@@ -5,7 +5,6 @@ export interface SimpleSearchArgs {
   key: string
   operator: string
   value: string
-  // select: string[]
   currentPage: number
   perPage: number
 }
@@ -14,9 +13,8 @@ export const SimpleSearchArgsSchema = Joi.object().keys({
   key: Joi.string().required(),
   operator: Joi.string().required(),
   value: Joi.string().required(),
-  // select: Joi.array().items(Joi.string()).default(["*"]),
-  currentPage: Joi.number().positive().default(0),
-  perPage: Joi.number().positive().default(10),
+  currentPage: Joi.number().positive().default(1),
+  perPage: Joi.number().positive().default(10).max(100),
 });
 // <<< Simple Search <<<
 
@@ -30,7 +28,8 @@ export interface Where {
 }
 export interface ChainWhereSearchArgs {
   chain: Where[]
-  select: string[] | string
+  currentPage: number
+  perPage: number
 }
 
 export const ChainWhereSearchArgsSchema = Joi.object().keys({
@@ -41,7 +40,8 @@ export const ChainWhereSearchArgsSchema = Joi.object().keys({
     operator: Joi.string().required(),
     value: Joi.string().required(),
   })),
-  select: Joi.alternatives().try(Joi.array().items(Joi.string()), Joi.string()).default("*")
+  currentPage: Joi.number().positive().default(0),
+  perPage: Joi.number().positive().default(10).max(100),
 });
 // <<< Chain Where Search <<<
 

@@ -14,10 +14,13 @@
     "backend:lint": "yarn eslint 'backend/**/*.{ts,tsx}'",
     "root:lint": "yarn eslint '**/*.{ts,tsx}'",
     "root:start": "yarn concurrently \"yarn backend:start\" \"yarn frontend:start\" -n \"SERVER,CLIENT\" -c \"bgCyan.bold,bgGreen.bold\"",
+    "frontend:cypress": "yarn workspace frontend cypress open",
     "frontend:start": "yarn workspace frontend next dev",
     "frontend:lint": "yarn eslint 'frontend/**/*.{ts,tsx}'"
   },
   "dependencies": {
+    "dotenv": "^16.3.1",
+    "env-var": "^7.4.1",
     "ts-node": "^10.9.1",
     "typescript": "^5.2.2"
   },

@@ -8,6 +8,7 @@
     "ICRUD",
     "knexfile",
     "middlewares",
+    "PGADMIN",
     "tanstack",
     "unnest",
     "Unvote",

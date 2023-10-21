@@ -54,14 +54,12 @@ typings/
 # Yarn Integrity file
 .yarn-integrity
 
-# dotenv environment variables file
-.backend.env
-.frontend.env
-.db.env
+*env.example
 
 # next.js build output
 .next
 
 dist
 *.sqlite3
+docker-compose.yml
 .yarn

@@ -28,13 +28,17 @@ export default class ErrorMiddleware {
       return;
     }
 
-    const debug = this.config.get("DEBUG").required().asBool();
+    const debug = this.config.get("NODE_ENV").default("development").asEnum(["development", "production", "test"]);
 
-    this.logger.error({ message: err.stack, path: module.filename, context: { debug } });
+    this.logger.error({
+      message: err.stack,
+      path: module.filename,
+      context: { debug: debug == "development" || debug == "test" }
+    });
     res.status(500).json({
       errorStatus: 500,
       errorType: "UnknownError",
-      errorMessage: debug ? err.stack : "Sorry, something went wrong"
+      errorMessage: debug == "development" || debug == "test" ? err.stack : "Sorry, something went wrong"
     });
     return;
   };

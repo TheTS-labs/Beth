@@ -3,7 +3,9 @@ import { AxiosRequestConfig } from "axios";
 import dotenv from "dotenv";
 import * as env from "env-var";
 
-dotenv.config({ path: "../.frontend.env" });
+dotenv.config({
+  path: process.env.NODE_ENV == "development" ? "../env/development/.frontend.env" : "../env/production/.frontend.env"
+});
 
 const axiosConfig: AxiosRequestConfig = {
   method: "post",

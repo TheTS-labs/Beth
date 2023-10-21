@@ -18,9 +18,9 @@ COPY . /app
 RUN yarn workspace frontend next build
 
 CMD yarn concurrently \
-      "yarn workspace backend run -T ts-node main.ts" \
-      "yarn workspace frontend next start -p ${DOCKER_FRONTEND_PORT}" \
+      "yarn backend:start" \
+      "yarn frontend:start" \
       -n "SERVER,CLIENT" \
       -c "bgCyan.bold,bgGreen.bold"
 
-EXPOSE ${APP_PORT} ${DOCKER_FRONTEND_PORT}
+EXPOSE ${APP_PORT} ${NEXT_PORT}

@@ -1,15 +1,9 @@
 // eslint-disable-next-line import/named
 import { AxiosRequestConfig } from "axios";
-import dotenv from "dotenv";
-import * as env from "env-var";
-
-dotenv.config({
-  path: process.env.NODE_ENV == "development" ? "../env/development/.frontend.env" : "../env/production/.frontend.env"
-});
 
 const axiosConfig: AxiosRequestConfig = {
   method: "post",
-  baseURL: env.get("SERVER_URL").required().asUrlString(),
+  baseURL: process.env.SERVER_URL,
   headers: {
     "Content-Type": "application/x-www-form-urlencoded"
   },

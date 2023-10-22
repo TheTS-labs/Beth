@@ -12,7 +12,8 @@
     "tanstack",
     "unnest",
     "Unvote",
-    "upvotes"
+    "upvotes",
+    "weakpassword"
   ],
   "jest.rootPath": "./backend",
   "search.exclude": {

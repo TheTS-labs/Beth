@@ -4,7 +4,7 @@ import Link from "next/link";
 import React, { FormEvent } from "react";
 
 import axiosConfig from "../../axios.config";
-import Errors, { errorsAtom } from "../../components/common/errors";
+import { errorsAtom } from "../../components/common/errors";
 import Header from "../../components/common/header";
 import styles from "../../public/styles/pages/auth/common.module.sass";
 import headerStyles from "../../public/styles/pages/auth/header.module.sass";
@@ -122,7 +122,5 @@ export default function Singup(): React.JSX.Element {
         <input type="submit" id="submit" value="Looks good" />
       </form>
     </div>
-
-    <Errors />
   </>;
 }

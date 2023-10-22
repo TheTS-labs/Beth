@@ -28,7 +28,7 @@ export default class ErrorMiddleware {
       return;
     }
 
-    const debug = this.config.get("NODE_ENV").default("development").asEnum(["development", "production", "test"]);
+    const debug = this.config.get("NODE_ENV").required().asEnum(["development", "production", "test"]);
 
     this.logger.error({
       message: err.stack,

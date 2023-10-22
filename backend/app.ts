@@ -22,9 +22,7 @@ import PermissionMiddleware from "./middlewares/permission_middleware";
 import Redis from "./redis";
 import ScheduledTasks from "./scheduledJobs/scheduled_tasks";
 
-dotenv.config({
-  path: process.env.NODE_ENV == "production" ? "../env/production/.backend.env" : "../env/development/.backend.env"
-});
+dotenv.config({ path: "../env/.backend.env" });
 
 export interface Domains {
   [key: string]: typeof IBaseEndpoint
@@ -57,7 +55,7 @@ export default class App {
   //! Disabling auth you also disabling permission check
   constructor(endpoints: Domains, disableAuthFor:string[]=[]) {
     this.config = from(process.env, {}, (varname: string, str: string): void => this.envLoggerFn(varname, str));
-    const env = this.config.get("NODE_ENV").default("development").asEnum(["development", "production", "test"]);
+    const env = this.config.get("NODE_ENV").required().asEnum(["development", "production", "test"]);
     this.logger = new Logger().get(this.config.get("LOG_LEVEL").required().asString());
     this.db = knex(knexfile[env]);
     this.redisClient = new Redis(this.logger, this.config).get();

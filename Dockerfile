@@ -18,7 +18,7 @@ COPY . /app
 RUN yarn workspace frontend next build
 
 CMD yarn concurrently \
-      "yarn backend:start" \
+      "yarn workspace backend run -T ts-node main.ts" \
       "yarn frontend:start" \
       -n "SERVER,CLIENT" \
       -c "bgCyan.bold,bgGreen.bold"

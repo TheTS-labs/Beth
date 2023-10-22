@@ -3,7 +3,7 @@ describe("Test header", () => {
     cy.visit("/");
 
     cy.getCookie("AUTH_TOKEN").should("not.exist");
-    cy.get('[href="/auth/update_data"] > p').should("have.value", "");
+    cy.get('[href="/auth/update_data"] > p').should("have.text", "");
   });
 });
 

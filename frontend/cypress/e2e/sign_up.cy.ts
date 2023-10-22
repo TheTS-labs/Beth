@@ -1,11 +1,7 @@
 beforeEach(() => {
   cy.exec("yarn backend:seed", { timeout: 120000 });
 
-  cy.visit("/", {
-    onBeforeLoad(win) {
-      win.localStorage.removeItem("AUTH_TOKEN");
-    },
-  });
+  cy.visit("/");
 
   cy.get('[href="/auth/signup"] > button').click();
 

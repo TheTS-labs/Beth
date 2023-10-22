@@ -1,10 +1,6 @@
 describe("Test header", () => {
   it("There's no account link", () => {
-    cy.visit("/", {
-      onBeforeLoad(win) {
-        win.localStorage.removeItem("AUTH_TOKEN");
-      },
-    });
+    cy.visit("/");
 
     cy.getCookie("AUTH_TOKEN").should("not.exist");
     cy.get('[href="/auth/update_data"] > p').should("have.value", "");
@@ -20,11 +16,7 @@ describe("Test content", () => {
       pathname: "/recommendation/globalRecommend"
     }).as("globalRecommend");
 
-    cy.visit("/", {
-      onBeforeLoad(win) {
-        win.localStorage.removeItem("AUTH_TOKEN");
-      },
-    });
+    cy.visit("/");
 
     cy.wait("@getHotTags").then((interception) => {
       expect(interception?.response?.statusCode).to.eq(200);

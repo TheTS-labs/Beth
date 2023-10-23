@@ -30,7 +30,7 @@ describe("Try to login", () => {
       cy.getAllLocalStorage().then(localStorage => {
         cy.location().then(location => {
           // eslint-disable-next-line max-len
-          expect(localStorage[location.origin].AUTH_TOKEN).to.eq(JSON.stringify("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbklkIjoyNCwic2NvcGUiOlsiVXNlclZpZXciLCJVc2VyRWRpdFBhc3N3b3JkIiwiVXNlckZyb3plIiwiUGVybWlzc2lvblZpZXciLCJQb3N0Q3JlYXRlIiwiUG9zdFZpZXciLCJQb3N0RWRpdCIsIlBvc3REZWxldGUiLCJQb3N0R2V0TGlzdCIsIlBvc3RWaWV3UmVwbGllcyIsIlBvc3RFZGl0VGFncyIsIlZvdGluZ1ZvdGUiLCJWb3RpbmdVbnZvdGUiLCJWb3RpbmdWb3RlQ291bnQiLCJWb3RpbmdHZXRWb3RlcyIsIlJlY29tbWVuZGF0aW9uUmVjb21tZW5kIl0sImVtYWlsIjoidGVzdEBjeXByZXNzLmlvIiwiaWF0IjoxNjk3OTkxNDMxLCJleHAiOjE3MDA1ODM0MzF9.GlUvRjmDhVlKNhrVdqCI31maCe77kz7hoipnw7y4EXg"));
+          expect(localStorage[location.origin]?.AUTH_TOKEN).to.eq(JSON.stringify("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbklkIjoyNCwic2NvcGUiOlsiVXNlclZpZXciLCJVc2VyRWRpdFBhc3N3b3JkIiwiVXNlckZyb3plIiwiUGVybWlzc2lvblZpZXciLCJQb3N0Q3JlYXRlIiwiUG9zdFZpZXciLCJQb3N0RWRpdCIsIlBvc3REZWxldGUiLCJQb3N0R2V0TGlzdCIsIlBvc3RWaWV3UmVwbGllcyIsIlBvc3RFZGl0VGFncyIsIlZvdGluZ1ZvdGUiLCJWb3RpbmdVbnZvdGUiLCJWb3RpbmdWb3RlQ291bnQiLCJWb3RpbmdHZXRWb3RlcyIsIlJlY29tbWVuZGF0aW9uUmVjb21tZW5kIl0sImVtYWlsIjoidGVzdEBjeXByZXNzLmlvIiwiaWF0IjoxNjk3OTkxNDMxLCJleHAiOjE3MDA1ODM0MzF9.GlUvRjmDhVlKNhrVdqCI31maCe77kz7hoipnw7y4EXg"));
         });
       });
 

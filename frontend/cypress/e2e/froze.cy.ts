@@ -42,57 +42,55 @@ beforeEach(() => {
     cy.get("a > button").should("have.text", "Log Out");
 
     cy.get('[href="/auth/update_data"] > p').click();
+    cy.get('[href="/auth/froze"] > button').click();
+    cy.url().should("include", "/auth/froze");
   });
 });
 
-describe("Try to update data", () => {
-  it("Current data", () => {
+describe("Try to froze", () => {
+  it("Froze", () => {
     cy.intercept({
-      pathname: "/user/view"
-    }).as("view");
+      pathname: "/user/froze"
+    }).as("froze");
 
-    cy.wait("@view").then((interception) => {
+    cy.get('[class*="common_logout_"]').click();
+
+    cy.wait("@froze").then((interception) => {
       expect(interception?.response?.statusCode).to.eq(200);
+    });
 
-      cy.fixture("credentials").then(credentials => {
-        cy.get(":nth-child(2) > form > #username").should(
-          "have.value",
-          `@${credentials.realCredentials.username}`
-        ).should("have.value", `@${interception?.response?.body?.username}`);
-        cy.get(":nth-child(2) > form > #displayName").should(
-          "have.value",
-          credentials.realCredentials.displayName
-        ).should("have.value", interception?.response?.body?.displayName);
+    cy.getAllLocalStorage().then(localStorage => {
+      cy.location().then(location => {
+        expect(localStorage[location.origin]?.AUTH_TOKEN).to.eq(undefined);
       });
     });
-  });
 
-  it("Update data", () => {
+    cy.get('[href="/auth/login"] > button').click();
+    cy.url().should("include", "/auth/login");
+
     cy.intercept({
-      pathname: "/user/edit"
-    }).as("edit");
-
+      pathname: "/user/issueToken"
+    }).as("issueToken");
+  
     cy.fixture("credentials").then(credentials => {
-      cy.fixture("others").then(({ updateData }) => {
-        (updateData.fieldsToFillOneByOne as string[][]).forEach(([field, value]) => {
-          cy.get("#currentPassword").type(credentials.realCredentials.password);
-
-          cy.get(field).clear();
-          cy.get(field).type(value);
-
-          cy.get("#submit").click();
-
-          cy.wait("@edit").then((interception) => {
-            expect(interception?.response?.statusCode).to.eq(200);
-            const body = new URLSearchParams(interception?.request?.body);
-            
-            expect(body.get(`edit[${field.split("#")[1]}]`)).to.eq(value);
-          });
-
-          cy.get('[href="/auth/update_data"] > p').click();
-          cy.url().should("include", "/auth/update_data");
-        });
+      cy.get("#email").type(credentials.realCredentials.email);
+      cy.get("#email").should("have.value", credentials.realCredentials.email);
+  
+      cy.get("#password").type(credentials.realCredentials.password);
+      cy.get("#password").should("have.value", credentials.realCredentials.password);
+  
+      cy.get("#submit").click();
+      cy.get("#submit").should("have.value", "working, just wait...");
+  
+      cy.wait("@issueToken").then((interception) => {
+        expect(interception?.response?.statusCode).to.eq(403);
       });
+
+      cy.get('div[class*="errors_errors_"]').should("have.length", 1);
+      cy.get('div[class*="errors_error_message_"]').should("have.length", 1);
+      cy.get('div[class*="errors_error_message_"] > p').first().contains(
+        `User ${credentials.realCredentials.email} is frozen`
+      );
     });
   });
 });

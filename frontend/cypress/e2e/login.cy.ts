@@ -36,7 +36,7 @@ describe("Try to login", () => {
 
         cy.getAllLocalStorage().then(localStorage => {
           cy.location().then(location => {
-            expect(localStorage[location.origin].AUTH_TOKEN).to.eq(JSON.stringify(interception?.response?.body?.token));
+            expect(localStorage[location.origin]?.AUTH_TOKEN).to.eq(JSON.stringify(interception?.response?.body?.token));
           });
         });
       });

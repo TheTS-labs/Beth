@@ -1,0 +1,11 @@
+# syntax = edrevo/dockerfile-plus
+
+FROM node:20.5.1-slim
+
+INCLUDE+ Dockerfile
+
+RUN yarn workspace frontend next build
+
+CMD yarn frontend:start
+
+EXPOSE ${NEXT_PORT}

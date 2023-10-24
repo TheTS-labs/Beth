@@ -24,4 +24,5 @@ export const disableAuthFor = [
   "/post/search",
   "/post/view",
   "/post/getUserPosts",
+  "/ping",
 ];

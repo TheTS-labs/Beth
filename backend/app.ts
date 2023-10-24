@@ -124,6 +124,22 @@ export default class App {
       path: module.filename
     });
 
+    this.app.post("/ping", (req, res) => {
+      this.logger.log({
+        level: "request",
+        message: "Ping",
+        path: module.filename 
+      });
+
+      res.sendStatus(200);
+
+      this.logger.log({
+        level: "response",
+        message: "Pong",
+        path: module.filename
+      });
+    });
+
     Object.keys(this.domains).map((domainName: string) => {
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       //@ts-ignore

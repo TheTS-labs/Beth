@@ -1,4 +1,4 @@
-FROM node:20.5.1-slim
+FROM node:20.5.1-alpine3.18
 
 WORKDIR /app
 
@@ -15,12 +15,5 @@ RUN yarn install
 
 COPY . /app
 
-RUN yarn workspace frontend next build
-
-CMD yarn concurrently \
-      "yarn workspace backend run -T ts-node main.ts" \
-      "yarn frontend:start" \
-      -n "SERVER,CLIENT" \
-      -c "bgCyan.bold,bgGreen.bold"
-
-EXPOSE ${APP_PORT} ${NEXT_PORT}
+RUN apk update
+RUN apk add curl

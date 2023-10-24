@@ -4,4 +4,6 @@ FROM node:20.5.1-slim
 
 INCLUDE+ Dockerfile
 
-CMD yarn backend:migrate && ([ "$RUN_SEED" -eq 1 ] && yarn backend:seed)
+CMD yarn workspace backend run -T ts-node main.ts
+
+EXPOSE ${APP_PORT}

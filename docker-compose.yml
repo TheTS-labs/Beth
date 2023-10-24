@@ -7,7 +7,7 @@ services:
             - '5432:5432'
         image: postgres
         healthcheck:
-            test: ["CMD-SHELL", "pg_isready", "-U", "postgres"]
+            test: ["CMD-SHELL", "pg_isready -U postgres"]
             interval: 30s
             timeout: 5s
             retries: 5
@@ -27,18 +27,41 @@ services:
             dockerfile: Dockerfile.migration
         env_file:
             - ./env/.backend.env
-    
-    beth:
+
+    backend:
+        healthcheck:
+            test: ["CMD-SHELL", "curl -f -X POST http://backend:3001/ping"]
+            interval: 30s
+            timeout: 5s
+            retries: 10
         depends_on:
             postgres:
                 condition: service_healthy
             migration:
                 condition: service_completed_successfully
         build:
-            dockerfile: Dockerfile
-        ports:
-            - '3001:3001'
-            - '3000:3000'
+            dockerfile: Dockerfile.backend
         env_file:
             - ./env/.backend.env
+        ports:
+            - '3001:3001'
+    
+    frontend:
+        healthcheck:
+            test: ["CMD-SHELL", "curl -f http://frontend:3001"]
+            interval: 30s
+            timeout: 5s
+            retries: 10
+        depends_on:
+            postgres:
+                condition: service_healthy
+            backend:
+                condition: service_healthy
+            migration:
+                condition: service_completed_successfully
+        build:
+            dockerfile: Dockerfile.frontend
+        ports:
+            - '3000:3000'
+        env_file:
             - ./env/.frontend.env

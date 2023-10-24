@@ -2,7 +2,9 @@ import { defineConfig } from "cypress";
 import dotenv from "dotenv";
 import * as env from "env-var";
 
-dotenv.config({ path: "../env/.frontend.env" });
+if (!process.env.DONT_USE_ENV_FILE) {
+  dotenv.config({ path: "../env/.frontend.env" });
+}
 
 export default defineConfig({
   e2e: {

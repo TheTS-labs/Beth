@@ -4,6 +4,6 @@ FROM node:20.5.1-slim
 
 INCLUDE+ Dockerfile
 
-CMD yarn workspace backend run -T ts-node main.ts
+CMD yarn backend:start
 
 EXPOSE ${APP_PORT}

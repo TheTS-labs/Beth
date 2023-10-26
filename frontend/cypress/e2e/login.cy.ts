@@ -2,10 +2,7 @@ before(() => {
   cy.exec("yarn backend:seed", { timeout: 120000 });
 
   cy.fixture("credentials").then(credentials => {
-    cy.request("post", `${Cypress.env("SERVER_URL")}/user/create`, {
-      ...credentials.realCredentials,
-      repeatPassword: credentials.realCredentials.password
-    });
+    cy.register({ ...credentials.realCredentials, repeatPassword: credentials.realCredentials.password });
   });
 });
 
@@ -36,7 +33,9 @@ describe("Try to login", () => {
 
         cy.getAllLocalStorage().then(localStorage => {
           cy.location().then(location => {
-            expect(localStorage[location.origin]?.AUTH_TOKEN).to.eq(JSON.stringify(interception?.response?.body?.token));
+            expect(localStorage[location.origin]?.AUTH_TOKEN).to.eq(
+              JSON.stringify(interception?.response?.body?.token)
+            );
           });
         });
       });

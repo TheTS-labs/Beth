@@ -22,9 +22,7 @@ import PermissionMiddleware from "./middlewares/permission_middleware";
 import Redis from "./redis";
 import ScheduledTasks from "./scheduledJobs/scheduled_tasks";
 
-if (!process.env.DONT_USE_ENV_FILE) {
-  dotenv.config({ path: "../env/.backend.env" });
-}
+dotenv.config({ path: "../env/.backend.env" });
 
 export interface Domains {
   [key: string]: typeof IBaseEndpoint

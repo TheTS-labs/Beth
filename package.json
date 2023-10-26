@@ -7,16 +7,19 @@
     "frontend"
   ],
   "scripts": {
-    "backend:start": "yarn workspace backend run -T nodemon main.ts",
+    "backend:start": "yarn workspace backend run -T ts-node main.ts",
+    "backend:start:dev": "yarn workspace backend run -T nodemon main.ts",
     "backend:migrate": "yarn workspace backend knex migrate:latest --knexfile knexfile.js --migrations-directory db/migrations",
     "backend:seed": "yarn workspace backend knex seed:run",
     "backend:test": "yarn workspace backend jest --detectOpenHandles --forceExit --maxWorkers=50%",
     "backend:lint": "yarn eslint 'backend/**/*.{ts,tsx}'",
     "root:lint": "yarn eslint '**/*.{ts,tsx}'",
-    "root:start": "yarn concurrently \"yarn backend:start\" \"yarn frontend:dev\" -n \"SERVER,CLIENT\" -c \"bgCyan.bold,bgGreen.bold\"",
+    "root:start:dev": "yarn concurrently \"yarn backend:start:dev\" \"yarn frontend:dev\" -n \"SERVER,CLIENT\" -c \"bgCyan.bold,bgGreen.bold\"",
     "frontend:cypress": "yarn workspace frontend cypress open",
+    "frontend:test": "yarn workspace frontend cypress run",
     "frontend:dev": "cd frontend && chmod +x ./dev_server.sh && ./dev_server.sh",
     "frontend:start": "cd frontend && chmod +x ./start_server.sh && ./start_server.sh",
+    "frontend:build": "yarn workspace frontend next build",
     "frontend:lint": "yarn eslint 'frontend/**/*.{ts,tsx}'"
   },
   "dependencies": {

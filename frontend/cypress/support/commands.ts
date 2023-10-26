@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-namespace */
 /// <reference types="cypress" />
 // ***********************************************
 // This example commands.ts shows you how to
@@ -8,30 +9,41 @@
 // commands please read more here:
 // https://on.cypress.io/custom-commands
 // ***********************************************
-//
-//
-// -- This is a parent command --
-// Cypress.Commands.add('login', (email, password) => { ... })
-//
-//
-// -- This is a child command --
-// Cypress.Commands.add('drag', { prevSubject: 'element'}, (subject, options) => { ... })
-//
-//
-// -- This is a dual command --
-// Cypress.Commands.add('dismiss', { prevSubject: 'optional'}, (subject, options) => { ... })
-//
-//
-// -- This will overwrite an existing command --
-// Cypress.Commands.overwrite('visit', (originalFn, url, options) => { ... })
-//
-// declare global {
-//   namespace Cypress {
-//     interface Chainable {
-//       login(email: string, password: string): Chainable<void>
-//       drag(subject: string, options?: Partial<TypeOptions>): Chainable<Element>
-//       dismiss(subject: string, options?: Partial<TypeOptions>): Chainable<Element>
-//       visit(originalFn: CommandOriginalFn, url: string, options: Partial<VisitOptions>): Chainable<Element>
-//     }
-//   }
-// }
+
+// cy.request("post", `${Cypress.env("SERVER_URL")}/user/create`, {
+//   ...realCredentials,
+//   email,
+//   password,
+//   repeatPassword: password
+// });
+
+Cypress.Commands.add("register", (options) => {
+  cy.request("post", `${Cypress.env("SERVER_URL")}/user/create`, options);
+});
+
+Cypress.Commands.add("login", (email, password) => {
+  cy.request("post", `${Cypress.env("SERVER_URL")}/user/issueToken`, {
+    email,
+    password,
+    shorthand: "login"
+  }).then((resp) => {
+    window.localStorage.setItem("AUTH_TOKEN", JSON.stringify(resp.body.token));
+  });
+});
+
+declare global {
+  namespace Cypress {
+    interface Chainable {
+      login(email: string, password: string): Chainable<void>
+      register(options: {
+        username: string
+        displayName: string
+        email: string
+        password: string
+        repeatPassword: string
+      }): Chainable<void>
+    }
+  }
+}
+
+export {};

@@ -2,9 +2,7 @@ import dotenv from "dotenv";
 import * as env from "env-var";
 import { Knex } from "knex";
 
-if (!process.env.DONT_USE_ENV_FILE) {
-  dotenv.config({ path: "../env/.backend.env" });
-}
+dotenv.config({ path: "../env/.backend.env" });
 
 const config: { [key: string]: Knex.Config } = {
   development: {
@@ -48,6 +46,8 @@ const config: { [key: string]: Knex.Config } = {
   test: {
     client: "postgresql",
     connection: {
+      host: env.get("POSTGRES_HOST").required().asString(),
+      port: env.get("POSTGRES_PORT").required().asPortNumber(),
       database: env.get("POSTGRES_DB").required().asString(),
       user: env.get("POSTGRES_USER").required().asString(),
       password: env.get("POSTGRES_PASSWORD").required().asString(),
@@ -60,7 +60,7 @@ const config: { [key: string]: Knex.Config } = {
     seeds: {
       directory: "./db/seeds"
     }
-  }
+  },
 };
 
 export default config;

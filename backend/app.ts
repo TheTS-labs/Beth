@@ -5,6 +5,7 @@ import express, { Express, Response } from "express";
 import asyncHandler from "express-async-handler";
 import { IncomingMessage, Server, ServerResponse } from "http";
 import knex, { Knex } from "knex";
+import { attachPaginate } from "knex-paginate";
 import asyncMiddleware from "middleware-async";
 import { RedisClientType } from "redis";
 import winston from "winston";
@@ -23,6 +24,7 @@ import Redis from "./redis";
 import ScheduledTasks from "./scheduledJobs/scheduled_tasks";
 
 dotenv.config({ path: "../env/.backend.env" });
+attachPaginate();
 
 export interface Domains {
   [key: string]: typeof IBaseEndpoint

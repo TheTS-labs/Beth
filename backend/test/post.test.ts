@@ -2,8 +2,9 @@ import request from "supertest";
 
 import App from "../app";
 import { disableAuthFor, endpoints } from "../common/endpoints";
+import { DBBool } from "../common/types";
 import { Permissions,PermissionStatus } from "../db/models/permission";
-import { Post } from "../db/models/post";
+import { DetailedPost, Post } from "../db/models/post";
 import userData, { credentials } from "./data/user_data";
 import auth from "./helpers/auth";
 
@@ -126,8 +127,22 @@ describe("POST /post/view", () => {
     expect(res.body.errorMessage).toBeUndefined();
     expect(res.statusCode).toBe(200);
 
-    const post = await server.db<Post>("post").where({ id }).first();
-    expect(JSON.stringify(res.body)).toBe(JSON.stringify(post));
+    const post = await server.db<Post>("post").where({ id }).select(
+      "id",
+      "author",
+      "text",
+      "repliesTo",
+      "tags",
+    ).first();
+    // /post/view returns DetailedPost so we need to add the missing properties
+    expect(res.body).toEqual({
+      ...post,
+      displayName: "Beth",
+      score: 0,
+      userVote: null,
+      username: "beth",
+      verified: false as unknown as DBBool
+    } as DetailedPost);
   });
 
   it("should return empty object", async () => {
@@ -659,7 +674,7 @@ describe("POST /post/getUserPosts", () => {
     // Preparing
 
     const res = await req.post("/post/getUserPosts")
-                         .send({ username: userData.username });
+                         .send({ email: userData.email });
 
     expect(res.body.errorMessage).toBeUndefined();
     expect(res.statusCode).toBe(200);
@@ -668,7 +683,7 @@ describe("POST /post/getUserPosts", () => {
 
   it("should throw DatabaseError", async () => {
     const res = await req.post("/post/getUserPosts")
-                         .send({ username: "notFound" });
+                         .send({ email: "notFound@email.com" });
 
     expect(res.body.errorType).toBe("DatabaseError");
     expect(res.body.errorMessage).not.toBeUndefined();

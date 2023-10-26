@@ -1,0 +1,11 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+echo "ESLint (1/3)"
+yarn root:lint
+
+echo "Cypress (2/3)"
+yarn frontend:test
+
+echo "Jest (3/3)"
+yarn backend:test

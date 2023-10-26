@@ -11,6 +11,7 @@ export default class Redis {
 
     redisClient.on("error", error => {
       this.logger.error({ message: error, path: module.filename });
+      // Perhaps the Redis server is unavailable?
       process.exit(1);
     });
     redisClient.on("ready", () => {

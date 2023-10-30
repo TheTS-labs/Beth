@@ -17,6 +17,7 @@
     "root:start:dev": "yarn concurrently \"yarn backend:start:dev\" \"yarn frontend:dev\" -n \"SERVER,CLIENT\" -c \"bgCyan.bold,bgGreen.bold\"",
     "frontend:cypress": "yarn workspace frontend cypress open",
     "frontend:test": "yarn workspace frontend cypress run",
+    "frontend:test:report": "yarn workspace frontend nyc report --reporter=text-summary",
     "frontend:dev": "cd frontend && chmod +x ./dev_server.sh && ./dev_server.sh",
     "frontend:start": "cd frontend && chmod +x ./start_server.sh && ./start_server.sh",
     "frontend:build": "yarn workspace frontend next build",

@@ -179,4 +179,34 @@ describe("Try to sing up", () => {
       });
     });
   });
+
+  it("Network Error", () => {
+    cy.intercept({
+      pathname: "/user/create",
+    }, req => req.destroy()).as("create");
+
+    cy.fixture("credentials").then(credentials => {
+      cy.get("#username").type(credentials.realCredentials.username);
+      cy.get("#username").should("have.value", credentials.realCredentials.username);
+
+      cy.get("#displayName").type(credentials.realCredentials.displayName);
+      cy.get("#displayName").should("have.value", credentials.realCredentials.displayName);
+
+      cy.get("#email").type(credentials.realCredentials.email);
+      cy.get("#email").should("have.value", credentials.realCredentials.email);
+
+      cy.get("#password").type(credentials.realCredentials.password);
+      cy.get("#password").should("have.value", credentials.realCredentials.password);
+
+      cy.get("#repeatPassword").type(credentials.realCredentials.password);
+      cy.get("#repeatPassword").should("have.value", credentials.realCredentials.password);
+    });
+
+    cy.get("#submit").click();
+    cy.get("#submit").should("have.value", "working, just wait...");
+
+    cy.get('div[class*="errors_errors_"]').should("have.length", 1);
+    cy.get('div[class*="errors_error_message_"]').should("have.length", 1);
+    cy.get('div[class*="errors_error_message_"] > p').first().contains("Network Error");
+  });
 });

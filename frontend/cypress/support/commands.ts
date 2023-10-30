@@ -31,6 +31,20 @@ Cypress.Commands.add("login", (email, password) => {
   });
 });
 
+Cypress.Commands.overwrite("visit", (originalFn, url) => {
+  cy.intercept({ pathname: "/_next/static/development/_devMiddlewareManifest.json" }).as("manifest");
+
+  originalFn(url);
+
+  cy.wait("@manifest").then(interception => {
+    expect(interception?.response?.statusCode).to.eq(200);
+
+    // This is needed for AUTH_TOKEN to get it's value
+    // eslint-disable-next-line cypress/no-unnecessary-waiting
+    cy.wait(2000);
+  });
+});
+
 declare global {
   namespace Cypress {
     interface Chainable {

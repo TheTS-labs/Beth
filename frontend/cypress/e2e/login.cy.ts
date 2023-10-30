@@ -48,6 +48,11 @@ describe("Try to login", () => {
   it("Account doesn't exist", () => {
     cy.intercept({
       pathname: "/user/issueToken"
+    }, req => {
+      req.continue(res => {
+        res.delay = 2000;
+        res.send();
+      });
     }).as("issueToken");
 
     cy.fixture("credentials").then(credentials => {
@@ -62,6 +67,8 @@ describe("Try to login", () => {
 
       cy.wait("@issueToken").then((interception) => {
         expect(interception?.response?.statusCode).to.eq(404);
+
+        cy.get("#submit").should("have.value", "Looks good");
       });
 
       cy.get('div[class*="errors_errors_"]').should("have.length", 1);

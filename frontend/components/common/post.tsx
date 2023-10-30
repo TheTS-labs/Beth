@@ -1,7 +1,7 @@
 import { PrimitiveAtom, useSetAtom } from "jotai";
 import React from "react";
 
-import { DetailedPost, Post } from "../../../backend/db/models/post";
+import { DetailedPost } from "../../../backend/db/models/post";
 import { atomWithHash } from "../../lib/atomWithHash";
 import useAuthToken from "../../lib/hooks/use_auth_token";
 import { modalUserAtom } from "../../lib/hooks/use_fetch_posts";

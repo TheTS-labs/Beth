@@ -1,11 +1,14 @@
 #!/usr/bin/env sh
 . "$(dirname -- "$0")/_/husky.sh"
 
-echo "ESLint (1/3)"
+echo "ESLint (1/4)"
 yarn root:lint
 
-echo "Cypress (2/3)"
+echo "Cypress (2/4)"
 yarn frontend:test
 
-echo "Jest (3/3)"
+echo "Cypress: check-coverage (3/4)"
+yarn workspace frontend nyc check-coverage
+
+echo "Jest (4/4)"
 yarn backend:test

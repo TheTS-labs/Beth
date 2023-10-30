@@ -4,7 +4,7 @@ import Link from "next/link";
 import React, { MouseEvent } from "react";
 
 import axiosConfig from "../../axios.config";
-import Errors, { errorsAtom } from "../../components/common/errors";
+import { errorsAtom } from "../../components/common/errors";
 import Header from "../../components/common/header";
 import useAuthToken from "../../lib/hooks/use_auth_token";
 import styles from "../../public/styles/pages/auth/common.module.sass";
@@ -73,7 +73,5 @@ export default function Froze(): React.JSX.Element {
       <p><i>Important note: You won&apos;t be able to undo it yourself</i></p>
       <button className={styles.logout} onClick={froze}>Froze account</button>
     </div>
-
-    <Errors />
   </>;
 }

@@ -1,12 +1,10 @@
-before(() => {
+beforeEach(() => {
   cy.exec("yarn backend:seed", { timeout: 120000 });
 
   cy.fixture("credentials").then(credentials => {
     cy.register({ ...credentials.realCredentials, repeatPassword: credentials.realCredentials.password });
   });
-});
 
-beforeEach(() => {
   cy.fixture("credentials").then(credentials => {
     cy.login(credentials.realCredentials.email, credentials.realCredentials.password);
   });
@@ -65,5 +63,77 @@ describe("Try to update data", () => {
         });
       });
     });
+  });
+
+  it("New and Current passwords match", () => {
+    cy.visit("/auth/update_data");
+
+    cy.fixture("credentials").then(credentials => {
+      cy.get("#currentPassword").type(credentials.realCredentials.password);
+      cy.get(":nth-child(1) > form > #password").type(credentials.realCredentials.password);
+      
+      cy.get("#submit").click();
+    });
+
+    cy.get('div[class*="errors_errors_"]').should("have.length", 1);
+    cy.get('div[class*="errors_error_message_"]').should("have.length", 1);
+    cy.get('div[class*="errors_error_message_"] > p').first().contains("New and Current passwords match");
+  });
+
+  it("Wrong password", () => {
+    cy.intercept({
+      pathname: "/user/edit"
+    }).as("edit");
+
+    cy.visit("/auth/update_data");
+
+    cy.fixture("credentials").then(credentials => {
+      cy.get("#currentPassword").type("Pa$$w0rD!!");
+      cy.get(":nth-child(1) > form > #password").type(credentials.realCredentials.password);
+      
+      cy.get("#submit").click();
+    });
+
+    cy.wait("@edit").then((interception) => {
+      expect(interception?.response?.statusCode).to.eq(403);
+    });
+
+    cy.get('div[class*="errors_errors_"]').should("have.length", 1);
+    cy.get('div[class*="errors_error_message_"]').should("have.length", 1);
+    cy.get('div[class*="errors_error_message_"] > p').first().contains("Wrong email or password");
+  });
+
+  it("New and Current passwords match", () => {
+    cy.visit("/auth/update_data");
+
+    cy.fixture("credentials").then(credentials => {
+      cy.get("#currentPassword").type(credentials.realCredentials.password);
+      cy.get(":nth-child(1) > form > #password").type(credentials.realCredentials.password);
+      
+      cy.get("#submit").click();
+    });
+
+    cy.get('div[class*="errors_errors_"]').should("have.length", 1);
+    cy.get('div[class*="errors_error_message_"]').should("have.length", 1);
+    cy.get('div[class*="errors_error_message_"] > p').first().contains("New and Current passwords match");
+  });
+
+  it("Network error", () => {
+    cy.intercept({
+      pathname: "/user/edit"
+    }, req => req.destroy()).as("edit");
+
+    cy.visit("/auth/update_data");
+
+    cy.fixture("credentials").then(credentials => {
+      cy.get("#currentPassword").type("Pa$$w0rD!!");
+      cy.get(":nth-child(1) > form > #password").type(credentials.realCredentials.password);
+      
+      cy.get("#submit").click();
+    });
+
+    cy.get('div[class*="errors_errors_"]').should("have.length", 1);
+    cy.get('div[class*="errors_error_message_"]').should("have.length", 1);
+    cy.get('div[class*="errors_error_message_"] > p').first().contains("Network Error");
   });
 });

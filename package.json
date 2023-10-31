@@ -19,6 +19,7 @@
     "frontend:test": "yarn workspace frontend cypress run",
     "frontend:test:report": "yarn workspace frontend nyc report --reporter=text-summary",
     "frontend:dev": "cd frontend && chmod +x ./dev_server.sh && ./dev_server.sh",
+    "frontend:dev:test": "yarn workspace frontend start-server-and-test \"yarn frontend:dev\" http-get://localhost:${NEXT_PORT} \"yarn backend:start\" http://localhost:${APP_PORT}/ping \"yarn frontend:test\"",
     "frontend:start": "cd frontend && chmod +x ./start_server.sh && ./start_server.sh",
     "frontend:build": "yarn workspace frontend next build",
     "frontend:lint": "yarn eslint 'frontend/**/*.{ts,tsx}'"

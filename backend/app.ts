@@ -124,7 +124,7 @@ export default class App {
       path: module.filename
     });
 
-    this.app.post("/ping", (req, res) => {
+    this.app.all("/ping", (req, res) => {
       this.logger.log({
         level: "request",
         message: "Ping",

@@ -1,3 +1,4 @@
+import { exit } from "process";
 import request from "supertest";
 
 import App from "../../app";
@@ -7,6 +8,10 @@ import { Permissions,PermissionStatus } from "../../db/models/permission";
 import { User } from "../../db/models/user";
 import userData, { credentials } from "../data/user_data";
 import auth from "../helpers/auth";
+
+if (process.env.DO_NOT_RUN_REDIS_TESTS == "true") {
+  exit(0);
+}
 
 process.env.REDIS_REQUIRED = "true";
 process.env.LOG_LEVEL = process.env.TEST_LOG_LEVEL;

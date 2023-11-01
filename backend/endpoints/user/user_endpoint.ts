@@ -53,11 +53,11 @@ export default class UserEndpoint extends BaseEndpoint<type.UserRequestArgs, Cal
       email: args.email,
       password: hash
     }).catch((err: Error) => {
-      throw new RequestError("DatabaseError",[ err.message]);
+      throw new RequestError("DatabaseError", [err.message]);
     });
 
     await this.permissionModel.create({ email: args.email }).catch((err: Error) => {
-      throw new RequestError("DatabaseError",[ err.message]);
+      throw new RequestError("DatabaseError", [err.message]);
     });
 
     return { success: true };
@@ -115,7 +115,7 @@ export default class UserEndpoint extends BaseEndpoint<type.UserRequestArgs, Cal
     }
 
     await this.userModel.update(args.email, { isFrozen: args.froze }).catch((err: { message: string }) => {
-      throw new RequestError("DatabaseError",[ err.message]);
+      throw new RequestError("DatabaseError", [err.message]);
     });
 
     return { success: true };
@@ -130,7 +130,7 @@ export default class UserEndpoint extends BaseEndpoint<type.UserRequestArgs, Cal
     }
 
     await this.userModel.update(args.email, { tags: args.newTags }).catch((err: { message: string }) => {
-      throw new RequestError("DatabaseError",[ err.message]);
+      throw new RequestError("DatabaseError", [err.message]);
     });
 
     return { success: true };
@@ -145,7 +145,7 @@ export default class UserEndpoint extends BaseEndpoint<type.UserRequestArgs, Cal
     }
 
     await this.userModel.update(args.email, { verified: args.verify }).catch((err: { message: string }) => {
-      throw new RequestError("DatabaseError",[ err.message]);
+      throw new RequestError("DatabaseError", [err.message]);
     });
 
     return { success: true };
@@ -182,7 +182,7 @@ export default class UserEndpoint extends BaseEndpoint<type.UserRequestArgs, Cal
 
     const tokenId = await this.tokenModel.create({ owner: user.email, scope: JSON.stringify(scope) })
                                          .catch((err: { message: string }) => {
-      throw new RequestError("DatabaseError",[ err.message]);
+      throw new RequestError("DatabaseError", [err.message]);
     });
 
     const token = jwt.sign({

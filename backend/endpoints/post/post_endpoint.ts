@@ -55,7 +55,7 @@ export default class PostEndpoint extends BaseEndpoint<type.PostRequestArgs, Cal
       parent: parent||null,
       tags: args.tags
     }).catch((err: Error) => {
-      throw new RequestError("DatabaseError",[ err.message]);
+      throw new RequestError("DatabaseError", [err.message]);
     });
 
     return { success: true, id };
@@ -157,7 +157,7 @@ export default class PostEndpoint extends BaseEndpoint<type.PostRequestArgs, Cal
     }
 
     await this.postModel.update(args.id, { tags: args.newTags }).catch((err: { message: string }) => {
-      throw new RequestError("DatabaseError",[ err.message]);
+      throw new RequestError("DatabaseError", [err.message]);
     });
 
     return { success: true };

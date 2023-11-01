@@ -61,7 +61,7 @@ export default class VoteEndpoint extends BaseEndpoint<type.VoteRequestArgs, Cal
         userEmail: auth.user.email,
         voteType: args.voteType
       }).catch((err: { message: string }) => {
-        throw new RequestError("DatabaseError",[ err.message]);
+        throw new RequestError("DatabaseError", [err.message]);
       });
   
       return { success: true, action: "create" };

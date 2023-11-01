@@ -4,12 +4,21 @@
  */
 
 import merge from "merge";
+import dotenv from "dotenv";
+import * as env from "env-var";
+
+dotenv.config({ path: "../env/.backend.env" });
 
 // https://stackoverflow.com/a/52622141
 // https://stackoverflow.com/a/42505940
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const TSPreset = require("ts-jest/jest-preset");
+
+// ENV
+// https://gist.github.com/tsmx/feb3748be5ba62a0164d575adb4b9368
+process.env.LOG_LEVEL = env.get("TEST_LOG_LEVEL").required().asString();
+process.env.DONT_START_SERVER = "false";
 
 export default merge.recursive(TSPreset, {
   // All imported modules in your tests should be mocked automatically
@@ -28,7 +37,16 @@ export default merge.recursive(TSPreset, {
   collectCoverage: true,
 
   // An array of glob patterns indicating a set of files for which coverage information should be collected
-  // collectCoverageFrom: undefined,
+  collectCoverageFrom: [
+    "endpoints/**/*",
+    "common/**/*",
+    "middlewares/**/*",
+    "db/**/*",
+    "!common/types/**/*",
+    "!db/migrations/**/*",
+    "!db/seeds/**/*",
+    env.get("REDIS_REQUIRED").required().asBool() ? "db/models/caching/**/*" : "!db/models/caching/**/*"
+  ],
 
   // The directory where Jest should output its coverage files
   coverageDirectory: "coverage",
@@ -52,7 +70,7 @@ export default merge.recursive(TSPreset, {
   // An object that configures minimum threshold enforcement for coverage results
   coverageThreshold: {
     global: {
-      branches: 90,
+      branches: env.get("REDIS_REQUIRED").required().asBool() ? 90 : 85, // With disabled Redis many branches can't be covered
       functions: 90,
       lines: 90,
       statements: 90,

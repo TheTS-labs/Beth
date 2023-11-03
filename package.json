@@ -11,7 +11,7 @@
     "backend:start:dev": "yarn workspace backend run -T nodemon main.ts",
     "backend:migrate": "yarn workspace backend knex migrate:latest --knexfile knexfile.js --migrations-directory db/migrations",
     "backend:seed": "yarn workspace backend knex seed:run",
-    "backend:test": "yarn workspace backend jest --detectOpenHandles --forceExit --maxWorkers=50%",
+    "backend:test": "yarn workspace backend jest --detectOpenHandles --forceExit --runInBand",
     "backend:lint": "yarn eslint 'backend/**/*.{ts,tsx}'",
     "root:lint": "yarn eslint '**/*.{ts,tsx}'",
     "root:start:dev": "yarn concurrently \"yarn backend:start:dev\" \"yarn frontend:dev\" -n \"SERVER,CLIENT\" -c \"bgCyan.bold,bgGreen.bold\"",

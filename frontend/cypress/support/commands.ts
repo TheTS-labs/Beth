@@ -44,6 +44,7 @@ Cypress.Commands.overwrite("visit", (originalFn, url) => {
   //   cy.wait(2000);
   // });
 
+  // eslint-disable-next-line cypress/no-unnecessary-waiting
   cy.wait(2000);
 });
 

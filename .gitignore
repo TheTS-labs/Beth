@@ -65,3 +65,4 @@ typings/
 dist
 *.sqlite3
 .yarn
+frontend/cypress/screenshots

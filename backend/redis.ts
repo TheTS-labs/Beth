@@ -7,7 +7,9 @@ export default class Redis {
   constructor(private logger: winston.Logger, public config: ENV) {}
 
   get(): RedisClientType {
-    const redisClient: RedisClientType = createRedisClient();
+    const redisClient: RedisClientType = createRedisClient({
+      url: this.config.get("REDIS_URL").required().asString()
+    });
 
     redisClient.on("error", error => {
       this.logger.error({ message: error, path: module.filename });

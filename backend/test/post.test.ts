@@ -1,5 +1,3 @@
-import dotenv from "dotenv";
-import * as env from "env-var";
 import request from "supertest";
 
 import App from "../app";
@@ -10,21 +8,16 @@ import { DetailedPost, Post } from "../db/models/post";
 import userData, { credentials } from "./data/user_data";
 import auth from "./helpers/auth";
 
-dotenv.config({ path: "../env/.backend.env" });
-
 const server = new App(endpoints, disableAuthFor);
 const req = request(server.app);
 
-afterAll(
-  (done) => { server.scheduledTasks.stop(); done(); },
-  env.get("JEST_HOOK_TIMEOUT_MS").required().asIntPositive()
-);
+afterAll((done) => { server.scheduledTasks.stop(); done(); });
 beforeEach(async () => {
   await server.db("user").del();
   await server.db("token").del();
   await server.db("permission").del();
   await server.db("post").del();
-}, env.get("JEST_HOOK_TIMEOUT_MS").required().asIntPositive());
+});
 
 describe("POST /post/create", () => {
   it("should create post", async () => {

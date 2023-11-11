@@ -1,32 +1,37 @@
-version: '3.3'
+version: "3.3"
 services:
-    # postgres:
-    #     env_file:
-    #         - ./env/.db.env
-    #     ports:
-    #         - '5432:5432'
-    #     image: postgres
-    #     healthcheck:
-    #         test: ["CMD-SHELL", "pg_isready -U postgres"]
-    #         interval: 30s
-    #         timeout: 5s
-    #         retries: 5
+    redis:
+        image: redis
+        ports:
+            - "6379:6379"
 
-    # pgadmin4:
-    #     env_file:
-    #         - ./env/.db.env
-    #     ports:
-    #         - '8080:80'
-    #     image: dpage/pgadmin4
+    postgres:
+        env_file:
+            - ./env/docker/.db.env
+        ports:
+            - "5432:5432"
+        image: postgres
+        healthcheck:
+            test: ["CMD-SHELL", "pg_isready -U postgres"]
+            interval: 30s
+            timeout: 5s
+            retries: 5
+
+    pgadmin4:
+        env_file:
+            - ./env/docker/.db.env
+        ports:
+            - "8080:80"
+        image: dpage/pgadmin4
 
     migration:
-        # depends_on:
-        #     postgres:
-        #         condition: service_healthy
+        depends_on:
+            postgres:
+                condition: service_healthy
         build:
             dockerfile: Dockerfile.migration
         env_file:
-            - ./env/.backend.env
+            - ./env/docker/.backend.env
 
     backend:
         healthcheck:
@@ -35,16 +40,16 @@ services:
             timeout: 5s
             retries: 10
         depends_on:
-            # postgres:
-            #     condition: service_healthy
+            postgres:
+                condition: service_healthy
             migration:
                 condition: service_completed_successfully
         build:
             dockerfile: Dockerfile.backend
         env_file:
-            - ./env/.backend.env
+            - ./env/docker/.backend.env
         ports:
-            - '3001:3001'
+            - "3001:3001"
     
     frontend:
         healthcheck:
@@ -52,16 +57,9 @@ services:
             interval: 30s
             timeout: 5s
             retries: 10
-        depends_on:
-            # postgres:
-            #     condition: service_healthy
-            backend:
-                condition: service_healthy
-            migration:
-                condition: service_completed_successfully
         build:
             dockerfile: Dockerfile.frontend
         ports:
-            - '3000:3000'
+            - "3000:3000"
         env_file:
-            - ./env/.frontend.env
+            - ./env/docker/.frontend.env

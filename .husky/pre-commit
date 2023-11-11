@@ -10,7 +10,8 @@ echo "ESLint (1/4)"
 yarn root:lint --max-warnings=0
 
 echo "Cypress (2/4)"
-yarn frontend:dev:test
+yarn frontend:build
+yarn frontend:test:full
 
 echo "Cypress: check-coverage (3/4)"
 yarn workspace frontend nyc check-coverage

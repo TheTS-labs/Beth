@@ -18,19 +18,14 @@ describe("Try to issue new token", () => {
       pathname: "/user/issueToken"
     }).as("issueToken");
 
-    cy.intercept(
-      { pathname: "/permission/view" },
-      req => {
-        req.continue(res => {
-          res.delay = 2000;
-          res.send();
-        });
-      }
-    ).as("permissionView");
+    cy.interceptIndefinitely("/permission/view", "permissionView").then(sendResponse => {
+      cy.visit("/auth/issue_token");
 
-    cy.visit("/auth/issue_token");
-
-    cy.get('div[class*="loader_loader__"]').should("have.length", 1);
+      cy.get('div[class*="loader_loader__"]').should("be.visible").then(() => {
+        sendResponse();
+        cy.get('div[class*="loader_loader__"]').should("not.exist");
+      });
+    });
 
     cy.wait("@permissionView").then(interception => {
       expect(interception?.response?.statusCode).to.eq(200);
@@ -61,19 +56,14 @@ describe("Try to issue new token", () => {
       pathname: "/user/issueToken"
     }).as("issueToken");
 
-    cy.intercept(
-      { pathname: "/permission/view" },
-      req => {
-        req.continue(res => {
-          res.delay = 2000;
-          res.send();
-        });
-      }
-    ).as("permissionView");
+    cy.interceptIndefinitely("/permission/view", "permissionView").then(sendResponse => {
+      cy.visit("/auth/issue_token");
 
-    cy.visit("/auth/issue_token");
-
-    cy.get('div[class*="loader_loader__"]').should("have.length", 1);
+      cy.get('div[class*="loader_loader__"]').should("be.visible").then(() => {
+        sendResponse();
+        cy.get('div[class*="loader_loader__"]').should("not.exist");
+      });
+    });
 
     cy.wait("@permissionView").then(interception => {
       expect(interception?.response?.statusCode).to.eq(200);
@@ -99,19 +89,14 @@ describe("Try to issue new token", () => {
       pathname: "/user/issueToken"
     }, req => req.destroy()).as("issueToken");
 
-    cy.intercept(
-      { pathname: "/permission/view" },
-      req => {
-        req.continue(res => {
-          res.delay = 2000;
-          res.send();
-        });
-      }
-    ).as("permissionView");
+    cy.interceptIndefinitely("/permission/view", "permissionView").then(sendResponse => {
+      cy.visit("/auth/issue_token");
 
-    cy.visit("/auth/issue_token");
-
-    cy.get('div[class*="loader_loader__"]').should("have.length", 1);
+      cy.get('div[class*="loader_loader__"]').should("be.visible").then(() => {
+        sendResponse();
+        cy.get('div[class*="loader_loader__"]').should("not.exist");
+      });
+    });
 
     cy.wait("@permissionView").then(interception => {
       expect(interception?.response?.statusCode).to.eq(200);
@@ -133,16 +118,26 @@ describe("Try to issue new token", () => {
   });
 
   it("Network Error: /permission/view", () => {
+    let sendResponse: (value?: unknown) => void;
+    const trigger = new Promise((resolve) => {
+      sendResponse = resolve;
+    });
+    
     cy.intercept({
       pathname: "/user/issueToken"
     }).as("issueToken");
 
     cy.intercept(
       { pathname: "/permission/view" },
-      req => req.destroy()
+      async req => trigger.then(() => req.destroy())
     ).as("permissionView");
 
     cy.visit("/auth/issue_token");
+
+    cy.get('div[class*="loader_loader__"]').should("be.visible").then(() => {
+      sendResponse();
+      cy.get('div[class*="loader_loader__"]').should("not.exist");
+    });
 
     cy.get('p[class*="issue_token_error_"').should("have.text", "AxiosError: Network Error");
 
@@ -156,19 +151,14 @@ describe("Try to issue new token", () => {
       pathname: "/user/issueToken"
     }).as("issueToken");
 
-    cy.intercept(
-      { pathname: "/permission/view" },
-      req => {
-        req.continue(res => {
-          res.delay = 2000;
-          res.send();
-        });
-      }
-    ).as("permissionView");
+    cy.interceptIndefinitely("/permission/view", "permissionView").then(sendResponse => {
+      cy.visit("/auth/issue_token");
 
-    cy.visit("/auth/issue_token");
-
-    cy.get('div[class*="loader_loader__"]').should("have.length", 1);
+      cy.get('div[class*="loader_loader__"]').should("be.visible").then(() => {
+        sendResponse();
+        cy.get('div[class*="loader_loader__"]').should("not.exist");
+      });
+    });
 
     cy.wait("@permissionView").then(interception => {
       expect(interception?.response?.statusCode).to.eq(200);

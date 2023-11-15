@@ -1,21 +1,27 @@
 /* eslint-disable @typescript-eslint/no-namespace */
 /// <reference types="cypress" />
-// ***********************************************
-// This example commands.ts shows you how to
-// create various custom commands and overwrite
-// existing commands.
-//
-// For more comprehensive examples of custom
-// commands please read more here:
-// https://on.cypress.io/custom-commands
-// ***********************************************
 
-// cy.request("post", `${Cypress.env("SERVER_URL")}/user/create`, {
-//   ...realCredentials,
-//   email,
-//   password,
-//   repeatPassword: password
-// });
+// eslint-disable-next-line import/no-unresolved
+import { HttpResponseInterceptor,RouteMatcher, StaticResponse } from "cypress/types/net-stubbing";
+
+Cypress.Commands.add("interceptIndefinitely", (
+  requestMatcher: RouteMatcher,
+  alias: string,
+  response?: StaticResponse | HttpResponseInterceptor
+): Cypress.Chainable<(value?: unknown) => void> => {
+  let sendResponse!: (value?: unknown) => void;
+  const trigger = new Promise((resolve) => {
+    sendResponse = resolve;
+  });
+
+  cy.intercept(requestMatcher, async request => {
+    return trigger.then(() => {
+      request.reply(response);
+    });
+  }).as(alias);
+
+  return cy.wrap(sendResponse);
+});
 
 Cypress.Commands.add("register", (options) => {
   cy.request("post", `${Cypress.env("SERVER_URL")}/user/create`, options);
@@ -32,20 +38,13 @@ Cypress.Commands.add("login", (email, password) => {
 });
 
 Cypress.Commands.overwrite("visit", (originalFn, url) => {
-  // cy.intercept({ pathname: "/_next/static/development/_devMiddlewareManifest.json" }).as("manifest");
-
   originalFn(url);
 
-  // cy.wait("@manifest").then(interception => {
-  //   expect(interception?.response?.statusCode).to.eq(200);
-
-  //   // This is needed for AUTH_TOKEN to get it's value
-  //   // eslint-disable-next-line cypress/no-unnecessary-waiting
-  //   cy.wait(2000);
-  // });
-
+  // This is needed for AUTH_TOKEN to get it's value
+  // TODO: Disable request buttons until AUTH_TOKEN get it's value
+  // Also if Next Dev server used, _devMiddlewareManifest.json need to be loaded
   // eslint-disable-next-line cypress/no-unnecessary-waiting
-  cy.wait(2000);
+  cy.wait(4000);
 });
 
 declare global {
@@ -59,6 +58,11 @@ declare global {
         password: string
         repeatPassword: string
       }): Chainable<void>
+      interceptIndefinitely(
+        requestMatcher: RouteMatcher,
+        alias: string,
+        response?: StaticResponse | HttpResponseInterceptor
+      ): Chainable<(value?: unknown) => void>
     }
   }
 }

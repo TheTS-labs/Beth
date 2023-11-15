@@ -19,7 +19,6 @@
     "@types/dotenv-webpack": "^7.0.6",
     "@types/react": "18.2.6",
     "cypress": "^13.3.2",
-    "cypress-fail-fast": "^7.0.3",
     "dotenv-webpack": "^8.0.1",
     "eslint-config-next": "^13.4.19",
     "eslint-import-resolver-typescript": "^3.6.0",

@@ -3658,17 +3658,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"cypress-fail-fast@npm:^7.0.3":
-  version: 7.0.3
-  resolution: "cypress-fail-fast@npm:7.0.3"
-  dependencies:
-    chalk: 4.1.2
-  peerDependencies:
-    cypress: ">=8.0.0"
-  checksum: 06d25b65ad850ed0f79c79f6029a779709c2279885be9b5ab95e8d78f73606a0ead8efeaf152e9b0867bd54a192451f157b7bb1be12d001e813ce9c88c7b2616
-  languageName: node
-  linkType: hard
-
 "cypress@npm:^13.3.2":
   version: 13.3.2
   resolution: "cypress@npm:13.3.2"
@@ -5121,7 +5110,6 @@ __metadata:
     axios: ^1.4.0
     buffer: ^6.0.3
     cypress: ^13.3.2
-    cypress-fail-fast: ^7.0.3
     dotenv-webpack: ^8.0.1
     eslint-config-next: ^13.4.19
     eslint-import-resolver-typescript: ^3.6.0

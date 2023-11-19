@@ -2886,6 +2886,7 @@ __metadata:
     cookie-parser: ^1.4.6
     debug: ^4.3.4
     ejs: ^3.1.9
+    enforce-unique: ^1.2.0
     express: ^4.18.2
     express-async-handler: ^1.2.0
     express-jwt: ^8.4.1
@@ -4074,6 +4075,13 @@ __metadata:
   dependencies:
     once: ^1.4.0
   checksum: 530a5a5a1e517e962854a31693dbb5c0b2fc40b46dad2a56a2deec656ca040631124f4795823acc68238147805f8b021abbe221f4afed5ef3c8e8efc2024908b
+  languageName: node
+  linkType: hard
+
+"enforce-unique@npm:^1.2.0":
+  version: 1.2.0
+  resolution: "enforce-unique@npm:1.2.0"
+  checksum: e109ad2e07cc069ee7c7561e2111b441eebb21c76016f827a495a7a57e267ccd411708b835b9891b8bc161fc20a85a95a21706c6085d419211c20e6903a37a8d
   languageName: node
   linkType: hard
 

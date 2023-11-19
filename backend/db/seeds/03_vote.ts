@@ -6,6 +6,22 @@ import { User } from "../models/user";
 import { Vote, VoteType } from "../models/vote";
 
 const seedVotes = 1000;
+const batches = Math.ceil(seedVotes / 100);
+
+const generateVotes = (
+  length: number,
+  emails: Pick<User, "email">[],
+  postIds: Pick<Post, "id">[]
+): Omit<Vote, "createdAt" | "id">[] => Array.from({ length }, () => {
+  const userEmail = emails[Math.floor(Math.random()*emails.length)].email;
+  const postId = postIds[Math.floor(Math.random()*postIds.length)].id;
+
+  return {
+    userEmail,
+    postId,
+    voteType: faker.datatype.boolean() as unknown as VoteType
+  };
+});
 
 export async function seed(knex: Knex): Promise<void> {
   // Deletes ALL existing entries
@@ -13,18 +29,8 @@ export async function seed(knex: Knex): Promise<void> {
 
   const emails = await knex<User>("user").select("email");
   const postIds = await knex<Post>("post").select("id");
-  const votes: Omit<Vote, "createdAt" | "id">[] = [];
 
-  [...Array(seedVotes).keys()].map(async () => {
-    const userEmail = emails[Math.floor(Math.random()*emails.length)].email;
-    const postId = postIds[Math.floor(Math.random()*postIds.length)].id;
-
-    votes.push({
-      userEmail,
-      postId,
-      voteType: faker.datatype.boolean() as unknown as VoteType
-    });
+  Array.from({ length: batches }).forEach(async () => {
+    await knex("vote").insert(generateVotes(seedVotes, emails, postIds));
   });
-
-  await knex("vote").insert(votes);
 }

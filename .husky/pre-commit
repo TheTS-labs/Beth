@@ -11,7 +11,7 @@ yarn root:lint --max-warnings=0
 
 echo "Cypress (2/4)"
 yarn frontend:build
-yarn frontend:test:full
+LOG_LEVEL=$TEST_LOG_LEVEL yarn frontend:test:full
 
 echo "Cypress: check-coverage (3/4)"
 yarn workspace frontend nyc check-coverage

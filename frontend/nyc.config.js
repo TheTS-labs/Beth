@@ -7,7 +7,7 @@ module.exports = {
     "lib/hooks/use_auth_token.ts",
     "components/common/loader.tsx",
 
-    // There are no tests for all these files right now, so exclude them to meet global coverage threshold
+    // Work in progress, so exclude them to meet global coverage threshold
     // "components/**/**",
     // "lib/**/**",
   ],

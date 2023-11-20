@@ -21,7 +21,7 @@ Setup environment variables in the `env` directory. Ensure your database server 
 ```bash
 yarn install
 yarn frontend:build
-yarn root:start
+NEXT_PORT=3001 yarn root:start
 ```
 
 You're good to go!

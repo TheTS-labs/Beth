@@ -6,8 +6,8 @@ export default function getJob(
   db: Knex,
   logger: winston.Logger,
 ): CronJob.ScheduledTask {
-  return CronJob.schedule("0 0 * * */1", async () => {
-    const sevenDaysAgo: number = Date.now() - 7 * 24 * 60 * 60 * 1000;
+  return CronJob.schedule("0 0 * * *", async () => {
+    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
 
     logger.log({
       level: "system",
@@ -16,6 +16,6 @@ export default function getJob(
       context: { frozenAt: ["<=", sevenDaysAgo]}
     });
 
-    await db.raw('delete from "post" where "frozenAt" <= to_timestamp(?)', [ sevenDaysAgo ]);
+    await db("post").where("frozenAt", "<", sevenDaysAgo).del();
   });
 }

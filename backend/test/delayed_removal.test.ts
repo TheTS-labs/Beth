@@ -11,7 +11,7 @@ const logger = new Logger().get(env.get("TEST_LOG_LEVEL").required().asString())
 const db = knex(knexfile["test"]);
 
 jest.mock("node-cron", () => {
-  return { schedule: jest.fn().mockImplementationOnce(async (_, callback) => await callback()) };
+  return { schedule: jest.fn().mockImplementation(async (_, callback) => await callback()) };
 });
 
 beforeEach(async () => { await db("post").del(); });
@@ -27,7 +27,7 @@ describe("General tests", () => {
     }, "id"))[0].id;
 
     getJob(db, logger);
-    expect(CronJob.schedule).toBeCalledWith("0 0 * * */1", expect.any(Function));
+    expect(CronJob.schedule).toBeCalledWith("0 0 * * *", expect.any(Function));
 
     const post = await db<Post>("post").where({ id }).first();
     expect(post).toBeUndefined();
@@ -43,7 +43,7 @@ describe("General tests", () => {
     }, "id"))[0].id;
 
     getJob(db, logger);
-    expect(CronJob.schedule).toBeCalledWith("0 0 * * */1", expect.any(Function));
+    expect(CronJob.schedule).toBeCalledWith("0 0 * * *", expect.any(Function));
 
     const post = await db<Post>("post").where({ id }).first();
     expect(post).not.toBeUndefined();

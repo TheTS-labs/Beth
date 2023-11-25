@@ -68,9 +68,7 @@ describe("Loaders", () => {
     cy.interceptIndefinitely("/recommendation/globalRecommend", "recommendationGlobalRecommend").then(sendResponse => {
       cy.visit("/");
 
-      cy.get(
-        'div[class*="post_post__"] > div[class*="post_post_container__"]'
-      ).should("have.length", 10);
+      cy.get(postSelector).should("have.length", 10);
 
       cy.get([
         postUserSelector,
@@ -101,122 +99,60 @@ describe("Loaders", () => {
   });
 });
 
-describe("Open and close modal post", () => {
-  it("Try to open modal post", () => {
-    cy.intercept("/recommendation/globalRecommend").as("recommendationGlobalRecommend");
-    cy.intercept("/post/view").as("postView");
+describe("Like & Dislike", () => {
+  it.only("Like post", () => {
+    cy.intercept({
+      pathname: "/voting/vote"
+    }).as("votingVote");
 
     cy.visit("/");
 
-    cy.wait("@recommendationGlobalRecommend").then(() => {
-      cy.get(`${postSelector} > p[class*="post_post_text__"]`).first().click();
-      cy.location("href").should("contain", "modalUser=null");
-      cy.location("href").should("match", /modalPost\=\d*/);
-      cy.wait("@postView").then((interception) => {
-        expect(interception?.response?.statusCode).to.eq(200);
+    cy.get(`${postSelector} > div[class*="post_voting__"] > button[data-type="like"]`)
+      .first()
+      .then(elementBeforeClick => {
+      cy.get(`${postSelector} > div[class*="post_voting__"] > button[data-type="like"]`).first().click();
+
+      cy.wait("@votingVote").then(interception => {
+        expect(interception?.response?.statusCode).to.eq(401);
+        expect(interception?.request?.body?.voteType).to.eq("1");
+      });
+  
+      cy.get('div[class*="errors_errors_"]').should("have.length", 1);
+      cy.get('div[class*="errors_error_message_"]').should("have.length", 1);
+      cy.get('div[class*="errors_error_message_"] > p').first().contains("invalid_token");
+
+      cy.get(`${postSelector} > div[class*="post_voting__"] > button[data-type="like"]`).first()
+        .then(elementAfterClick => {
+        expect(elementAfterClick).to.eql(elementBeforeClick);
       });
     });
-
-    cy.get('div[class*="modal_modal__"]').should("be.visible");
   });
 
-  it("Try to close modal post: Escape", () => {
-    cy.intercept("/recommendation/globalRecommend").as("recommendationGlobalRecommend");
-    cy.intercept("/post/view").as("postView");
+  it.only("Dislike post", () => {
+    cy.intercept({
+      pathname: "/voting/vote"
+    }).as("votingVote");
 
     cy.visit("/");
 
-    cy.wait("@recommendationGlobalRecommend").then(() => {
-      cy.get(`${postSelector} > p[class*="post_post_text__"]`).first().click();
-      cy.location("href").should("contain", "modalUser=null");
-      cy.location("href").should("match", /modalPost\=\d*/);
-      cy.wait("@postView").then((interception) => {
-        expect(interception?.response?.statusCode).to.eq(200);
+    cy.get(`${postSelector} > div[class*="post_voting__"] > button[data-type="dislike"]`)
+      .first()
+      .then(elementBeforeClick => {
+      cy.get(`${postSelector} > div[class*="post_voting__"] > button[data-type="dislike"]`).first().click();
+
+      cy.wait("@votingVote").then(interception => {
+        expect(interception?.response?.statusCode).to.eq(401);
+        expect(interception?.request?.body?.voteType).to.eq("0");
+      });
+  
+      cy.get('div[class*="errors_errors_"]').should("have.length", 1);
+      cy.get('div[class*="errors_error_message_"]').should("have.length", 1);
+      cy.get('div[class*="errors_error_message_"] > p').first().contains("invalid_token");
+
+      cy.get(`${postSelector} > div[class*="post_voting__"] > button[data-type="dislike"]`).first()
+        .then(elementAfterClick => {
+        expect(elementAfterClick).to.eql(elementBeforeClick);
       });
     });
-
-    cy.get('div[class*="modal_modal__"]').should("be.visible");
-    cy.get("body").type("{esc}");
-    cy.get('div[class*="modal_modal__"]').should("not.exist");
-  });
-
-  it("Try to close modal post: Click outside", () => {
-    cy.intercept("/recommendation/globalRecommend").as("recommendationGlobalRecommend");
-    cy.intercept("/post/view").as("postView");
-
-    cy.visit("/");
-
-    cy.wait("@recommendationGlobalRecommend").then(() => {
-      cy.get(`${postSelector} > p[class*="post_post_text__"]`).first().click();
-      cy.location("href").should("contain", "modalUser=null");
-      cy.location("href").should("match", /modalPost\=\d*/);
-      cy.wait("@postView").then((interception) => {
-        expect(interception?.response?.statusCode).to.eq(200);
-      });
-    });
-
-    cy.get('div[class*="modal_modal__"]').should("be.visible");
-    cy.get("body").click(0, 0);
-    cy.get('div[class*="modal_modal__"]').should("not.exist");
-  });
-});
-
-describe.only("Open and close modal user", () => {
-  it("Try to open modal user", () => {
-    cy.intercept("/recommendation/globalRecommend").as("recommendationGlobalRecommend");
-    cy.intercept("/post/getUserPosts").as("postGetUserPosts");
-
-    cy.visit("/");
-
-    cy.wait("@recommendationGlobalRecommend").then(() => {
-      cy.get(postUserSelector).first().click();
-      cy.location("href").should("match", /modalUser\=.*/);
-      cy.location("href").should("contain", "modalPost=null");
-      cy.wait("@postGetUserPosts").then((interception) => {
-        expect(interception?.response?.statusCode).to.eq(200);
-      });
-    });
-
-    cy.get('div[class*="modal_modal__"]').should("be.visible");
-  });
-
-  it("Try to close modal user: Escape", () => {
-    cy.intercept("/recommendation/globalRecommend").as("recommendationGlobalRecommend");
-    cy.intercept("/post/getUserPosts").as("postGetUserPosts");
-
-    cy.visit("/");
-
-    cy.wait("@recommendationGlobalRecommend").then(() => {
-      cy.get(postUserSelector).first().click();
-      cy.location("href").should("match", /modalUser\=.*/);
-      cy.location("href").should("contain", "modalPost=null");
-      cy.wait("@postGetUserPosts").then((interception) => {
-        expect(interception?.response?.statusCode).to.eq(200);
-      });
-    });
-
-    cy.get('div[class*="modal_modal__"]').should("be.visible");
-    cy.get("body").type("{esc}");
-    cy.get('div[class*="modal_modal__"]').should("not.exist");
-  });
-
-  it("Try to close modal user: Click outside", () => {
-    cy.intercept("/recommendation/globalRecommend").as("recommendationGlobalRecommend");
-    cy.intercept("/post/getUserPosts").as("postGetUserPosts");
-
-    cy.visit("/");
-
-    cy.wait("@recommendationGlobalRecommend").then(() => {
-      cy.get(postUserSelector).first().click();
-      cy.location("href").should("match",/modalUser\=.*/);
-      cy.location("href").should("contain", "modalPost=null");
-      cy.wait("@postGetUserPosts").then((interception) => {
-        expect(interception?.response?.statusCode).to.eq(200);
-      });
-    });
-
-    cy.get('div[class*="modal_modal__"]').should("be.visible");
-    cy.get("body").click(0, 0);
-    cy.get('div[class*="modal_modal__"]').should("not.exist");
   });
 });

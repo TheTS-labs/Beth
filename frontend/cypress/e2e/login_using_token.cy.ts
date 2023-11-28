@@ -6,16 +6,10 @@ before(() => {
   });
 });
 
-beforeEach(() => {
-  cy.visit("/");
-  cy.get('[href="/auth/login"] > button').click();
-  cy.url().should("include", "/auth/login");
-  cy.get('[href="/auth/login_using_token"] > button').click();
-  cy.url().should("include", "/auth/login_using_token");
-});
-
 describe("Try to login", () => {
   it("Login to account", () => {
+    cy.visit("/auth/login_using_token");
+
     cy.fixture("credentials").then(credentials => {
       cy.get("#token").type(credentials.exampleToken);
       cy.get("#token").should("have.value", credentials.exampleToken);

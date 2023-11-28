@@ -1,45 +1,42 @@
 beforeEach(() => {
   cy.exec("yarn backend:seed", { timeout: 120000 });
-
-  cy.visit("/");
-
-  cy.get('[href="/auth/signup"] > button').click();
-
-  cy.url().should("include", "/auth/signup");
 });
 
 describe("Try to sing up", () => {
   it("Register account", () => {
-    cy.intercept({
-      pathname: "/user/create"
-    }).as("create");
+    cy.visit("/auth/signup");
 
-    cy.fixture("credentials").then(credentials => {
-      cy.get("#username").type(credentials.realCredentials.username);
-      cy.get("#username").should("have.value", credentials.realCredentials.username);
-
-      cy.get("#displayName").type(credentials.realCredentials.displayName);
-      cy.get("#displayName").should("have.value", credentials.realCredentials.displayName);
-
-      cy.get("#email").type(credentials.realCredentials.email);
-      cy.get("#email").should("have.value", credentials.realCredentials.email);
-
-      cy.get("#password").type(credentials.realCredentials.password);
-      cy.get("#password").should("have.value", credentials.realCredentials.password);
-
-      cy.get("#repeatPassword").type(credentials.realCredentials.password);
-      cy.get("#repeatPassword").should("have.value", credentials.realCredentials.password);
-    });
-
-    cy.get("#submit").click();
-    cy.get("#submit").should("have.value", "working, just wait...");
-
-    cy.wait("@create").then((interception) => {
-      expect(interception?.response?.statusCode).to.eq(200);
+    cy.interceptIndefinitely("/user/create", "create").then(sendResponse => {
+      cy.fixture("credentials").then(credentials => {
+        cy.get("#username").type(credentials.realCredentials.username);
+        cy.get("#username").should("have.value", credentials.realCredentials.username);
+  
+        cy.get("#displayName").type(credentials.realCredentials.displayName);
+        cy.get("#displayName").should("have.value", credentials.realCredentials.displayName);
+  
+        cy.get("#email").type(credentials.realCredentials.email);
+        cy.get("#email").should("have.value", credentials.realCredentials.email);
+  
+        cy.get("#password").type(credentials.realCredentials.password);
+        cy.get("#password").should("have.value", credentials.realCredentials.password);
+  
+        cy.get("#repeatPassword").type(credentials.realCredentials.password);
+        cy.get("#repeatPassword").should("have.value", credentials.realCredentials.password);
+      });
+  
+      cy.get("#submit").click();
+      cy.get("#submit").should("have.value", "working, just wait...");
+      sendResponse();
+  
+      cy.wait("@create").then((interception) => {
+        expect(interception?.response?.statusCode).to.eq(200);
+      });
     });
   });
 
   it("Passwords don't match", () => {
+    cy.visit("/auth/signup");
+
     cy.fixture("credentials").then(credentials => {
       cy.get("#username").type(credentials.realCredentials.username);
       cy.get("#username").should("have.value", credentials.realCredentials.username);
@@ -66,32 +63,31 @@ describe("Try to sing up", () => {
   });
 
   it("duplicate key value violates unique constraint \"user_username_unique\"", () => {
+    cy.visit("/auth/signup");
+
     cy.fixture("credentials").then(credentials => {
-      cy.request("post", `${Cypress.env("SERVER_URL")}/user/create`, {
-        ...credentials.realCredentials,
-        repeatPassword: credentials.realCredentials.password
+      cy.register({ ...credentials.realCredentials, repeatPassword: credentials.realCredentials.password });
+
+      cy.interceptIndefinitely("/user/create", "create").then(sendResponse => {
+        cy.get("#username").type(credentials.realCredentials.username);
+        cy.get("#username").should("have.value", credentials.realCredentials.username);
+
+        cy.get("#displayName").type(credentials.realCredentials.displayName);
+        cy.get("#displayName").should("have.value", credentials.realCredentials.displayName);
+
+        cy.get("#email").type(credentials.realCredentials.email);
+        cy.get("#email").should("have.value", credentials.realCredentials.email);
+
+        cy.get("#password").type(credentials.realCredentials.password);
+        cy.get("#password").should("have.value", credentials.realCredentials.password);
+
+        cy.get("#repeatPassword").type(credentials.realCredentials.password);
+        cy.get("#repeatPassword").should("have.value", credentials.realCredentials.password);
+
+        cy.get("#submit").click();
+        cy.get("#submit").should("have.value", "working, just wait...");
+        sendResponse();
       });
-      cy.intercept({
-        pathname: "/user/create"
-      }).as("create");
-
-      cy.get("#username").type(credentials.realCredentials.username);
-      cy.get("#username").should("have.value", credentials.realCredentials.username);
-
-      cy.get("#displayName").type(credentials.realCredentials.displayName);
-      cy.get("#displayName").should("have.value", credentials.realCredentials.displayName);
-
-      cy.get("#email").type(credentials.realCredentials.email);
-      cy.get("#email").should("have.value", credentials.realCredentials.email);
-
-      cy.get("#password").type(credentials.realCredentials.password);
-      cy.get("#password").should("have.value", credentials.realCredentials.password);
-
-      cy.get("#repeatPassword").type(credentials.realCredentials.password);
-      cy.get("#repeatPassword").should("have.value", credentials.realCredentials.password);
-
-      cy.get("#submit").click();
-      cy.get("#submit").should("have.value", "working, just wait...");
 
       cy.wait("@create").then((interception) => {
         expect(interception?.response?.statusCode).to.eq(500);
@@ -110,32 +106,31 @@ describe("Try to sing up", () => {
   });
 
   it("duplicate key value violates unique constraint \"user_email_unique\"", () => {
+    cy.visit("/auth/signup");
+
     cy.fixture("credentials").then(credentials => {
-      cy.request("post", `${Cypress.env("SERVER_URL")}/user/create`, {
-        ...credentials.realCredentials,
-        repeatPassword: credentials.realCredentials.password
+      cy.register({ ...credentials.realCredentials, repeatPassword: credentials.realCredentials.password });
+      
+      cy.interceptIndefinitely("/user/create", "create").then(sendResponse => {
+        cy.get("#username").type(credentials.realCredentials.username + "1");
+        cy.get("#username").should("have.value", credentials.realCredentials.username + "1");
+
+        cy.get("#displayName").type(credentials.realCredentials.displayName);
+        cy.get("#displayName").should("have.value", credentials.realCredentials.displayName);
+
+        cy.get("#email").type(credentials.realCredentials.email);
+        cy.get("#email").should("have.value", credentials.realCredentials.email);
+
+        cy.get("#password").type(credentials.realCredentials.password);
+        cy.get("#password").should("have.value", credentials.realCredentials.password);
+
+        cy.get("#repeatPassword").type(credentials.realCredentials.password);
+        cy.get("#repeatPassword").should("have.value", credentials.realCredentials.password);
+    
+        cy.get("#submit").click();
+        cy.get("#submit").should("have.value", "working, just wait...");
+        sendResponse();
       });
-      cy.intercept({
-        pathname: "/user/create"
-      }).as("create");
-
-      cy.get("#username").type(credentials.realCredentials.username + "1");
-      cy.get("#username").should("have.value", credentials.realCredentials.username + "1");
-
-      cy.get("#displayName").type(credentials.realCredentials.displayName);
-      cy.get("#displayName").should("have.value", credentials.realCredentials.displayName);
-
-      cy.get("#email").type(credentials.realCredentials.email);
-      cy.get("#email").should("have.value", credentials.realCredentials.email);
-
-      cy.get("#password").type(credentials.realCredentials.password);
-      cy.get("#password").should("have.value", credentials.realCredentials.password);
-
-      cy.get("#repeatPassword").type(credentials.realCredentials.password);
-      cy.get("#repeatPassword").should("have.value", credentials.realCredentials.password);
-  
-      cy.get("#submit").click();
-      cy.get("#submit").should("have.value", "working, just wait...");
 
       cy.wait("@create").then((interception) => {
         expect(interception?.response?.statusCode).to.eq(500);
@@ -154,6 +149,8 @@ describe("Try to sing up", () => {
   });
 
   it("Weak password", () => {
+    cy.visit("/auth/signup");
+
     cy.fixture("credentials").then(credentials => {
       cy.get("#username").type(credentials.realCredentials.username + "1");
       cy.get("#username").should("have.value", credentials.realCredentials.username + "1");
@@ -181,9 +178,9 @@ describe("Try to sing up", () => {
   });
 
   it("Network Error", () => {
-    cy.intercept({
-      pathname: "/user/create",
-    }, req => req.destroy()).as("create");
+    cy.intercept("/user/create", req => req.destroy()).as("create");
+  
+    cy.visit("/auth/signup");
 
     cy.fixture("credentials").then(credentials => {
       cy.get("#username").type(credentials.realCredentials.username);

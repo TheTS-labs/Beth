@@ -126,3 +126,5 @@ describe.only("Open and close modal user", () => {
     cy.get('div[class*="modal_modal__"]').should("not.exist");
   });
 });
+
+export {};

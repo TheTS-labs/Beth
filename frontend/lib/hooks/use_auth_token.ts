@@ -15,7 +15,10 @@ interface ReturnType {
   } | undefined
 }
 
-export const authTokenAtom = atomWithStorage<string | undefined>("AUTH_TOKEN", undefined);
+export const authTokenAtom = atomWithStorage<string | undefined>("AUTH_TOKEN", undefined, undefined, {
+  // eslint-disable-next-line camelcase
+  unstable_getOnInit: true
+});
 
 export default function useAuthToken(): ReturnType {
   const [ token, setToken ] = useAtom(authTokenAtom);

@@ -12,7 +12,7 @@ beforeEach(() => {
 
 describe("Try to log out", () => {
   it("Log out", () => {
-    cy.visit("/auth/logout");
+    cy.visitAndWaitForToken("/auth/logout");
 
     cy.getAllLocalStorage().then(localStorage => {
       cy.location().then(location => {

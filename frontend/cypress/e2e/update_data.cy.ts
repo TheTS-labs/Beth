@@ -12,11 +12,9 @@ beforeEach(() => {
 
 describe("Try to update data", () => {
   it("Current data", () => {
-    cy.intercept({
-      pathname: "/user/view"
-    }).as("view");
+    cy.intercept("/user/view").as("view");
 
-    cy.visit("/auth/update_data");
+    cy.visitAndWaitForToken("/auth/update_data");
 
     cy.wait("@view").then((interception) => {
       expect(interception?.response?.statusCode).to.eq(200);
@@ -35,11 +33,9 @@ describe("Try to update data", () => {
   });
 
   it("Update data", () => {
-    cy.intercept({
-      pathname: "/user/edit"
-    }).as("edit");
+    cy.intercept("/user/edit").as("edit");
 
-    cy.visit("/auth/update_data");
+    cy.visitAndWaitForToken("/auth/update_data");
 
     cy.fixture("credentials").then(credentials => {
       cy.fixture("others").then(({ updateData }) => {
@@ -66,7 +62,7 @@ describe("Try to update data", () => {
   });
 
   it("New and Current passwords match", () => {
-    cy.visit("/auth/update_data");
+    cy.visitAndWaitForToken("/auth/update_data");
 
     cy.fixture("credentials").then(credentials => {
       cy.get("#currentPassword").type(credentials.realCredentials.password);
@@ -81,11 +77,9 @@ describe("Try to update data", () => {
   });
 
   it("Wrong password", () => {
-    cy.intercept({
-      pathname: "/user/edit"
-    }).as("edit");
+    cy.intercept("/user/edit").as("edit");
 
-    cy.visit("/auth/update_data");
+    cy.visitAndWaitForToken("/auth/update_data");
 
     cy.fixture("credentials").then(credentials => {
       cy.get("#currentPassword").type("Pa$$w0rD!!");
@@ -103,25 +97,8 @@ describe("Try to update data", () => {
     cy.get('div[class*="errors_error_message_"] > p').first().contains("Wrong email or password");
   });
 
-  it("New and Current passwords match", () => {
-    cy.visit("/auth/update_data");
-
-    cy.fixture("credentials").then(credentials => {
-      cy.get("#currentPassword").type(credentials.realCredentials.password);
-      cy.get(":nth-child(1) > form > #password").type(credentials.realCredentials.password);
-      
-      cy.get("#submit").click();
-    });
-
-    cy.get('div[class*="errors_errors_"]').should("have.length", 1);
-    cy.get('div[class*="errors_error_message_"]').should("have.length", 1);
-    cy.get('div[class*="errors_error_message_"] > p').first().contains("New and Current passwords match");
-  });
-
   it("Network error", () => {
-    cy.intercept({
-      pathname: "/user/edit"
-    }, req => req.destroy()).as("edit");
+    cy.intercept("/user/edit", req => req.destroy()).as("edit");
 
     cy.visit("/auth/update_data");
 

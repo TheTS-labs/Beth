@@ -12,11 +12,9 @@ beforeEach(() => {
 
 describe("Try to froze", () => {
   it("Froze", () => {
-    cy.intercept({
-      pathname: "/user/froze"
-    }).as("froze");
+    cy.intercept("/user/froze").as("froze");
 
-    cy.visit("/auth/froze");
+    cy.visitAndWaitForToken("/auth/froze");
 
     cy.get('[class*="common_logout_"]').click();
 
@@ -30,39 +28,35 @@ describe("Try to froze", () => {
       });
     });
 
-    cy.get('[href="/auth/login"] > button').click();
-    cy.url().should("include", "/auth/login");
+    cy.visit("/auth/login");
 
-    cy.intercept({
-      pathname: "/user/issueToken"
-    }).as("issueToken");
+    cy.interceptIndefinitely("/user/issueToken", "issueToken").then(sendResponse => {
+      cy.fixture("credentials").then(credentials => {
+        cy.get("#email").type(credentials.realCredentials.email);
+        cy.get("#email").should("have.value", credentials.realCredentials.email);
+    
+        cy.get("#password").type(credentials.realCredentials.password);
+        cy.get("#password").should("have.value", credentials.realCredentials.password);
+    
+        cy.get("#submit").click();
+        cy.get("#submit").should("have.value", "working, just wait...");
+        sendResponse();
+    
+        cy.wait("@issueToken").then((interception) => {
+          expect(interception?.response?.statusCode).to.eq(403);
+        });
   
-    cy.fixture("credentials").then(credentials => {
-      cy.get("#email").type(credentials.realCredentials.email);
-      cy.get("#email").should("have.value", credentials.realCredentials.email);
-  
-      cy.get("#password").type(credentials.realCredentials.password);
-      cy.get("#password").should("have.value", credentials.realCredentials.password);
-  
-      cy.get("#submit").click();
-      cy.get("#submit").should("have.value", "working, just wait...");
-  
-      cy.wait("@issueToken").then((interception) => {
-        expect(interception?.response?.statusCode).to.eq(403);
+        cy.get('div[class*="errors_errors_"]').should("have.length", 1);
+        cy.get('div[class*="errors_error_message_"]').should("have.length", 1);
+        cy.get('div[class*="errors_error_message_"] > p').first().contains(
+          `User ${credentials.realCredentials.email} is frozen`
+        );
       });
-
-      cy.get('div[class*="errors_errors_"]').should("have.length", 1);
-      cy.get('div[class*="errors_error_message_"]').should("have.length", 1);
-      cy.get('div[class*="errors_error_message_"] > p').first().contains(
-        `User ${credentials.realCredentials.email} is frozen`
-      );
     });
   });
 
   it("Cancel", () => {
-    cy.intercept({
-      pathname: "/user/froze"
-    }).as("froze");
+    cy.intercept("/user/froze").as("froze");
 
     cy.on("window:confirm", text => {
       expect(text).to.contains("If you freeze the account, there's no way you can unfreeze it yourself");
@@ -80,9 +74,7 @@ describe("Try to froze", () => {
   });
 
   it("Network Error", () => {
-    cy.intercept({
-      pathname: "/user/froze"
-    }, req => req.destroy()).as("froze");
+    cy.intercept("/user/froze", req => req.destroy()).as("froze");
   
     cy.visit("/auth/froze");
 
@@ -94,9 +86,7 @@ describe("Try to froze", () => {
   });
 
   it("Request Error", () => {
-    cy.intercept({
-      pathname: "/user/froze"
-    }, req => {
+    cy.intercept("/user/froze", req => {
       req.headers["authorization"] = "Bearer undefined";
     }).as("froze");
   

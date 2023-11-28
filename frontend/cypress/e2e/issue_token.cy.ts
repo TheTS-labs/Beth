@@ -14,12 +14,10 @@ beforeEach(() => {
 
 describe("Try to issue new token", () => {
   it("Set as session token", () => {
-    cy.intercept({
-      pathname: "/user/issueToken"
-    }).as("issueToken");
+    cy.intercept("/user/issueToken").as("issueToken");
 
     cy.interceptIndefinitely("/permission/view", "permissionView").then(sendResponse => {
-      cy.visit("/auth/issue_token");
+      cy.visitAndWaitForToken("/auth/issue_token");
 
       cy.get('div[class*="loader_loader__"]').should("be.visible").then(() => {
         sendResponse();
@@ -52,12 +50,10 @@ describe("Try to issue new token", () => {
   });
 
   it("Just get the token", () => {
-    cy.intercept({
-      pathname: "/user/issueToken"
-    }).as("issueToken");
+    cy.intercept("/user/issueToken").as("issueToken");
 
     cy.interceptIndefinitely("/permission/view", "permissionView").then(sendResponse => {
-      cy.visit("/auth/issue_token");
+      cy.visitAndWaitForToken("/auth/issue_token");
 
       cy.get('div[class*="loader_loader__"]').should("be.visible").then(() => {
         sendResponse();
@@ -85,9 +81,7 @@ describe("Try to issue new token", () => {
   });
 
   it("Network Error: /user/issueToken", () => {
-    cy.intercept({
-      pathname: "/user/issueToken"
-    }, req => req.destroy()).as("issueToken");
+    cy.intercept("/user/issueToken", req => req.destroy()).as("issueToken");
 
     cy.interceptIndefinitely("/permission/view", "permissionView").then(sendResponse => {
       cy.visit("/auth/issue_token");
@@ -123,12 +117,10 @@ describe("Try to issue new token", () => {
       sendResponse = resolve;
     });
     
-    cy.intercept({
-      pathname: "/user/issueToken"
-    }).as("issueToken");
+    cy.intercept("/user/issueToken").as("issueToken");
 
     cy.intercept(
-      { pathname: "/permission/view" },
+      "/permission/view",
       async req => trigger.then(() => req.destroy())
     ).as("permissionView");
 
@@ -147,12 +139,10 @@ describe("Try to issue new token", () => {
   });
 
   it("Wrong password", () => {
-    cy.intercept({
-      pathname: "/user/issueToken"
-    }).as("issueToken");
+    cy.intercept("/user/issueToken").as("issueToken");
 
     cy.interceptIndefinitely("/permission/view", "permissionView").then(sendResponse => {
-      cy.visit("/auth/issue_token");
+      cy.visitAndWaitForToken("/auth/issue_token");
 
       cy.get('div[class*="loader_loader__"]').should("be.visible").then(() => {
         sendResponse();

@@ -16,8 +16,8 @@ module.exports = {
     return config;
   },
   experimental: {
-    swcPlugins: [
-      useInstrumentPlugin && ["swc-plugin-coverage-instrument", {}],
-    ]
+    swcPlugins: useInstrumentPlugin ? [
+       ["swc-plugin-coverage-instrument", {}],
+    ] : []
   }
 };

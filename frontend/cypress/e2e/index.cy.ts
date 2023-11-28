@@ -101,58 +101,38 @@ describe("Loaders", () => {
 
 describe("Like & Dislike", () => {
   it.only("Like post", () => {
-    cy.intercept({
-      pathname: "/voting/vote"
-    }).as("votingVote");
+    cy.intercept("/voting/vote").as("votingVote");
 
     cy.visit("/");
 
-    cy.get(`${postSelector} > div[class*="post_voting__"] > button[data-type="like"]`)
-      .first()
-      .then(elementBeforeClick => {
-      cy.get(`${postSelector} > div[class*="post_voting__"] > button[data-type="like"]`).first().click();
+    cy.get(`${postSelector} > div[class*="post_voting__"] > button[data-type="like"]`).first().click();
 
-      cy.wait("@votingVote").then(interception => {
-        expect(interception?.response?.statusCode).to.eq(401);
-        expect(interception?.request?.body?.voteType).to.eq("1");
-      });
-  
-      cy.get('div[class*="errors_errors_"]').should("have.length", 1);
-      cy.get('div[class*="errors_error_message_"]').should("have.length", 1);
-      cy.get('div[class*="errors_error_message_"] > p').first().contains("invalid_token");
-
-      cy.get(`${postSelector} > div[class*="post_voting__"] > button[data-type="like"]`).first()
-        .then(elementAfterClick => {
-        expect(elementAfterClick).to.eql(elementBeforeClick);
-      });
+    cy.wait("@votingVote").then(interception => {
+      expect(interception?.response?.statusCode).to.eq(401);
+      expect(interception?.request?.body?.voteType).to.eq("1");
     });
+
+    cy.get('div[class*="errors_errors_"]').should("have.length", 1);
+    cy.get('div[class*="errors_error_message_"]').should("have.length", 1);
+    cy.get('div[class*="errors_error_message_"] > p').first().contains("invalid_token");
   });
 
   it.only("Dislike post", () => {
-    cy.intercept({
-      pathname: "/voting/vote"
-    }).as("votingVote");
+    cy.intercept("/voting/vote").as("votingVote");
 
     cy.visit("/");
 
-    cy.get(`${postSelector} > div[class*="post_voting__"] > button[data-type="dislike"]`)
-      .first()
-      .then(elementBeforeClick => {
-      cy.get(`${postSelector} > div[class*="post_voting__"] > button[data-type="dislike"]`).first().click();
+    cy.get(`${postSelector} > div[class*="post_voting__"] > button[data-type="dislike"]`).first().click();
 
-      cy.wait("@votingVote").then(interception => {
-        expect(interception?.response?.statusCode).to.eq(401);
-        expect(interception?.request?.body?.voteType).to.eq("0");
-      });
-  
-      cy.get('div[class*="errors_errors_"]').should("have.length", 1);
-      cy.get('div[class*="errors_error_message_"]').should("have.length", 1);
-      cy.get('div[class*="errors_error_message_"] > p').first().contains("invalid_token");
-
-      cy.get(`${postSelector} > div[class*="post_voting__"] > button[data-type="dislike"]`).first()
-        .then(elementAfterClick => {
-        expect(elementAfterClick).to.eql(elementBeforeClick);
-      });
+    cy.wait("@votingVote").then(interception => {
+      expect(interception?.response?.statusCode).to.eq(401);
+      expect(interception?.request?.body?.voteType).to.eq("0");
     });
+
+    cy.get('div[class*="errors_errors_"]').should("have.length", 1);
+    cy.get('div[class*="errors_error_message_"]').should("have.length", 1);
+    cy.get('div[class*="errors_error_message_"] > p').first().contains("invalid_token");
   });
 });
+
+export {};

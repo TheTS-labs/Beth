@@ -37,20 +37,17 @@ Cypress.Commands.add("login", (email, password) => {
   });
 });
 
-Cypress.Commands.overwrite("visit", (originalFn, url) => {
-  originalFn(url);
+Cypress.Commands.add("visitAndWaitForToken", (url) => {
+  cy.visit(url);
 
-  // This is needed for AUTH_TOKEN to get it's value
-  // TODO: Disable request buttons until AUTH_TOKEN get it's value
-  // Also if Next Dev server used, _devMiddlewareManifest.json need to be loaded
-  // eslint-disable-next-line cypress/no-unnecessary-waiting
-  cy.wait(4000);
+  cy.get("#authTokenDefined", { timeout: 10000 });
 });
 
 declare global {
   namespace Cypress {
     interface Chainable {
       login(email: string, password: string): Chainable<void>
+      visitAndWaitForToken(url: string): Chainable<void>
       register(options: {
         username: string
         displayName: string

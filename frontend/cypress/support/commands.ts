@@ -43,11 +43,16 @@ Cypress.Commands.add("visitAndWaitForToken", (url) => {
   cy.get("#authTokenDefined", { timeout: 10000 });
 });
 
+Cypress.Commands.add("seed", () => {
+  cy.request("post", `${Cypress.env("SERVER_URL")}/dev/seed`);
+});
+
 declare global {
   namespace Cypress {
     interface Chainable {
       login(email: string, password: string): Chainable<void>
       visitAndWaitForToken(url: string): Chainable<void>
+      seed(): Chainable<void>
       register(options: {
         username: string
         displayName: string

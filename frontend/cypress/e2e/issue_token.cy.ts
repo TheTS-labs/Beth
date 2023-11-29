@@ -1,5 +1,5 @@
 before(() => {
-  cy.exec("yarn backend:seed", { timeout: 120000 });
+  cy.seed();
 
   cy.fixture("credentials").then(credentials => {
     cy.register({ ...credentials.realCredentials, repeatPassword: credentials.realCredentials.password });

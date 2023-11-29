@@ -13,6 +13,9 @@ export default defineConfig({
       return config;
     },
     baseUrl: env.get("CYPRESS_URL").required().asUrlString(),
-    env: env.get()
-  },
+    env: {
+      SERVER_URL: env.get("SERVER_URL").required().asUrlString(),
+      NODE_ENV: env.get("NODE_ENV").required().asEnum(["development", "production", "test"])
+    }
+  }
 });

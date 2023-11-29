@@ -8,8 +8,8 @@ module.exports = {
     "components/common/loader.tsx",
 
     // Work in progress, so exclude them to meet global coverage threshold
-    // "components/**/**",
-    // "lib/**/**",
+    "components/**/**",
+    "lib/**/**",
   ],
   exclude: ["node_modules/**/**", "lib/atomWithHash.ts"],
   watermarks: {

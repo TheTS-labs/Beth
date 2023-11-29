@@ -10,11 +10,11 @@ const batches = Math.ceil(seedVotes / 100);
 
 const generateVotes = (
   length: number,
-  emails: Pick<User, "email">[],
-  postIds: Pick<Post, "id">[]
+  users: User[],
+  posts: Post[]
 ): Omit<Vote, "createdAt" | "id">[] => Array.from({ length }, () => {
-  const userEmail = emails[Math.floor(Math.random()*emails.length)].email;
-  const postId = postIds[Math.floor(Math.random()*postIds.length)].id;
+  const userEmail = users[Math.floor(Math.random()*users.length)].email;
+  const postId = posts[Math.floor(Math.random()*posts.length)].id;
 
   return {
     userEmail,
@@ -27,10 +27,10 @@ export async function seed(knex: Knex): Promise<void> {
   // Deletes ALL existing entries
   await knex("vote").del();
 
-  const emails = await knex<User>("user").select("email");
-  const postIds = await knex<Post>("post").select("id");
+  const users = await knex<User>("user").select();
+  const posts = await knex<Post>("post").select();
 
   Array.from({ length: batches }).forEach(async () => {
-    await knex("vote").insert(generateVotes(seedVotes, emails, postIds));
+    await knex("vote").insert(generateVotes(seedVotes, users, posts));
   });
 }

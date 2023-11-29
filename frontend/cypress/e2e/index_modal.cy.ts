@@ -3,9 +3,7 @@ const postSelector = 'div[class*="post_post__"] > div[class*="post_post_containe
 
 const postUserSelector = 'div[class*="post_post__"] > div[class*="post_user__"]';
 
-before(() => {
-  cy.exec("yarn backend:seed", { timeout: 120000 });
-});
+before(() => cy.seed());
 
 describe("Open and close modal post", () => {
   it("Try to open modal post", () => {
@@ -67,10 +65,14 @@ describe("Open and close modal post", () => {
   });
 });
 
-describe.only("Open and close modal user", () => {
+describe("Open and close modal user", () => {
   it("Try to open modal user", () => {
     cy.intercept("/recommendation/globalRecommend").as("recommendationGlobalRecommend");
-    cy.intercept("/post/getUserPosts").as("postGetUserPosts");
+
+    //? Seeding the database does not guarantee that each user will have their own posts.
+    //? If you open a user modal window when the user has no posts /post/getUserPosts will
+    //? return an error Cannot convert null or undefined to object
+    cy.intercept("/post/getUserPosts", { fixture: "post_get_user_posts.json" }).as("postGetUserPosts");
 
     cy.visit("/");
 
@@ -88,7 +90,7 @@ describe.only("Open and close modal user", () => {
 
   it("Try to close modal user: Escape", () => {
     cy.intercept("/recommendation/globalRecommend").as("recommendationGlobalRecommend");
-    cy.intercept("/post/getUserPosts").as("postGetUserPosts");
+    cy.intercept("/post/getUserPosts", { fixture: "post_get_user_posts.json" }).as("postGetUserPosts");
 
     cy.visit("/");
 
@@ -108,7 +110,7 @@ describe.only("Open and close modal user", () => {
 
   it("Try to close modal user: Click outside", () => {
     cy.intercept("/recommendation/globalRecommend").as("recommendationGlobalRecommend");
-    cy.intercept("/post/getUserPosts").as("postGetUserPosts");
+    cy.intercept("/post/getUserPosts", { fixture: "post_get_user_posts.json" }).as("postGetUserPosts");
 
     cy.visit("/");
 

@@ -1,5 +1,6 @@
 import { Domains } from "../app";
 import ActionEndpoint from "../endpoints/action/action_endpoint";
+import DevEndpoint from "../endpoints/dev/dev_endpoint";
 import PermissionEndpoint from "../endpoints/permission/permission_endpoint";
 import PostEndpoint from "../endpoints/post/post_endpoint";
 import RecommendationEndpoint from "../endpoints/recommendation/recommendation_endpoint";
@@ -12,7 +13,8 @@ export const endpoints: Domains = {
   "/post": PostEndpoint,
   "/voting": VoteEndpoint,
   "/action": ActionEndpoint,
-  "/recommendation": RecommendationEndpoint
+  "/recommendation": RecommendationEndpoint,
+  ...process.env.NODE_ENV == "development" || process.env.NODE_ENV == "production" ? { "/dev": DevEndpoint } : {}
 };
 
 export const disableAuthFor = [
@@ -25,4 +27,5 @@ export const disableAuthFor = [
   "/post/view",
   "/post/getUserPosts",
   "/ping",
+  "/dev/seed"
 ];

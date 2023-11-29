@@ -5,9 +5,7 @@ const tagSelector = 'div[class*="hot_tags_hot_tags__"] > div[class*="tag_hot_tag
 
 const postUserSelector = 'div[class*="post_post__"] > div[class*="post_user__"]';
 
-before(() => {
-  cy.exec("yarn backend:seed", { timeout: 120000 });
-});
+before(() => cy.seed());
 
 describe("Loaders", () => {
   it("Post text loader", () => {
@@ -100,7 +98,7 @@ describe("Loaders", () => {
 });
 
 describe("Like & Dislike", () => {
-  it.only("Like post", () => {
+  it("Like: invalid_token", () => {
     cy.intercept("/voting/vote").as("votingVote");
 
     cy.visit("/");
@@ -117,7 +115,7 @@ describe("Like & Dislike", () => {
     cy.get('div[class*="errors_error_message_"] > p').first().contains("invalid_token");
   });
 
-  it.only("Dislike post", () => {
+  it("Dislike post: invalid_token", () => {
     cy.intercept("/voting/vote").as("votingVote");
 
     cy.visit("/");
@@ -132,6 +130,76 @@ describe("Like & Dislike", () => {
     cy.get('div[class*="errors_errors_"]').should("have.length", 1);
     cy.get('div[class*="errors_error_message_"]').should("have.length", 1);
     cy.get('div[class*="errors_error_message_"] > p').first().contains("invalid_token");
+  });
+
+  it("Like", () => {
+    cy.seed();
+
+    cy.fixture("credentials").then(credentials => {
+      cy.register({ ...credentials.realCredentials, repeatPassword: credentials.realCredentials.password });
+    });
+
+    cy.fixture("credentials").then(credentials => {
+      cy.login(credentials.realCredentials.email, credentials.realCredentials.password);
+    });
+
+    cy.intercept("/voting/vote").as("votingVote");
+    cy.intercept("voting/voteCount").as("votingVoteCount");
+
+    cy.visitAndWaitForToken("/");
+
+    cy.get(`${postSelector} > div[class*="post_voting__"] > button[data-type="like"]`).first().click();
+
+    cy.wait("@votingVote").then(interception => {
+      expect(interception?.response?.statusCode).to.eq(200);
+      expect(interception?.request?.body?.voteType).to.eq("1");
+    });
+
+    cy.wait("@votingVoteCount").then(interception => {
+      expect(interception?.response?.statusCode).to.eq(200);
+    });
+
+    cy.get('div[class*="errors_error_message_"]').should("have.length", 0);
+
+    cy.get(`${postSelector} > div[class*="post_voting__"] > span`)
+      .first()
+      .should("have.css", "color")
+      .and("eq", "rgb(0, 128, 0)");
+  });
+
+  it("Dislike post", () => {
+    cy.seed();
+
+    cy.fixture("credentials").then(credentials => {
+      cy.register({ ...credentials.realCredentials, repeatPassword: credentials.realCredentials.password });
+    });
+
+    cy.fixture("credentials").then(credentials => {
+      cy.login(credentials.realCredentials.email, credentials.realCredentials.password);
+    });
+
+    cy.intercept("/voting/vote").as("votingVote");
+    cy.intercept("voting/voteCount").as("votingVoteCount");
+
+    cy.visitAndWaitForToken("/");
+
+    cy.get(`${postSelector} > div[class*="post_voting__"] > button[data-type="dislike"]`).first().click();
+
+    cy.wait("@votingVote").then(interception => {
+      expect(interception?.response?.statusCode).to.eq(200);
+      expect(interception?.request?.body?.voteType).to.eq("0");
+    });
+
+    cy.wait("@votingVoteCount").then(interception => {
+      expect(interception?.response?.statusCode).to.eq(200);
+    });
+
+    cy.get('div[class*="errors_error_message_"]').should("have.length", 0);
+
+    cy.get(`${postSelector} > div[class*="post_voting__"] > span`)
+      .first()
+      .should("have.css", "color")
+      .and("eq", "rgb(255, 0, 0)");
   });
 });
 

@@ -1,5 +1,5 @@
 beforeEach(() => {
-  cy.exec("yarn backend:seed", { timeout: 120000 });
+  cy.seed();
 });
 
 describe("Try to sing up", () => {
@@ -25,8 +25,7 @@ describe("Try to sing up", () => {
       });
   
       cy.get("#submit").click();
-      cy.get("#submit").should("have.value", "working, just wait...");
-      sendResponse();
+      cy.get("#submit").should("have.value", "working, just wait...").then(sendResponse);
   
       cy.wait("@create").then((interception) => {
         expect(interception?.response?.statusCode).to.eq(200);
@@ -85,8 +84,7 @@ describe("Try to sing up", () => {
         cy.get("#repeatPassword").should("have.value", credentials.realCredentials.password);
 
         cy.get("#submit").click();
-        cy.get("#submit").should("have.value", "working, just wait...");
-        sendResponse();
+        cy.get("#submit").should("have.value", "working, just wait...").then(sendResponse);
       });
 
       cy.wait("@create").then((interception) => {
@@ -128,8 +126,7 @@ describe("Try to sing up", () => {
         cy.get("#repeatPassword").should("have.value", credentials.realCredentials.password);
     
         cy.get("#submit").click();
-        cy.get("#submit").should("have.value", "working, just wait...");
-        sendResponse();
+        cy.get("#submit").should("have.value", "working, just wait...").then(sendResponse);
       });
 
       cy.wait("@create").then((interception) => {

@@ -1,5 +1,5 @@
 before(() => {
-  cy.exec("yarn backend:seed", { timeout: 120000 });
+  cy.seed();
 
   cy.fixture("credentials").then(credentials => {
     cy.register({ ...credentials.realCredentials, repeatPassword: credentials.realCredentials.password });
@@ -19,8 +19,7 @@ describe("Try to login", () => {
         cy.get("#password").should("have.value", credentials.realCredentials.password);
   
         cy.get("#submit").click();
-        cy.get("#submit").should("have.value", "working, just wait...");
-        sendResponse();
+        cy.get("#submit").should("have.value", "working, just wait...").then(sendResponse);
   
         cy.wait("@issueToken").then((interception) => {
           expect(interception?.response?.statusCode).to.eq(200);
@@ -52,8 +51,7 @@ describe("Try to login", () => {
         cy.get("#password").should("have.value", credentials.realCredentials.password);
   
         cy.get("#submit").click();
-        cy.get("#submit").should("have.value", "working, just wait...");
-        sendResponse();
+        cy.get("#submit").should("have.value", "working, just wait...").then(sendResponse);
   
         cy.wait("@issueToken").then((interception) => {
           expect(interception?.response?.statusCode).to.eq(404);
@@ -80,8 +78,7 @@ describe("Try to login", () => {
         cy.get("#password").should("have.value", "Pa$$w0rD!!");
   
         cy.get("#submit").click();
-        cy.get("#submit").should("have.value", "working, just wait...");
-        sendResponse();
+        cy.get("#submit").should("have.value", "working, just wait...").then(sendResponse);
   
         cy.wait("@issueToken").then((interception) => {
           expect(interception?.response?.statusCode).to.eq(403);

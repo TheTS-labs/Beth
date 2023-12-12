@@ -7,7 +7,7 @@ services:
 
     postgres:
         env_file:
-            - ./env/docker/.db.env
+            - ./env/.db.env
         ports:
             - "5432:5432"
         image: postgres
@@ -19,7 +19,7 @@ services:
 
     pgadmin4:
         env_file:
-            - ./env/docker/.db.env
+            - ./env/.db.env
         ports:
             - "8080:80"
         image: dpage/pgadmin4
@@ -31,7 +31,7 @@ services:
         build:
             dockerfile: Dockerfile.migration
         env_file:
-            - ./env/docker/.backend.env
+            - ./env/.backend.env
 
     backend:
         healthcheck:
@@ -47,7 +47,7 @@ services:
         build:
             dockerfile: Dockerfile.backend
         env_file:
-            - ./env/docker/.backend.env
+            - ./env/.backend.env
         ports:
             - "3001:3001"
     
@@ -62,4 +62,4 @@ services:
         ports:
             - "3000:3000"
         env_file:
-            - ./env/docker/.frontend.env
+            - ./env/.frontend.env

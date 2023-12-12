@@ -100,8 +100,8 @@ function ModalPost(): React.JSX.Element {
 
         {((): React.JSX.Element => {
           if (
-            fetchPost.result &&
-            authToken?.payload?.email == fetchPost.result.author ||
+            fetchPost?.result &&
+            authToken?.payload?.email == fetchPost?.result?.author ||
             authToken?.payload?.scope?.includes("PostSuperTagsEdit")
           ) {
             return <p className={styles.tags}><EditableField valueAtom={editablePostTagsAtom}/></p>;
@@ -110,7 +110,7 @@ function ModalPost(): React.JSX.Element {
         })()}
         <hr className={styles.hr}/>
         <Write
-          replyTo={(fetchPost.result as DetailedPost)?.id || -1}
+          replyTo={(fetchPost?.result as DetailedPost)?.id || -1}
           setDoRequest={(): void => { fetchReplies.setResult([]); fetchReplies.request(); }}
           placeholder="Your comment..."
         />

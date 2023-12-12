@@ -6,7 +6,7 @@
 
 There's a `docker-compose.yml` in the root folder that includes backend, frontend, migrations, Redis, pgadmin 4, and a PostgreSQL database.
 
-To build, ensure that the environment files are in the `env` folder. The runtime will use environment files from `env/docker`. Set up the environment variables and execute the following:
+To build, ensure that the environment files are in the `env` folder. Set up the environment variables and execute the following:
 
 ```bash
 docker compose up
@@ -31,8 +31,6 @@ You're good to go!
 To configure, use `.env` files or pass variables to your environment.
 
 **NOTE: Some `package.json` commands require environment variables set.**
-
-**NOTE: Docker's env files are in the `env/docker` folder.**
 
 - `.backend.env` - Copy the `env/examples/.backend.env` file to the `env` directory
   - `APP_PORT` - The port on which the Express.JS server will be started

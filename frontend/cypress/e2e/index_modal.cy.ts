@@ -12,7 +12,10 @@ describe("Open and close modal post", () => {
 
     cy.visit("/");
 
-    cy.wait("@recommendationGlobalRecommend").then(() => {
+    cy.wait("@recommendationGlobalRecommend").then((interception) => {
+      expect(interception?.response?.statusCode).to.eq(200);
+
+      cy.get(`${postSelector} > p[class*="post_post_text__"] > span[class*="loading_loading__"]`).should("not.exist");
       cy.get(`${postSelector} > p[class*="post_post_text__"]`).first().click();
       cy.location("href").should("contain", "modalUser=null");
       cy.location("href").should("match", /modalPost\=\d*/);
@@ -30,7 +33,10 @@ describe("Open and close modal post", () => {
 
     cy.visit("/");
 
-    cy.wait("@recommendationGlobalRecommend").then(() => {
+    cy.wait("@recommendationGlobalRecommend").then((interception) => {
+      expect(interception?.response?.statusCode).to.eq(200);
+
+      cy.get(`${postSelector} > p[class*="post_post_text__"] > span[class*="loading_loading__"]`).should("not.exist");
       cy.get(`${postSelector} > p[class*="post_post_text__"]`).first().click();
       cy.location("href").should("contain", "modalUser=null");
       cy.location("href").should("match", /modalPost\=\d*/);
@@ -50,7 +56,10 @@ describe("Open and close modal post", () => {
 
     cy.visit("/");
 
-    cy.wait("@recommendationGlobalRecommend").then(() => {
+    cy.wait("@recommendationGlobalRecommend").then((interception) => {
+      expect(interception?.response?.statusCode).to.eq(200);
+
+      cy.get(`${postSelector} > p[class*="post_post_text__"] > span[class*="loading_loading__"]`).should("not.exist");
       cy.get(`${postSelector} > p[class*="post_post_text__"]`).first().click();
       cy.location("href").should("contain", "modalUser=null");
       cy.location("href").should("match", /modalPost\=\d*/);
@@ -62,6 +71,26 @@ describe("Open and close modal post", () => {
     cy.get('div[class*="modal_modal__"]').should("be.visible");
     cy.get("body").click(0, 0);
     cy.get('div[class*="modal_modal__"]').should("not.exist");
+  });
+
+  it("/post/view: Network Error", () => {
+    cy.intercept("/recommendation/globalRecommend").as("recommendationGlobalRecommend");
+    cy.intercept("/post/view", req => req.destroy()).as("postView");
+
+    cy.visit("/");
+
+    cy.wait("@recommendationGlobalRecommend").then((interception) => {
+      expect(interception?.response?.statusCode).to.eq(200);
+
+      cy.get(`${postSelector} > p[class*="post_post_text__"] > span[class*="loading_loading__"]`).should("not.exist");
+      cy.get(`${postSelector} > p[class*="post_post_text__"]`).first().click();
+      cy.location("href").should("contain", "modalUser=null");
+      cy.location("href").should("match", /modalPost\=\d*/);
+      cy.get('div[class*="modal_modal__"] > p').should("have.text", "An error occurred =(");
+      cy.get('div[class*="modal_modal__"] > p[class*="expanded_post_tags__"]').should("have.text", "");
+    });
+
+    cy.get('div[class*="modal_modal__"]').should("be.visible");
   });
 });
 
@@ -76,7 +105,9 @@ describe("Open and close modal user", () => {
 
     cy.visit("/");
 
-    cy.wait("@recommendationGlobalRecommend").then(() => {
+    cy.wait("@recommendationGlobalRecommend").then((interception) => {
+      expect(interception?.response?.statusCode).to.eq(200);
+
       cy.get(postUserSelector).first().click();
       cy.location("href").should("match", /modalUser\=.*/);
       cy.location("href").should("contain", "modalPost=null");
@@ -94,7 +125,9 @@ describe("Open and close modal user", () => {
 
     cy.visit("/");
 
-    cy.wait("@recommendationGlobalRecommend").then(() => {
+    cy.wait("@recommendationGlobalRecommend").then((interception) => {
+      expect(interception?.response?.statusCode).to.eq(200);
+
       cy.get(postUserSelector).first().click();
       cy.location("href").should("match", /modalUser\=.*/);
       cy.location("href").should("contain", "modalPost=null");
@@ -114,9 +147,11 @@ describe("Open and close modal user", () => {
 
     cy.visit("/");
 
-    cy.wait("@recommendationGlobalRecommend").then(() => {
+    cy.wait("@recommendationGlobalRecommend").then((interception) => {
+      expect(interception?.response?.statusCode).to.eq(200);
+
       cy.get(postUserSelector).first().click();
-      cy.location("href").should("match",/modalUser\=.*/);
+      cy.location("href").should("match", /modalUser\=.*/);
       cy.location("href").should("contain", "modalPost=null");
       cy.wait("@postGetUserPosts").then((interception) => {
         expect(interception?.response?.statusCode).to.eq(200);

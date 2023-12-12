@@ -27,11 +27,11 @@ Cypress.Commands.add("register", (options) => {
   cy.request("post", `${Cypress.env("SERVER_URL")}/user/create`, options);
 });
 
-Cypress.Commands.add("login", (email, password) => {
+Cypress.Commands.add("login", (email, password, shorthand) => {
   cy.request("post", `${Cypress.env("SERVER_URL")}/user/issueToken`, {
     email,
     password,
-    shorthand: "login"
+    shorthand: shorthand || "login"
   }).then((resp) => {
     window.localStorage.setItem("AUTH_TOKEN", JSON.stringify(resp.body.token));
   });
@@ -44,13 +44,17 @@ Cypress.Commands.add("visitAndWaitForToken", (url) => {
 });
 
 Cypress.Commands.add("seed", () => {
-  cy.request("post", `${Cypress.env("SERVER_URL")}/dev/seed`);
+  cy.request({
+    method: "post",
+    url: `${Cypress.env("SERVER_URL")}/dev/seed`,
+    timeout: 60000
+  });
 });
 
 declare global {
   namespace Cypress {
     interface Chainable {
-      login(email: string, password: string): Chainable<void>
+      login(email: string, password: string, shorthand?: string): Chainable<void>
       visitAndWaitForToken(url: string): Chainable<void>
       seed(): Chainable<void>
       register(options: {

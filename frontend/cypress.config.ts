@@ -14,7 +14,7 @@ export default defineConfig({
     },
     baseUrl: env.get("CYPRESS_URL").required().asUrlString(),
     env: {
-      SERVER_URL: env.get("SERVER_URL").required().asUrlString(),
+      SERVER_URL: env.get("SERVER_URL").required().asString(),
       NODE_ENV: env.get("NODE_ENV").required().asEnum(["development", "production", "test"])
     }
   }

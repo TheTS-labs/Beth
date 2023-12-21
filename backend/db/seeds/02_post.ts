@@ -5,7 +5,7 @@ import { Post } from "../models/post";
 import { User } from "../models/user";
 
 const seedPosts = 100;
-const batches = Math.ceil(seedPosts / 100);
+const batches = 2;
 
 const generatePosts = (
   length: number,
@@ -23,6 +23,15 @@ const generatePosts = (
 export async function seed(knex: Knex): Promise<void> {
   // Deletes ALL existing entries
   await knex("post").del();
+
+  // Used for testing purposes
+  await knex<Pick<Post, "author" | "text" | "tags">>("post").insert({
+    author: "admin@example.com",
+    //               This is used to find this post on the page. It should be unique     
+    //                                     ↓↓↓↓↓↓↓↓
+    text: "Text used for testing purposes. 953ea058",
+    tags: "testingonly,testingtag"
+  });
 
   const emails = await knex<User>("user").select("email");
 

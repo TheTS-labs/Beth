@@ -7,7 +7,7 @@ import { Permissions, PermissionStatus } from "../models/permission";
 import { User } from "../models/user";
 
 const seedUsers = 100;
-const batches = Math.ceil(seedUsers / 100);
+const batches = 1;
 const passwordHash = "$2b$04$LL.nTjsYZY6V.LuBAlVikOgBt/gYiEHu3XtvHvMGwwByqBOgFqZoC"; // Pa$$w0rd!
 const uniqueEnforcerEmail = new UniqueEnforcer();
 const uniqueEnforcerUsername = new UniqueEnforcer();

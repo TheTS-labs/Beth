@@ -12,6 +12,8 @@
     "middlewares",
     "PGADMIN",
     "tanstack",
+    "testingonly",
+    "testingtag",
     "unnest",
     "Unvote",
     "upvotes",

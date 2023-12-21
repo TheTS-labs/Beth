@@ -5,8 +5,8 @@ import { Post } from "../models/post";
 import { User } from "../models/user";
 import { Vote, VoteType } from "../models/vote";
 
-const seedVotes = 1000;
-const batches = Math.ceil(seedVotes / 100);
+const seedVotes = 100;
+const batches = 10;
 
 const generateVotes = (
   length: number,
@@ -29,7 +29,7 @@ export async function seed(knex: Knex): Promise<void> {
 
   const users = await knex<User>("user").select();
   const posts = await knex<Post>("post").select();
-
+  
   Array.from({ length: batches }).forEach(async () => {
     await knex("vote").insert(generateVotes(seedVotes, users, posts));
   });

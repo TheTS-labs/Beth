@@ -14,7 +14,7 @@ import * as type from "./types";
 type CallEndpointReturnType = {} | Permissions | {success: true};
 
 export default class PermissionEndpoint extends BaseEndpoint<type.PermissionRequestArgs, CallEndpointReturnType> {
-  allowNames: Array<string> = ["view", "grant", "rescind"];
+  allowNames: Array<string> = ["view", "grand", "rescind"];
   permissionModel: PermissionModel;
   userModel: UserModel | CachingUserModel;
 
@@ -43,11 +43,11 @@ export default class PermissionEndpoint extends BaseEndpoint<type.PermissionRequ
     return permissions;
   }
   
-  async grant(args: type.GrantArgs, _auth: Auth): Promise<{success: true}|never> {
-    args = await this.validate(type.GrantArgsSchema, args);
+  async grand(args: type.GrandArgs, _auth: Auth): Promise<{success: true}|never> {
+    args = await this.validate(type.GrandArgsSchema, args);
 
-    await this.permissionModel.update(args.grantTo, {
-      [args.grantPermission]: PermissionStatus.Has
+    await this.permissionModel.update(args.grandTo, {
+      [args.grandPermission]: PermissionStatus.Has
     }).catch((err: Error) => {
       throw new RequestError("DatabaseError", [err.message]);
     });

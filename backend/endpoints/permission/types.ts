@@ -10,17 +10,17 @@ export const ViewArgsSchema = Joi.object({
 });
 // <<< View <<<
 
-// >>> Grant >>>
-export interface GrantArgs {
-  grantPermission: string
-  grantTo: string
+// >>> Grand >>>
+export interface GrandArgs {
+  grandPermission: string
+  grandTo: string
 }
 
-export const GrantArgsSchema = Joi.object({
-  grantPermission: Joi.string().required(),
-  grantTo: Joi.string().email().required()
+export const GrandArgsSchema = Joi.object({
+  grandPermission: Joi.string().required(),
+  grandTo: Joi.string().email().required()
 });
-// <<< Grant <<<
+// <<< Grand <<<
 
 // >>> Rescind >>>
 export interface RescindArgs {
@@ -34,4 +34,4 @@ export const RescindArgsSchema = Joi.object({
 });
 // <<< Rescind <<<
 
-export type PermissionRequestArgs = ViewArgs | GrantArgs | RescindArgs;
+export type PermissionRequestArgs = ViewArgs | GrandArgs | RescindArgs;

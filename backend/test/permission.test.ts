@@ -59,13 +59,13 @@ describe("POST /permission/view", () => {
   });
 });
 
-describe("POST /permission/grant", () => {
-  it("should grant permission", async () => {
+describe("POST /permission/grand", () => {
+  it("should grand permission", async () => {
     // Preparing
     const { token } = await auth(server, {
       userData,
       password: credentials.hash,
-      scope: ["PermissionGrant"]
+      scope: ["PermissionGrand"]
     });
     const id = (await server.db<Permissions>("permission").insert({
       email: userData.email,
@@ -74,8 +74,8 @@ describe("POST /permission/grant", () => {
     }, "id"))[0].id;
     // Preparing
 
-    const res = await req.post("/permission/grant")
-                         .send({ grantTo: userData.email, grantPermission: "VotingVote" })
+    const res = await req.post("/permission/grand")
+                         .send({ grandTo: userData.email, grandPermission: "VotingVote" })
                          .set({ "Authorization": "Bearer " + token });
 
     expect(res.body.errorMessage).toBeUndefined();

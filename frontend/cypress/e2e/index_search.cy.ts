@@ -42,8 +42,10 @@ describe("Search by text", () => {
       });
     });
   });
+});
 
-  it("Search by tags", () => {
+describe("Search by tags", () => {
+  it("Try to search", () => {
     cy.intercept("/recommendation/globalRecommend").as("recommendationGlobalRecommend");
     cy.intercept("/post/search").as("postSearch");
 
@@ -79,6 +81,24 @@ describe("Search by text", () => {
 
         cy.get('div[class*="post_post__"]').should("have.length", 1);
         cy.contains("953ea058");
+      });
+    });
+  });
+
+  it("Search by hot tag", () => {
+    cy.intercept("/recommendation/getHotTags").as("recommendationGetHotTags");
+    cy.intercept("/post/search").as("postSearch");
+
+    cy.visit("/");
+
+    cy.wait("@recommendationGetHotTags").then(() => {
+      cy.get('span[class*="tag_hot_tag_name__"]').first().click();
+
+      cy.location("href").should("match", /tags=%22.*%22/);
+      cy.location("href").should("contain", "q=%22%22");
+    
+      cy.wait("@postSearch").then(interception => {
+        expect(interception?.response?.statusCode).to.eq(200);
       });
     });
   });

@@ -203,4 +203,26 @@ describe("Like & Dislike", () => {
   });
 });
 
+describe("Errors", () => {
+  it("Failed request to /recommendation/globalRecommend", () => {
+    cy.intercept("/recommendation/globalRecommend", req => req.destroy()).as("recommendationGlobalRecommend");
+
+    cy.visit("/");
+
+    cy.wait("@recommendationGlobalRecommend").then(() => {
+      cy.get('div[class*="posts_posts_broken_container__"]').should("exist").and("be.visible");
+    });
+  });
+
+  it("Failed request to /recommendation/getHotTags", () => {
+    cy.intercept("/recommendation/getHotTags", req => req.destroy()).as("recommendationGetHotTags");
+
+    cy.visit("/");
+
+    cy.wait("@recommendationGetHotTags").then(() => {
+      cy.get('div[class*="hot_tags_broken_container__"]').should("exist").and("be.visible");
+    });
+  });
+});
+
 export {};

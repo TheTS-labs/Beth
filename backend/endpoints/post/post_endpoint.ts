@@ -14,7 +14,7 @@ import UserModel from "../../db/models/user";
 import * as type from "./types";
 
 type CallEndpointReturnType = { success: true, id: number } | { success: true } | DetailedPost[] | {} |
-                              DetailedPosts;
+                              DetailedPosts | { results: Post[], endCursor: string } | never;
 
 export default class PostEndpoint extends BaseEndpoint<type.PostRequestArgs, CallEndpointReturnType> {
   public allowNames: string[] = [
@@ -43,7 +43,7 @@ export default class PostEndpoint extends BaseEndpoint<type.PostRequestArgs, Cal
     this.postModel = new PostModelType(this.db, this.logger, this.redisClient, this.config);
   }
 
-  async create(args: type.CreateArgs, auth: Auth): Promise<{ success: true, id: number }> {
+  async create(args: type.CreateArgs, auth: Auth): Promise<{ success: true, id: number } | never> {
     args = await this.validate(type.CreateArgsSchema, args);
 
     const parent = args.replyTo ? await this.postModel.findParent(args.replyTo) : undefined;
@@ -61,7 +61,7 @@ export default class PostEndpoint extends BaseEndpoint<type.PostRequestArgs, Cal
     return { success: true, id };
   }
 
-  async view(args: type.ViewArgs, auth: Auth | undefined): Promise<CallEndpointReturnType> {
+  async view(args: type.ViewArgs, auth: Auth | undefined): Promise<DetailedPost | {}> {
     args = await this.validate(type.ViewArgsSchema, args);
 
     const post = await this.postModel.readDetailedPost(args.id, auth?.user?.email);
@@ -69,7 +69,7 @@ export default class PostEndpoint extends BaseEndpoint<type.PostRequestArgs, Cal
     return post || {};
   }
 
-  async edit(args: type.EditArgs, auth: Auth): Promise<CallEndpointReturnType> {
+  async edit(args: type.EditArgs, auth: Auth): Promise<{ success: true } | never> {
     args = await this.validate(type.EditArgsSchema, args);
 
     const post = await this.postModel.read(args.id);
@@ -88,7 +88,7 @@ export default class PostEndpoint extends BaseEndpoint<type.PostRequestArgs, Cal
     return { success: true };
   }
 
-  async delete(args: type.DeleteArgs, auth: Auth): Promise<CallEndpointReturnType> {
+  async delete(args: type.DeleteArgs, auth: Auth): Promise<{ success: true } | never> {
     args = await this.validate(type.DeleteArgsSchema, args);
 
     const post = await this.postModel.read(args.id);
@@ -107,7 +107,7 @@ export default class PostEndpoint extends BaseEndpoint<type.PostRequestArgs, Cal
     return { success: true };
   }
 
-  async getList(args: type.GetListArgs, _auth: Auth): Promise<{ results: Post[], endCursor: string }> {
+  async getList(args: type.GetListArgs, _auth: Auth): Promise<{ results: Post[], endCursor: string } | never> {
     args = await this.validate(type.GetListArgsSchema, args);
 
     const result = await this.postModel.readList(args.afterCursor, args.numberRecords)
@@ -118,7 +118,7 @@ export default class PostEndpoint extends BaseEndpoint<type.PostRequestArgs, Cal
     return result;
   }
 
-  async forceDelete(args: type.ForceDeleteArgs, _auth: Auth): Promise<CallEndpointReturnType> {
+  async forceDelete(args: type.ForceDeleteArgs, _auth: Auth): Promise<{ success: true } | never> {
     args = await this.validate(type.ForceDeleteArgsSchema, args);
 
     const post = await this.postModel.read(args.id);
@@ -132,7 +132,7 @@ export default class PostEndpoint extends BaseEndpoint<type.PostRequestArgs, Cal
     return { success: true };
   }
 
-  async viewReplies(args: type.ViewRepliesArgs, _auth: Auth): Promise<CallEndpointReturnType> {
+  async viewReplies(args: type.ViewRepliesArgs, _auth: Auth): Promise<DetailedPost[] | never> {
     args = await this.validate(type.ViewRepliesArgsSchema, args);
 
     const results = await this.postModel.readReplies(args.repliesTo).catch((err: { message: string }) => {
@@ -142,7 +142,7 @@ export default class PostEndpoint extends BaseEndpoint<type.PostRequestArgs, Cal
     return results;
   }
 
-  async editTags(args: type.EditTagsArgs, auth: Auth): Promise<CallEndpointReturnType> {
+  async editTags(args: type.EditTagsArgs, auth: Auth): Promise<{ success: true } | never> {
     args = await this.validate(type.EditTagsArgsSchema, args);
 
     const post = await this.postModel.read(args.id);
@@ -163,7 +163,7 @@ export default class PostEndpoint extends BaseEndpoint<type.PostRequestArgs, Cal
     return { success: true };
   }
 
-  async search(args: type.SearchArgs, _auth: Auth, recursive?: boolean): Promise<CallEndpointReturnType> {
+  async search(args: type.SearchArgs, _auth: Auth, recursive?: boolean): Promise<DetailedPosts | never> {
     args = await this.validate(type.SearchArgsSchema, args);
 
     const searchResults = await this.postModel.search(
@@ -197,7 +197,7 @@ export default class PostEndpoint extends BaseEndpoint<type.PostRequestArgs, Cal
         afterCursor: searchResults.endCursor,
         numberRecords: Math.floor(args.numberRecords*multiplier),
         tags: args.tags
-      }, _auth, true) as DetailedPosts;
+      }, _auth, true);
 
       if (!recursive) {
         this.logger.log({
@@ -213,7 +213,7 @@ export default class PostEndpoint extends BaseEndpoint<type.PostRequestArgs, Cal
     return searchResults;
   }
 
-  async getUserPosts(args: type.GetUserPostsArgs, _auth: Auth): Promise<CallEndpointReturnType> {
+  async getUserPosts(args: type.GetUserPostsArgs, _auth: Auth): Promise<DetailedPosts | undefined> {
     args = await this.validate(type.GetUserPostsArgsSchema, args);
 
     const results = await this.postModel.getUserPosts(

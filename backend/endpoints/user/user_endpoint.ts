@@ -110,7 +110,7 @@ export default class UserEndpoint extends BaseEndpoint<type.UserRequestArgs, Cal
 
     const permissions = await this.permissionModel.read(auth.user.email) as Permissions;
 
-    if (args.email != auth.user.email && permissions["UserSuperFroze"] == PermissionStatus.Hasnt) {
+    if (args.email != auth.user.email && permissions.UserSuperFroze == PermissionStatus.Hasnt) {
       throw new RequestError("PermissionError", [""], 3);
     }
 

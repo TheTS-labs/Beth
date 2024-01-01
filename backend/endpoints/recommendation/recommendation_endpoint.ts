@@ -15,11 +15,9 @@ import UserModel from "../../db/models/user";
 import VoteModel, { VoteType } from "../../db/models/vote";
 import * as type from "./types";
 
-type CallEndpointReturnType = { results: PostWithRate[] } |
-                              { result: { tag: string, postCount: string }[] } |
-                              DetailedPosts;
+type CallEndpointReturnType = { result: { tag: string, postCount: string }[] } | DetailedPosts | never;
+
 type PostWithVote = Post & { voteType: VoteType };
-type PostWithRate = Post & { rate: number };
 interface RecommendationRequirements {
   likedTags: string[]
   dislikedTags: string[]
@@ -56,8 +54,8 @@ export default class RecommendationEndpoint extends BaseEndpoint<type.Recommenda
     this.voteModel = new VoteModelType(this.db, this.logger, this.redisClient, this.config);
   }
 
-  async globalRecommend(args: type.GetPostsArgs, _auth: Auth): Promise<DetailedPosts> {
-    args = await this.validate(type.GetPostsArgsSchema, args);
+  async globalRecommend(args: type.GlobalRecommendArgs, _auth: Auth): Promise<DetailedPosts> {
+    args = await this.validate(type.GlobalRecommendArgsSchema, args);
 
     const posts = await this.postModel.readDetailedPosts(args.afterCursor, args.numberRecords);
 
@@ -84,7 +82,7 @@ export default class RecommendationEndpoint extends BaseEndpoint<type.Recommenda
     return { result: hotTags };
   }
 
-  async recommend(args: type.RecommendArgs, auth: Auth): Promise<CallEndpointReturnType> {
+  async recommend(args: type.RecommendArgs, auth: Auth): Promise<DetailedPosts> {
     args = await this.validate(type.RecommendArgsSchema, args);
 
     const votes = await this.voteModel.readVotesOfUser(auth.user.email);

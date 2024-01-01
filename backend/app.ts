@@ -40,7 +40,7 @@ export default class App {
   app: Express = express();
   db: Knex;
   redisClient: RedisClientType;
-  domains: DomainInstances = {};
+  domainInstances: DomainInstances = {};
   logger: winston.Logger;
   config: ENV;
   scheduledTasks: ScheduledTasks;
@@ -102,7 +102,7 @@ export default class App {
       path: module.filename
     });
     Object.keys(domains).map((domainName: string) => {
-      this.domains[domainName] = new domains[domainName](
+      this.domainInstances[domainName] = new domains[domainName](
         this.db,
         this.redisClient,
         this.logger,
@@ -140,8 +140,7 @@ export default class App {
       });
     });
 
-    Object.keys(this.domains).map((domainName: string) => {
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    Object.keys(this.domainInstances).map((domainName: string) => {
       //@ts-ignore
       this.app.post(`${domainName}/:endPoint`, asyncHandler(async (req: JWTRequest, res: Response) => {
         this.logger.log({
@@ -151,7 +150,7 @@ export default class App {
           path: module.filename 
         });
 
-        const response = await this.domains[domainName].callEndpoint(req.params.endPoint, req.body, req.auth);
+        const response = await this.domainInstances[domainName].callEndpoint(req.params.endPoint, req.body, req.auth);
 
         this.logger.log({
           level: "response",

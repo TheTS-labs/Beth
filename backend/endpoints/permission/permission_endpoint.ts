@@ -11,7 +11,7 @@ import PermissionModel, { Permissions,PermissionStatus } from "../../db/models/p
 import UserModel from "../../db/models/user";
 import * as type from "./types";
 
-type CallEndpointReturnType = {} | Permissions | {success: true};
+type CallEndpointReturnType = Permissions | { success: true } | never;
 
 export default class PermissionEndpoint extends BaseEndpoint<type.PermissionRequestArgs, CallEndpointReturnType> {
   allowNames: Array<string> = ["view", "grand", "rescind"];
@@ -43,7 +43,7 @@ export default class PermissionEndpoint extends BaseEndpoint<type.PermissionRequ
     return permissions;
   }
   
-  async grand(args: type.GrandArgs, _auth: Auth): Promise<{success: true}|never> {
+  async grand(args: type.GrandArgs, _auth: Auth): Promise<{ success: true } | never> {
     args = await this.validate(type.GrandArgsSchema, args);
 
     await this.permissionModel.update(args.grandTo, {
@@ -55,7 +55,7 @@ export default class PermissionEndpoint extends BaseEndpoint<type.PermissionRequ
     return { success: true };
   }
 
-  async rescind(args: type.RescindArgs, _auth: Auth): Promise<{success: true}|never> {
+  async rescind(args: type.RescindArgs, _auth: Auth): Promise<{ success: true } | never> {
     args = await this.validate(type.RescindArgsSchema, args);
 
     await this.permissionModel.update(args.rescindFrom, {

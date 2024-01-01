@@ -4,7 +4,7 @@ import winston from "winston";
 
 import { ENV } from "../../app";
 import BaseEndpoint from "../../common/base_endpoint_class";
-import RequestError from "../../common/request_error";
+import RequestError, { ERequestError } from "../../common/request_error";
 import { Auth } from "../../common/types";
 import CachingPostModel from "../../db/models/caching/caching_post";
 import CachingUserModel from "../../db/models/caching/caching_user";
@@ -44,41 +44,45 @@ export default class VoteEndpoint extends BaseEndpoint<type.VoteRequestArgs, Cal
     this.postModel = new PostModelType(this.db, this.logger, this.redisClient, this.config);
     this.voteModel = new VoteModelType(this.db, this.logger, this.redisClient, this.config);
   }
- 
-  // TODO: Refactor
+
   async vote(args: type.VoteArgs, auth: Auth): Promise<CallEndpointReturnType>{
     args = await this.validate(type.VoteArgsSchema, args);
 
     const post = await this.postModel.read(args.postId);
     if (!post) {
-      throw new RequestError("DatabaseError", [""], 2);
+      throw new RequestError(ERequestError.DatabaseErrorDoesntExist, ["Post"]);
     }
 
     const vote = await this.voteModel.readByIds(args.postId, auth.user.email);
+
+    // Create a vote if the user has never voted yet to the post 
     if (!vote) {
       await this.voteModel.create({
         postId: args.postId,
         userEmail: auth.user.email,
         voteType: args.voteType
       }).catch((err: { message: string }) => {
-        throw new RequestError("DatabaseError", [err.message]);
+        throw new RequestError(ERequestError.DatabaseError, [err.message]);
       });
   
       return { success: true, action: "create" };
     }
 
+    // Delete the vote if the user chooses same type as previously recorded
     if (vote.voteType == args.voteType) {
       await this.voteModel.delete(vote?.id||-1).catch((err: { message: string }) => {
-        throw new RequestError("DatabaseError", [err.message]);
+        throw new RequestError(ERequestError.DatabaseError, [err.message]);
       });
 
       return { success: true, action: "delete" };
-    } else {
-      await this.voteModel.update(vote.id, { voteType: args.voteType }).catch((err: { message: string }) => {
-        throw new RequestError("DatabaseError", [err.message]);
-      });
-      return { success: true, action: "update" };
-    }
+    } 
+    
+    // Update the vote if the user chooses another vote type
+    await this.voteModel.update(vote.id, { voteType: args.voteType }).catch((err: { message: string }) => {
+      throw new RequestError(ERequestError.DatabaseError, [err.message]);
+    });
+
+    return { success: true, action: "update" };
   }
   
   async voteCount(args: type.VoteCountArgs, _auth: Auth): Promise<CallEndpointReturnType>{
@@ -86,7 +90,7 @@ export default class VoteEndpoint extends BaseEndpoint<type.VoteRequestArgs, Cal
 
     const post = await this.postModel.read(args.postId);
     if (!post) {
-      throw new RequestError("DatabaseError", [""], 2);
+      throw new RequestError(ERequestError.DatabaseErrorDoesntExist, ["Post"]);
     }
 
     const goodCount = await this.voteModel.readVoteCount(args.postId, VoteType.Up);

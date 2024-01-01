@@ -67,7 +67,6 @@ describe("POST /post/create", () => {
     expect(post).not.toBeUndefined();
     expect(post?.text).toBe("Example");
     expect(post?.repliesTo).toBe(replyTo);
-    expect(post?.parent).toBe(replyTo);
   });
 
   it("should create reply to reply", async () => {
@@ -85,7 +84,6 @@ describe("POST /post/create", () => {
       text: "Example 2",
       author: userData.email,
       repliesTo: parent,
-      parent
     }, "id"))[0].id;
     // Preparing
 
@@ -102,7 +100,6 @@ describe("POST /post/create", () => {
     expect(post).not.toBeUndefined();
     expect(post?.text).toBe("Example");
     expect(post?.repliesTo).toBe(replyTo);
-    expect(post?.parent).toBe(parent);
   });
 });
 
@@ -169,7 +166,7 @@ describe("POST /post/view", () => {
     const id = (await server.db<Post>("post").insert({
       text: "Example",
       author: userData.email,
-      frozenAt: new Date(Date.now())
+      softDeletedAt: new Date(Date.now())
     }, "id"))[0].id;
     // Preparing
 
@@ -298,7 +295,7 @@ describe("POST /post/delete", () => {
     expect(res.body.success).toBeTruthy();
 
     const post = await server.db<Post>("post").where({ id }).first();
-    expect(post?.frozenAt).not.toBeUndefined();
+    expect(post?.softDeletedAt).not.toBeUndefined();
   });
 
   it("should throw DatabaseError: Post doesn't exist", async () => {
@@ -369,7 +366,7 @@ describe("POST /post/delete", () => {
     expect(res.body.success).toBeTruthy();
 
     const post = await server.db<Post>("post").where({ id }).first();
-    expect(post?.frozenAt).not.toBeUndefined();
+    expect(post?.softDeletedAt).not.toBeUndefined();
   });
 });
 
@@ -485,9 +482,9 @@ describe("POST /post/viewReplies", () => {
       text: "Example",
       author: userData.email
     }, "id"))[0].id;
-    await server.db<Post>("post").insert({ text: "Example 1", author: userData.email, repliesTo: parent, parent });
-    await server.db<Post>("post").insert({ text: "Example 2", author: userData.email, repliesTo: parent, parent });
-    await server.db<Post>("post").insert({ text: "Example 3", author: userData.email, repliesTo: parent, parent });
+    await server.db<Post>("post").insert({ text: "Example 1", author: userData.email, repliesTo: parent });
+    await server.db<Post>("post").insert({ text: "Example 2", author: userData.email, repliesTo: parent });
+    await server.db<Post>("post").insert({ text: "Example 3", author: userData.email, repliesTo: parent });
     // Preparing
 
     const res = await req.post("/post/viewReplies")

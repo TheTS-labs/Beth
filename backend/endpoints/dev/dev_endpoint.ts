@@ -21,7 +21,7 @@ export default class DevEndpoint extends BaseEndpoint<type.VoteRequestArgs, Call
     super(db, redisClient, logger, config, "dev");
   }
   
-  async seed(_args: type.SeedArgs, _auth: Auth): Promise<CallEndpointReturnType>{
+  async seed(_args: type.SeedArgs, _auth: Auth): Promise<{ success: true }>{
     await this.db.seed.run();
 
     return { success: true };

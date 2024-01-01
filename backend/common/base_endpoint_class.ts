@@ -5,7 +5,7 @@ import winston from "winston";
 
 import { ENV } from "../app";
 import ActionModel from "../db/models/action";
-import RequestError from "./request_error";
+import RequestError, { ERequestError } from "./request_error";
 import { EndpointThisType, JWTRequest } from "./types";
 import IBaseEndpoint from "./types/base_endpoint";
 
@@ -30,7 +30,7 @@ export default class BaseEndpoint<RequestArgsType extends object,
   ): Promise<CallEndpointReturnType> {
     const endpointIncludes = this.allowNames.includes(name);
     if (!endpointIncludes) {
-      throw new RequestError("EndpointNotFound", [this.endpointName, name]);
+      throw new RequestError(ERequestError.EndpointNotFound, [this.endpointName, name]);
     }
 
     const result: CallEndpointReturnType = await this[name](args, auth);
@@ -47,7 +47,7 @@ export default class BaseEndpoint<RequestArgsType extends object,
   async validate<EType>(schema: Joi.ObjectSchema, args: EType): Promise<EType> {
     const { error, value } = schema.validate(args);
     if (error) {
-      throw new RequestError("ValidationError", [error.message]);
+      throw new RequestError(ERequestError.ValidationError, [error.message]);
     }
 
     return value as EType;

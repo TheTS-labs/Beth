@@ -7,8 +7,6 @@ import useRequest from "../lib/hooks/use_request";
 import styles from "../public/styles/components/actions.module.sass";
 import { errorsAtom } from "./common/errors";
 
-// TODO: Refactor
-
 export default function ModalUserAdmins(): React.JSX.Element {
   const authToken = useAuthToken();
   const modalUser = useAtomValue(modalUserAtom);

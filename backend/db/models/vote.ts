@@ -97,7 +97,7 @@ export default class VoteModel implements ICRUDModel<Omit<Vote, "id" | "createdA
                            .select(select||["*"])
                            .first();
     
-    return vote as Pick<Vote, SelectType>;
+    return vote;
   }
 
   public async readVoteCount(postId: number, voteType: VoteType): Promise<number> {
@@ -109,7 +109,7 @@ export default class VoteModel implements ICRUDModel<Omit<Vote, "id" | "createdA
     });
   
     const count = await this.db<Vote>("vote").count("*")
-                                             .where({ postId, voteType }) as unknown as [{ "count": number }];
+                                             .where({ postId, voteType }) as unknown as [{ "count": string }];
 
     return Number(count[0]["count"]);
   }

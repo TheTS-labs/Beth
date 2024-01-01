@@ -4,7 +4,7 @@ import { RedisClientType } from "redis";
 import winston from "winston";
 
 import { ENV } from "../app";
-import RequestError from "../common/request_error";
+import RequestError, { ERequestError } from "../common/request_error";
 import { JWTRequest } from "../common/types";
 import CachingUserModel from "../db/models/caching/caching_user";
 import TokenModel from "../db/models/token";
@@ -46,10 +46,10 @@ export default class IdentityMiddleware {
       });
       const token = await this.tokenModel.read(req?.auth?.tokenId||-1);
       if (!token) {
-        throw new RequestError("AuthError", [""], 2);
+        throw new RequestError(ERequestError.AuthErrorUnverifiedToken);
       }
       if (token.revoked) {
-        throw new RequestError("AuthError", [""], 1);
+        throw new RequestError(ERequestError.AuthErrorTokenRevoked);
       }
 
       this.logger.log({
@@ -59,7 +59,7 @@ export default class IdentityMiddleware {
       });
       const user = await this.userModel.read(token.owner, "*");
       if (!user) {
-        throw new RequestError("DatabaseError", [""], 3);
+        throw new RequestError(ERequestError.DatabaseErrorDoesntExist, ["User"]);
       }
 
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment

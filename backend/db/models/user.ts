@@ -38,7 +38,6 @@ export default class UserModel implements ICRUDModel<Omit<User, "id" | "isFrozen
     return user[0].id;
   }
 
-  // TODO: Return User type if select="*"
   public async read<SelectType extends keyof User>(
     identifier: string,
     select?: SelectType[] | "*"
@@ -55,7 +54,7 @@ export default class UserModel implements ICRUDModel<Omit<User, "id" | "isFrozen
                            .select(select||["id", "email", "isFrozen", "username", "displayName"])
                            .first();
     
-    return user as Pick<User, SelectType>;
+    return user;
   }
 
   public async update(identifier: string, args: Partial<User>): Promise<void> {

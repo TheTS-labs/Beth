@@ -4,7 +4,7 @@ import winston from "winston";
 
 import { ENV } from "../../app";
 import BaseEndpoint from "../../common/base_endpoint_class";
-import RequestError from "../../common/request_error";
+import RequestError, { ERequestError } from "../../common/request_error";
 import { Auth } from "../../common/types";
 import CachingUserModel from "../../db/models/caching/caching_user";
 import PermissionModel, { Permissions,PermissionStatus } from "../../db/models/permission";
@@ -37,7 +37,7 @@ export default class PermissionEndpoint extends BaseEndpoint<type.PermissionRequ
 
     const permissions = await this.permissionModel.read(args.email);
     if (!permissions) {
-      throw new RequestError("DatabaseError", [args.email], 1);
+      throw new RequestError(ERequestError.DatabaseErrorNoPermissionsFound, [args.email]);
     }
 
     return permissions;
@@ -49,7 +49,7 @@ export default class PermissionEndpoint extends BaseEndpoint<type.PermissionRequ
     await this.permissionModel.update(args.grandTo, {
       [args.grandPermission]: PermissionStatus.Has
     }).catch((err: Error) => {
-      throw new RequestError("DatabaseError", [err.message]);
+      throw new RequestError(ERequestError.DatabaseError, [err.message]);
     });
 
     return { success: true };
@@ -61,7 +61,7 @@ export default class PermissionEndpoint extends BaseEndpoint<type.PermissionRequ
     await this.permissionModel.update(args.rescindFrom, {
       [args.rescindPermission]: PermissionStatus.Hasnt
     }).catch((err: Error) => {
-      throw new RequestError("DatabaseError", [err.message]);
+      throw new RequestError(ERequestError.DatabaseError, [err.message]);
     });
 
     return { success: true };

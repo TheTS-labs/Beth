@@ -1,5 +1,59 @@
 import { RequestErrorObject } from "./types";
 
+export enum ERequestError {
+  PermissionDenied,
+  AuthErrorWrongCredentials,
+  AuthErrorTokenRevoked,
+  AuthErrorUnverifiedToken,
+  UserIsFrozen,
+  EndpointNotFound,
+  ValidationError,
+  DatabaseError,
+  DatabaseErrorDoesntExist,
+  DatabaseErrorAlreadyVoted,
+  DatabaseErrorSufficientPosts,
+  DatabaseErrorNoPermissionsFound,
+  PermissionErrorCantIssueToken,
+  PermissionErrorOnlyOwnPosts,
+  PermissionErrorFrozeOnlyYourself,
+}
+
+export const requestErrorMessages: { [key in ERequestError]: string } = {
+  [ERequestError.PermissionDenied]: "You don't have scope: {}",
+  [ERequestError.AuthErrorWrongCredentials]: "Wrong email or password",
+  [ERequestError.AuthErrorTokenRevoked]: "This token revoked",
+  [ERequestError.AuthErrorUnverifiedToken]: "The authenticity of the token cannot be verified",
+  [ERequestError.UserIsFrozen]: "User {} is frozen",
+  [ERequestError.EndpointNotFound]: "Endpoint {}/{} doesn't exist",
+  [ERequestError.ValidationError]: "{}",
+  [ERequestError.DatabaseError]: "{}",
+  [ERequestError.DatabaseErrorDoesntExist]: "{} doesn't exist",
+  [ERequestError.DatabaseErrorAlreadyVoted]: "You already voted",
+  [ERequestError.DatabaseErrorSufficientPosts]: "There aren't enough posts to show",
+  [ERequestError.DatabaseErrorNoPermissionsFound]: "User permissions with email {} not found",
+  [ERequestError.PermissionErrorCantIssueToken]: "You don't have permission {} to issue the token with given scope",
+  [ERequestError.PermissionErrorOnlyOwnPosts]: "You can {} only your own posts",
+  [ERequestError.PermissionErrorFrozeOnlyYourself]: "You can froze only yourself"
+};
+
+export const requestErrorStatusCodes: { [key in ERequestError]: number } = {
+  [ERequestError.PermissionDenied]: 403,
+  [ERequestError.AuthErrorWrongCredentials]: 400,
+  [ERequestError.AuthErrorTokenRevoked]: 403,
+  [ERequestError.AuthErrorUnverifiedToken]: 403,
+  [ERequestError.UserIsFrozen]: 403,
+  [ERequestError.EndpointNotFound]: 404,
+  [ERequestError.ValidationError]: 400,
+  [ERequestError.DatabaseError]: 500,
+  [ERequestError.DatabaseErrorDoesntExist]: 404,
+  [ERequestError.DatabaseErrorAlreadyVoted]: 400,
+  [ERequestError.DatabaseErrorSufficientPosts]: 500,
+  [ERequestError.DatabaseErrorNoPermissionsFound]: 500,
+  [ERequestError.PermissionErrorCantIssueToken]: 403,
+  [ERequestError.PermissionErrorOnlyOwnPosts]: 403,
+  [ERequestError.PermissionErrorFrozeOnlyYourself]: 403
+};
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function format(value: string, ...args: any[]): string {
   let i = 0;
@@ -8,70 +62,19 @@ export function format(value: string, ...args: any[]): string {
   });
 }
 
-export const requestErrors = {
-  PermissionDenied: {
-    templates: ["You don't have scope: {}"],
-    statusCodes: [403],
-  },
-  AuthError: {
-    templates: [
-      "Wrong email or password",
-      "This token revoked",
-      "The authenticity of the token cannot be verified"
-    ],
-    statusCodes: [403, 403, 403],
-  },
-  UserIsFrozen: {
-    templates: ["User {} is frozen"],
-    statusCodes: [403],
-  },
-  EndpointNotFound: {
-    templates: ["Endpoint {}/{} doesn't exist"],
-    statusCodes: [404],
-  },
-  ValidationError: {
-    templates: ["{}"],
-    statusCodes: [400],
-  },
-  DatabaseError: {
-    templates: [
-      "{}",
-      "User permissions with email {} not found",
-      "Post doesn't exist",
-      "User doesn't exist",
-      "You already voted",
-      "There aren't enough posts to show",
-      "Vote doesn't exist"
-    ],
-    statusCodes: [500, 500, 404, 404, 403, 500, 404],
-  },
-  PermissionError: {
-    templates: [
-      "You can only edit your own posts",
-      "You can only delete your own posts",
-      "You can only edit tags of your own posts",
-      "You can froze only yourself",
-      "You don't have permission {} to issue the token with given scope"
-    ],
-    statusCodes: [403, 403, 403, 403, 403],
-  }
-};
-
 export default class RequestError {
   public errorMessage: string;
   public status: number;
 
   constructor(
-    public errorType: keyof typeof requestErrors,
-    public errorArgs=[""],
-    public template=0,
-    status?: number | undefined
+    public errorType: ERequestError,
+    public errorArgs: string[] = [""],
   ) {
     this.errorMessage = format(
-      requestErrors[errorType].templates[template],
+      requestErrorMessages[this.errorType],
       ...errorArgs
     );
-    this.status = status || requestErrors[errorType].statusCodes[template];
+    this.status = requestErrorStatusCodes[this.errorType];
   }
 
   message(): string {
@@ -80,7 +83,7 @@ export default class RequestError {
   object(): RequestErrorObject {
     return {
       errorStatus: this.status,
-      errorType: this.errorType,
+      errorType: ERequestError[this.errorType],
       errorMessage: this.errorMessage,
     };
   }

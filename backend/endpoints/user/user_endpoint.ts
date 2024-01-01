@@ -6,7 +6,7 @@ import winston from "winston";
 
 import { ENV } from "../../app";
 import BaseEndpoint from "../../common/base_endpoint_class";
-import RequestError from "../../common/request_error";
+import RequestError, { ERequestError } from "../../common/request_error";
 import scopes from "../../common/scopes";
 import { Auth, SafeUserObject } from "../../common/types";
 import CachingUserModel from "../../db/models/caching/caching_user";
@@ -53,11 +53,11 @@ export default class UserEndpoint extends BaseEndpoint<type.UserRequestArgs, Cal
       email: args.email,
       password: hash
     }).catch((err: Error) => {
-      throw new RequestError("DatabaseError", [err.message]);
+      throw new RequestError(ERequestError.DatabaseError, [err.message]);
     });
 
     await this.permissionModel.create({ email: args.email }).catch((err: Error) => {
-      throw new RequestError("DatabaseError", [err.message]);
+      throw new RequestError(ERequestError.DatabaseError, [err.message]);
     });
 
     return { success: true };
@@ -91,7 +91,7 @@ export default class UserEndpoint extends BaseEndpoint<type.UserRequestArgs, Cal
     const hash = await bcrypt.compare(args.password, auth.user.password);
 
     if (!hash) {
-      throw new RequestError("AuthError");
+      throw new RequestError(ERequestError.AuthErrorWrongCredentials);
     }
 
     if (args.edit.password) {
@@ -111,11 +111,11 @@ export default class UserEndpoint extends BaseEndpoint<type.UserRequestArgs, Cal
     const permissions = await this.permissionModel.read(auth.user.email) as Permissions;
 
     if (args.email != auth.user.email && permissions.UserSuperFroze == PermissionStatus.Hasnt) {
-      throw new RequestError("PermissionError", [""], 3);
+      throw new RequestError(ERequestError.PermissionErrorFrozeOnlyYourself);
     }
 
     await this.userModel.update(args.email, { isFrozen: args.froze }).catch((err: { message: string }) => {
-      throw new RequestError("DatabaseError", [err.message]);
+      throw new RequestError(ERequestError.DatabaseError, [err.message]);
     });
 
     return { success: true };
@@ -126,11 +126,11 @@ export default class UserEndpoint extends BaseEndpoint<type.UserRequestArgs, Cal
 
     const requestedUser = await this.userModel.read(args.email);
     if (!requestedUser) {
-      throw new RequestError("DatabaseError", [""], 3);
+      throw new RequestError(ERequestError.DatabaseErrorDoesntExist, ["User"]);
     }
 
     await this.userModel.update(args.email, { tags: args.newTags }).catch((err: { message: string }) => {
-      throw new RequestError("DatabaseError", [err.message]);
+      throw new RequestError(ERequestError.DatabaseError, [err.message]);
     });
 
     return { success: true };
@@ -141,11 +141,11 @@ export default class UserEndpoint extends BaseEndpoint<type.UserRequestArgs, Cal
 
     const requestedUser = await this.userModel.read(args.email);
     if (!requestedUser) {
-      throw new RequestError("DatabaseError", [""], 3);
+      throw new RequestError(ERequestError.DatabaseErrorDoesntExist, ["User"]);
     }
 
     await this.userModel.update(args.email, { verified: args.verify }).catch((err: { message: string }) => {
-      throw new RequestError("DatabaseError", [err.message]);
+      throw new RequestError(ERequestError.DatabaseError, [err.message]);
     });
 
     return { success: true };
@@ -156,33 +156,33 @@ export default class UserEndpoint extends BaseEndpoint<type.UserRequestArgs, Cal
     const user = await this.userModel.read(args.email, "*");
 
     if (!user) {
-      throw new RequestError("DatabaseError", [""], 3);
+      throw new RequestError(ERequestError.DatabaseErrorDoesntExist, ["User"]);
     }
 
     if (user.isFrozen) {
-      throw new RequestError("UserIsFrozen", [user.email]);
+      throw new RequestError(ERequestError.UserIsFrozen, [user.email]);
     }
 
     const hash = await bcrypt.compare(args.password, user.password);
     if (!hash) {
-      throw new RequestError("AuthError");
+      throw new RequestError(ERequestError.AuthErrorWrongCredentials);
     }
 
     const permission = await this.permissionModel.read(user.email) ;
     if (!permission) {
-      throw new RequestError("DatabaseError", [user.email], 1);
+      throw new RequestError(ERequestError.DatabaseErrorNoPermissionsFound, [user.email]);
     }
 
     const scope = args.scope || scopes[args.shorthand];
     scope.forEach(exactScope => {
       if (!permission[exactScope]) {
-        throw new RequestError("PermissionError", [exactScope], 4);
+        throw new RequestError(ERequestError.PermissionErrorCantIssueToken, [exactScope]);
       }
     });
 
     const tokenId = await this.tokenModel.create({ owner: user.email, scope: JSON.stringify(scope) })
                                          .catch((err: { message: string }) => {
-      throw new RequestError("DatabaseError", [err.message]);
+      throw new RequestError(ERequestError.DatabaseError, [err.message]);
     });
 
     const token = jwt.sign({

@@ -5,7 +5,7 @@ import winston from "winston";
 
 import { ENV } from "../../app";
 import BaseEndpoint from "../../common/base_endpoint_class";
-import RequestError from "../../common/request_error";
+import RequestError, { ERequestError } from "../../common/request_error";
 import { Auth } from "../../common/types";
 import { Action } from "../../db/models/action";
 import * as type from "./types";
@@ -47,7 +47,7 @@ export default class ActionEndpoint extends BaseEndpoint<type.ActionRequestArgs,
       args.currentPage,
       args.perPage
     ).catch((err: Error) => {
-      throw new RequestError("DatabaseError", [err.message]);
+      throw new RequestError(ERequestError.DatabaseError, [err.message]);
     });
 
     return result;
@@ -61,7 +61,7 @@ export default class ActionEndpoint extends BaseEndpoint<type.ActionRequestArgs,
     args = await this.validate(type.ChainWhereSearchArgsSchema, args);
 
     const result = this.actionModel.chainWhereSearch(args.chain, args.currentPage, args.perPage).catch((err: Error) => {
-      throw new RequestError("DatabaseError", [err.message]);
+      throw new RequestError(ERequestError.DatabaseError, [err.message]);
     });
 
     return result;

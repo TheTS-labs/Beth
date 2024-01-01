@@ -4,7 +4,7 @@ import winston from "winston";
 
 import { ENV } from "../../app";
 import BaseEndpoint from "../../common/base_endpoint_class";
-import RequestError from "../../common/request_error";
+import RequestError, { ERequestError } from "../../common/request_error";
 import { Auth, UserScore } from "../../common/types";
 import CachingPostModel from "../../db/models/caching/caching_post";
 import CachingUserModel from "../../db/models/caching/caching_user";
@@ -60,16 +60,10 @@ export default class RecommendationEndpoint extends BaseEndpoint<type.Recommenda
     const posts = await this.postModel.readDetailedPosts(args.afterCursor, args.numberRecords);
 
     if (!posts) {
-      throw new RequestError("DatabaseError", [""], 5);
+      throw new RequestError(ERequestError.DatabaseErrorSufficientPosts);
     }
 
     posts.results.sort((a, b) => b.score - a.score);
-
-    // posts.results.sort((a, b) => {
-    //   const millisecondsFromCreationA = Date.now() - a.createdAt.getTime(),
-    //         millisecondsFromCreationB = Date.now() - b.createdAt.getTime();
-    //   return millisecondsFromCreationB/b.score - millisecondsFromCreationA/a.score;
-    // });
 
     return posts;
   }
@@ -100,7 +94,7 @@ export default class RecommendationEndpoint extends BaseEndpoint<type.Recommenda
     const requirements = await this.getRecommendationRequirements(args, postsWithVoteType, auth.user.email);
 
     if (!requirements.posts) {
-      throw new RequestError("DatabaseError", [""], 5);
+      throw new RequestError(ERequestError.DatabaseErrorSufficientPosts);
     }
 
     const recommendations = requirements.posts.results.map(recommendPost => {

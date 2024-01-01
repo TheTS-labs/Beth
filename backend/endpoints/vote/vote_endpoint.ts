@@ -4,7 +4,7 @@ import winston from "winston";
 
 import { ENV } from "../../app";
 import BaseEndpoint from "../../common/base_endpoint_class";
-import RequestError from "../../common/request_error";
+import RequestError, { ERequestError } from "../../common/request_error";
 import { Auth } from "../../common/types";
 import CachingPostModel from "../../db/models/caching/caching_post";
 import CachingUserModel from "../../db/models/caching/caching_user";
@@ -50,7 +50,7 @@ export default class VoteEndpoint extends BaseEndpoint<type.VoteRequestArgs, Cal
 
     const post = await this.postModel.read(args.postId);
     if (!post) {
-      throw new RequestError("DatabaseError", [""], 2);
+      throw new RequestError(ERequestError.DatabaseErrorDoesntExist, ["Post"]);
     }
 
     const vote = await this.voteModel.readByIds(args.postId, auth.user.email);
@@ -62,7 +62,7 @@ export default class VoteEndpoint extends BaseEndpoint<type.VoteRequestArgs, Cal
         userEmail: auth.user.email,
         voteType: args.voteType
       }).catch((err: { message: string }) => {
-        throw new RequestError("DatabaseError", [err.message]);
+        throw new RequestError(ERequestError.DatabaseError, [err.message]);
       });
   
       return { success: true, action: "create" };
@@ -71,7 +71,7 @@ export default class VoteEndpoint extends BaseEndpoint<type.VoteRequestArgs, Cal
     // Delete the vote if the user chooses same type as previously recorded
     if (vote.voteType == args.voteType) {
       await this.voteModel.delete(vote?.id||-1).catch((err: { message: string }) => {
-        throw new RequestError("DatabaseError", [err.message]);
+        throw new RequestError(ERequestError.DatabaseError, [err.message]);
       });
 
       return { success: true, action: "delete" };
@@ -79,7 +79,7 @@ export default class VoteEndpoint extends BaseEndpoint<type.VoteRequestArgs, Cal
     
     // Update the vote if the user chooses another vote type
     await this.voteModel.update(vote.id, { voteType: args.voteType }).catch((err: { message: string }) => {
-      throw new RequestError("DatabaseError", [err.message]);
+      throw new RequestError(ERequestError.DatabaseError, [err.message]);
     });
 
     return { success: true, action: "update" };
@@ -90,7 +90,7 @@ export default class VoteEndpoint extends BaseEndpoint<type.VoteRequestArgs, Cal
 
     const post = await this.postModel.read(args.postId);
     if (!post) {
-      throw new RequestError("DatabaseError", [""], 2);
+      throw new RequestError(ERequestError.DatabaseErrorDoesntExist, ["Post"]);
     }
 
     const goodCount = await this.voteModel.readVoteCount(args.postId, VoteType.Up);

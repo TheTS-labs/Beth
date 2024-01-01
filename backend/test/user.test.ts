@@ -385,7 +385,7 @@ describe("POST /user/issueToken", () => {
                           });
 
     expect(res.body.errorMessage).not.toBeUndefined();
-    expect(res.statusCode).toBe(403);
+    expect(res.statusCode).toBe(400);
   });
 
   it("should throw DatabaseError: Permissions doesn't exist", async () => {

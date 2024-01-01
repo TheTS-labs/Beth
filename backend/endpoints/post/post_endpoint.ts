@@ -4,7 +4,7 @@ import winston from "winston";
 
 import { ENV } from "../../app";
 import BaseEndpoint from "../../common/base_endpoint_class";
-import RequestError from "../../common/request_error";
+import RequestError, { ERequestError } from "../../common/request_error";
 import { Auth } from "../../common/types";
 import CachingPostModel from "../../db/models/caching/caching_post";
 import CachingUserModel from "../../db/models/caching/caching_user";
@@ -55,7 +55,7 @@ export default class PostEndpoint extends BaseEndpoint<type.PostRequestArgs, Cal
       parent: parent||null,
       tags: args.tags
     }).catch((err: Error) => {
-      throw new RequestError("DatabaseError", [err.message]);
+      throw new RequestError(ERequestError.DatabaseError, [err.message]);
     });
 
     return { success: true, id };
@@ -76,11 +76,11 @@ export default class PostEndpoint extends BaseEndpoint<type.PostRequestArgs, Cal
     const permissions = await this.permissionModel.read(auth.user.email) as Permissions;
   
     if (!post) {
-      throw new RequestError("DatabaseError", [""], 2);
+      throw new RequestError(ERequestError.DatabaseErrorDoesntExist, ["Post"]);
     }
 
     if (post.author != auth.user.email && permissions["PostSuperEdit"] == PermissionStatus.Hasnt) {
-      throw new RequestError("PermissionError");
+      throw new RequestError(ERequestError.PermissionErrorOnlyOwnPosts, ["edit"]);
     }
 
     await this.postModel.update(args.id, { text: args.newText });
@@ -95,11 +95,11 @@ export default class PostEndpoint extends BaseEndpoint<type.PostRequestArgs, Cal
     const permissions = await this.permissionModel.read(auth.user.email) as Permissions;
 
     if (!post) {
-      throw new RequestError("DatabaseError", [""], 2);
+      throw new RequestError(ERequestError.DatabaseErrorDoesntExist, ["Post"]);
     }
 
     if (post.author != auth.user.email && permissions["PostSuperDelete"] == PermissionStatus.Hasnt) {
-      throw new RequestError("PermissionError", [""], 1);
+      throw new RequestError(ERequestError.PermissionErrorOnlyOwnPosts, ["delete"]);
     }
 
     await this.postModel.update(args.id, { frozenAt: new Date(Date.now()) });
@@ -112,7 +112,7 @@ export default class PostEndpoint extends BaseEndpoint<type.PostRequestArgs, Cal
 
     const result = await this.postModel.readList(args.afterCursor, args.numberRecords)
                                        .catch((err: { message: string }) => {
-      throw new RequestError("DatabaseError", [err.message]);
+      throw new RequestError(ERequestError.DatabaseError, [err.message]);
     });
 
     return result;
@@ -124,7 +124,7 @@ export default class PostEndpoint extends BaseEndpoint<type.PostRequestArgs, Cal
     const post = await this.postModel.read(args.id);
 
     if (!post) {
-      throw new RequestError("DatabaseError", [""], 2);
+      throw new RequestError(ERequestError.DatabaseErrorDoesntExist, ["Post"]);
     }
 
     await this.postModel.delete(args.id);
@@ -136,7 +136,7 @@ export default class PostEndpoint extends BaseEndpoint<type.PostRequestArgs, Cal
     args = await this.validate(type.ViewRepliesArgsSchema, args);
 
     const results = await this.postModel.readReplies(args.repliesTo).catch((err: { message: string }) => {
-      throw new RequestError("DatabaseError", [err.message]);
+      throw new RequestError(ERequestError.DatabaseError, [err.message]);
     });
 
     return results;
@@ -149,15 +149,15 @@ export default class PostEndpoint extends BaseEndpoint<type.PostRequestArgs, Cal
     const permissions = await this.permissionModel.read(auth.user.email) as Permissions;
 
     if (!post) {
-      throw new RequestError("DatabaseError", [""], 2);
+      throw new RequestError(ERequestError.DatabaseErrorDoesntExist, ["Post"]);
     }
 
     if (post.author != auth.user.email && permissions["PostSuperTagsEdit"] == PermissionStatus.Hasnt) {
-      throw new RequestError("PermissionError", [""], 2);
+      throw new RequestError(ERequestError.PermissionErrorOnlyOwnPosts, ["edit tags of"]);
     }
 
     await this.postModel.update(args.id, { tags: args.newTags }).catch((err: { message: string }) => {
-      throw new RequestError("DatabaseError", [err.message]);
+      throw new RequestError(ERequestError.DatabaseError, [err.message]);
     });
 
     return { success: true };
@@ -171,7 +171,7 @@ export default class PostEndpoint extends BaseEndpoint<type.PostRequestArgs, Cal
       args.afterCursor,
       args.numberRecords
     ).catch((err: { message: string }) => {
-      throw new RequestError("DatabaseError", [err.message]);
+      throw new RequestError(ERequestError.DatabaseError, [err.message]);
     });
 
     if (args.tags) {
@@ -221,7 +221,7 @@ export default class PostEndpoint extends BaseEndpoint<type.PostRequestArgs, Cal
       args.afterCursor,
       args.numberRecords
     ).catch((err: { message: string }) => {
-      throw new RequestError("DatabaseError", [err.message]);
+      throw new RequestError(ERequestError.DatabaseError, [err.message]);
     });
 
     return results;

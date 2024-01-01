@@ -4,7 +4,7 @@ import { RedisClientType } from "redis";
 import winston from "winston";
 
 import { ENV } from "../app";
-import RequestError from "../common/request_error";
+import RequestError, { ERequestError } from "../common/request_error";
 import { JWTRequest } from "../common/types";
 
 type MiddlewareFunction = (req: JWTRequest, res: Response, next: NextFunction) => Promise<void>;
@@ -29,7 +29,7 @@ export default class FrozenMiddleware {
       }
 
       if (req.auth?.user?.isFrozen) {
-        throw new RequestError("UserIsFrozen", [req.auth.user.email]);
+        throw new RequestError(ERequestError.UserIsFrozen, [req.auth.user.email]);
       }
   
       next();

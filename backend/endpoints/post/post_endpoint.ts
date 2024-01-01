@@ -99,7 +99,7 @@ export default class PostEndpoint extends BaseEndpoint<type.PostRequestArgs, Cal
       throw new RequestError(ERequestError.PermissionErrorOnlyOwnPosts, ["delete"]);
     }
 
-    await this.postModel.update(args.id, { frozenAt: new Date(Date.now()) });
+    await this.postModel.update(args.id, { softDeletedAt: new Date(Date.now()) });
 
     return { success: true };
   }
@@ -160,54 +160,17 @@ export default class PostEndpoint extends BaseEndpoint<type.PostRequestArgs, Cal
     return { success: true };
   }
 
-  async search(args: type.SearchArgs, _auth: Auth, recursive?: boolean): Promise<PaginatedDetailedPosts | never> {
+  async search(args: type.SearchArgs, _auth: Auth): Promise<PaginatedDetailedPosts | never> {
     args = await this.validate(type.SearchArgsSchema, args);
 
     const searchResults: PaginatedDetailedPosts = await this.postModel.search(
       args.query,
+      args.tags,
       args.afterCursor,
-      args.numberRecords
+      args.numberRecords,
     ).catch((err: { message: string }) => {
       throw new RequestError(ERequestError.DatabaseError, [err.message]);
     });
-
-    // TODO: Just use something like WHERE LIKE? What's wrong with you, the tags received like tag1,tag2
-    // TODO: and stored in the database same way ._.
-    if (args.tags) {
-      const filtered = searchResults.results.filter(({ tags }) => {
-        const postTags = tags.split(",");
-        const queryTags = args.tags?.split(",") || [];
-
-        return postTags.some(tag => queryTags.includes(tag));
-      });
-
-      if (filtered.length >= 1) {
-        return {
-          endCursor: searchResults.endCursor,
-          results: filtered
-        };
-      }
-
-      const multiplier = this.config.get("RECURSIVE_SEARCH_MULTIPLIER").required().asFloatPositive();
-
-      const performanceStart = performance.now();
-      const recursiveSearch = await this.search({
-        query: args.query,
-        afterCursor: searchResults.endCursor,
-        numberRecords: Math.floor(args.numberRecords*multiplier),
-        tags: args.tags
-      }, _auth, true);
-
-      if (!recursive) {
-        this.logger.log({
-          level: "system",
-          message: `Time collapsed to complete the search: ~${Math.floor(performance.now()-performanceStart)} ms`,
-          path: module.filename
-        });
-      }
-
-      return recursiveSearch;
-    }
 
     return searchResults;
   }

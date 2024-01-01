@@ -12,7 +12,7 @@ export interface Post {
   id: number
   author: string
   createdAt: Date
-  frozenAt: Date
+  softDeletedAt: Date
   text: string
   repliesTo: number | null
   tags: string
@@ -36,7 +36,7 @@ export interface PaginatedDetailedPosts {
 export type NestedPost = (Post & { replies: NestedPost[] });
 
 export default class PostModel implements ICRUDModel<
-  Omit<Post, "id" | "createdAt" | "frozenAt">,
+  Omit<Post, "id" | "createdAt" | "softDeletedAt">,
   Post
 > {
   constructor(
@@ -47,7 +47,7 @@ export default class PostModel implements ICRUDModel<
   ) {}
 
   public async create(
-    args: Omit<Post, "id" | "createdAt" | "frozenAt">
+    args: Omit<Post, "id" | "createdAt" | "softDeletedAt">
   ): Promise<number> {
     this.logger.log({
       level: "trying",
@@ -128,7 +128,7 @@ export default class PostModel implements ICRUDModel<
       this.db.queryBuilder()
              .select("*")
              .from("post")
-             .whereNull("post.frozenAt"),
+             .whereNull("post.softDeletedAt"),
       { after: afterCursor, first: numberRecords }
     );
     const endCursor = getCursor(results[results.length - 1]);
@@ -157,7 +157,7 @@ export default class PostModel implements ICRUDModel<
       "user.username",
       "user.verified"
     ).join("user", "post.author", "=", "user.email")
-     .where("frozenAt", null)
+     .where("softDeletedAt", null)
      .andWhere("repliesTo", repliesTo)
      .where("user.isFrozen", false)
      .orderBy("createdAt", "DESC");
@@ -191,7 +191,7 @@ export default class PostModel implements ICRUDModel<
       .from("post")
       .join("user", "post.author", "=", "user.email")
       .whereNull("post.repliesTo")
-      .whereNull("post.frozenAt")
+      .whereNull("post.softDeletedAt")
       .where("user.isFrozen", false)
       .orderBy("post.id", "desc"), { after: afterCursor, first: numberRecords });
 
@@ -249,7 +249,7 @@ export default class PostModel implements ICRUDModel<
       "user.username",
       "user.verified"
     ).join("user", "post.author", "=", "user.email")
-     .where("frozenAt", null)
+     .where("softDeletedAt", null)
      .andWhere("post.id", identifier)
      .andWhere("user.isFrozen", false)
      .first() as Omit<DetailedPost, "score" | "userVote"> | undefined;
@@ -280,34 +280,43 @@ export default class PostModel implements ICRUDModel<
 
   public async search(
     query: string,
+    tags: string | undefined,
     afterCursor?: string,
-    numberRecords?: number
+    numberRecords?: number,
   ): Promise<PaginatedDetailedPosts> {
     this.logger.log({
       level: "trying",
       message: "To search posts",
       path: module.filename,
-      context: { query, afterCursor, numberRecords }
+      context: { query, tags, afterCursor, numberRecords }
     });
 
-    const results = await knexCursorPagination(this.db.queryBuilder()
-      .select(
-        "post.id",
-        "post.author",
-        "post.text",
-        "post.repliesTo",
-        "post.tags",
-        "user.displayName",
-        "user.username",
-        "user.verified"
-      )
-      .from("post")
-      .join("user", "post.author", "=", "user.email")
-      .whereNull("post.repliesTo")
-      .whereNull("post.frozenAt")
-      .where("user.isFrozen", false)
-      .whereLike("text", query)
-      .orderBy("post.id", "desc"), { after: afterCursor, first: numberRecords });
+    const dbQuery = this.db.queryBuilder()
+                           .select(
+                             "post.id",
+                             "post.author",
+                             "post.text",
+                             "post.repliesTo",
+                             "post.tags",
+                             "user.displayName",
+                             "user.username",
+                             "user.verified"
+                           )
+                           .from("post")
+                           .join("user", "post.author", "=", "user.email")
+                           .whereNull("post.repliesTo")
+                           .whereNull("post.softDeletedAt")
+                           .where("user.isFrozen", false)
+                           .whereLike("text", query)
+                           .orderBy("post.id", "desc");
+
+    if (tags) {
+      tags.split(",").forEach(tag => {
+        dbQuery.whereLike("post.tags", `%${tag}%`);
+      });
+    }
+
+    const results = await knexCursorPagination(dbQuery, { after: afterCursor, first: numberRecords });
     const endCursor = getCursor(results[results.length - 1]);
 
     return {
@@ -342,7 +351,7 @@ export default class PostModel implements ICRUDModel<
       .from("post")
       .join("user", "post.author", "=", "user.email")
       .whereNull("post.repliesTo")
-      .whereNull("post.frozenAt")
+      .whereNull("post.softDeletedAt")
       .where("user.isFrozen", false)
       .where("post.author", email)
       .orderBy("post.id", "desc"), { after: afterCursor, first: numberRecords });

@@ -13,9 +13,9 @@ export default function getJob(
       level: "system",
       message: "Deleting posts...",
       path: module.filename,
-      context: { frozenAt: ["<=", sevenDaysAgo]}
+      context: { softDeletedAt: ["<=", sevenDaysAgo]}
     });
 
-    await db("post").where("frozenAt", "<", sevenDaysAgo).del();
+    await db("post").where("softDeletedAt", "<", sevenDaysAgo).del();
   });
 }

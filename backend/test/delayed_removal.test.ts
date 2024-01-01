@@ -23,7 +23,7 @@ describe("General tests", () => {
       text: "112",
       //                              Days
       //       No need to thank       ↓
-      frozenAt: new Date(Date.now() - 8 * 24 * 60 * 60 * 1000)
+      softDeletedAt: new Date(Date.now() - 8 * 24 * 60 * 60 * 1000)
     }, "id"))[0].id;
 
     getJob(db, logger);
@@ -39,7 +39,7 @@ describe("General tests", () => {
       text: "112",
       //                              Days
       //       No need to thank       ↓
-      frozenAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000)
+      softDeletedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000)
     }, "id"))[0].id;
 
     getJob(db, logger);

@@ -43,7 +43,7 @@ function Posts(): React.JSX.Element {
     userVote: faker.datatype.boolean(),
     author: faker.internet.userName(),
     createdAt: new Date(),
-    frozenAt: null,
+    softDeletedAt: null,
     repliesTo: null,
     parent: null,
     tags: "",

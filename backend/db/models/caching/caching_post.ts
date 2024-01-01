@@ -26,16 +26,16 @@ export default class CachingPostModel extends PostModel {
     identifier: number,
     select?: "*" | (keyof Post)[]
   ): Promise<Post | Pick<Post, SelectType> | undefined> {
-    const cachedPostString = await this.redisClient.get(`user:${identifier}`),
+    const cachedPostString = await this.redisClient.get(`post:${identifier}`),
           cachedPost = JSON.parse(cachedPostString||"null") as Post | null;
 
     if (cachedPost) {
-      return pick(cachedPost, select) as Pick<Post, SelectType>;
+      return pick(cachedPost, select || "*") as Pick<Post, SelectType>;
     }
 
     const post = await this.db<Post>("post")
                            .where({ id: identifier })
-                           .select()
+                           .select("*")
                            .first();
 
     if (!post) {
@@ -87,7 +87,7 @@ export default class CachingPostModel extends PostModel {
     });
 
     const cachedHotTagsString = await this.redisClient.get("post:hotTags");
-    const cachedHotTags: { tag: string, postCount: string }[] | null = JSON.parse(cachedHotTagsString||"null");
+    const cachedHotTags: { tag: string, postCount: string }[] | null = JSON.parse(cachedHotTagsString || "null");
 
     if (cachedHotTags) {
       return cachedHotTags;

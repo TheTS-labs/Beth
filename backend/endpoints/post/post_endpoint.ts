@@ -9,12 +9,12 @@ import { Auth } from "../../common/types";
 import CachingPostModel from "../../db/models/caching/caching_post";
 import CachingUserModel from "../../db/models/caching/caching_user";
 import PermissionModel, { Permissions,PermissionStatus } from "../../db/models/permission";
-import PostModel, { DetailedPost, DetailedPosts, Post } from "../../db/models/post";
+import PostModel, { DetailedPost, PaginatedDetailedPosts, Post } from "../../db/models/post";
 import UserModel from "../../db/models/user";
 import * as type from "./types";
 
 type CallEndpointReturnType = { success: true, id: number } | { success: true } | DetailedPost[] | {} |
-                              DetailedPosts | { results: Post[], endCursor: string } | never;
+                              PaginatedDetailedPosts | { results: Post[], endCursor: string } | never;
 
 export default class PostEndpoint extends BaseEndpoint<type.PostRequestArgs, CallEndpointReturnType> {
   public allowNames: string[] = [
@@ -46,13 +46,10 @@ export default class PostEndpoint extends BaseEndpoint<type.PostRequestArgs, Cal
   async create(args: type.CreateArgs, auth: Auth): Promise<{ success: true, id: number } | never> {
     args = await this.validate(type.CreateArgsSchema, args);
 
-    const parent = args.replyTo ? await this.postModel.findParent(args.replyTo) : undefined;
-
     const id = await this.postModel.create({
       author: auth.user.email,
       text: args.text,
-      repliesTo: args.replyTo||null,
-      parent: parent||null,
+      repliesTo: args.replyTo || null,
       tags: args.tags
     }).catch((err: Error) => {
       throw new RequestError(ERequestError.DatabaseError, [err.message]);
@@ -163,10 +160,10 @@ export default class PostEndpoint extends BaseEndpoint<type.PostRequestArgs, Cal
     return { success: true };
   }
 
-  async search(args: type.SearchArgs, _auth: Auth, recursive?: boolean): Promise<DetailedPosts | never> {
+  async search(args: type.SearchArgs, _auth: Auth, recursive?: boolean): Promise<PaginatedDetailedPosts | never> {
     args = await this.validate(type.SearchArgsSchema, args);
 
-    const searchResults = await this.postModel.search(
+    const searchResults: PaginatedDetailedPosts = await this.postModel.search(
       args.query,
       args.afterCursor,
       args.numberRecords
@@ -174,6 +171,8 @@ export default class PostEndpoint extends BaseEndpoint<type.PostRequestArgs, Cal
       throw new RequestError(ERequestError.DatabaseError, [err.message]);
     });
 
+    // TODO: Just use something like WHERE LIKE? What's wrong with you, the tags received like tag1,tag2
+    // TODO: and stored in the database same way ._.
     if (args.tags) {
       const filtered = searchResults.results.filter(({ tags }) => {
         const postTags = tags.split(",");
@@ -213,7 +212,7 @@ export default class PostEndpoint extends BaseEndpoint<type.PostRequestArgs, Cal
     return searchResults;
   }
 
-  async getUserPosts(args: type.GetUserPostsArgs, _auth: Auth): Promise<DetailedPosts | undefined> {
+  async getUserPosts(args: type.GetUserPostsArgs, _auth: Auth): Promise<PaginatedDetailedPosts | undefined> {
     args = await this.validate(type.GetUserPostsArgsSchema, args);
 
     const results = await this.postModel.getUserPosts(

@@ -9,7 +9,6 @@ export async function up(knex: Knex): Promise<void> {
     table.timestamp("frozenAt"); // TODO: Rename to softDeletedAt
     table.text("text").notNullable();
     table.integer("repliesTo");
-    table.integer("parent");
     table.text("tags").defaultTo("");
   });
 }

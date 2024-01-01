@@ -36,8 +36,6 @@ export default class CachingUserModel extends UserModel {
       context: { identifier, select }
     });
 
-    const userCacheKey = select ? `user:${identifier}:${select}` : `user:${identifier}`;
-
     if (select?.includes("password") || select == "*") {
       const user = await this.db<User>("user")
                            .where({ email: identifier })
@@ -46,30 +44,32 @@ export default class CachingUserModel extends UserModel {
       return user as Pick<User, SelectType>;
     }
 
-    const cachedUserString = await this.redisClient.get(userCacheKey),
+    const cachedUserString = await this.redisClient.get(`user:${identifier}`),
           cachedUser = JSON.parse(cachedUserString||"null") as Omit<User, "password"> | null;
 
     if (cachedUser) {
       return pick(
         cachedUser,
-        select||["id", "email", "isFrozen", "username", "displayName"]
+        select || ["id", "email", "isFrozen", "username", "displayName"]
       ) as Pick<User, SelectType>;
     }
 
-    const user = await this.db<User>("user").where({ email: identifier }).select().first();
-
+    const user = await this.db<User>("user")
+                           .where({ email: identifier })
+                           .select(["id", "email", "isFrozen", "username", "displayName", "verified"])
+                           .first();
     if (!user) {
-      return user;
+      return undefined;
     }
 
-    await this.redisClient.set(userCacheKey, JSON.stringify(user), {
+    await this.redisClient.set(`user:${identifier}`, JSON.stringify(user), {
       EX: this.config.get("USER_EX").required().asIntPositive(),
       NX: true
     });
 
     return pick(
       user,
-      select||["id", "email", "isFrozen", "username", "displayName"]
+      select || ["id", "email", "isFrozen", "username", "displayName", "verified"]
     ) as Pick<User, SelectType>;
   }
 

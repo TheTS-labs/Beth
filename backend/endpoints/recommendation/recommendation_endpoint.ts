@@ -10,12 +10,12 @@ import CachingPostModel from "../../db/models/caching/caching_post";
 import CachingUserModel from "../../db/models/caching/caching_user";
 import CachingVoteModel from "../../db/models/caching/caching_vote";
 import PermissionModel from "../../db/models/permission";
-import PostModel, { DetailedPosts, Post } from "../../db/models/post";
+import PostModel, { PaginatedDetailedPosts, Post } from "../../db/models/post";
 import UserModel from "../../db/models/user";
 import VoteModel, { VoteType } from "../../db/models/vote";
 import * as type from "./types";
 
-type CallEndpointReturnType = { result: { tag: string, postCount: string }[] } | DetailedPosts | never;
+type CallEndpointReturnType = { result: { tag: string, postCount: string }[] } | PaginatedDetailedPosts | never;
 
 type PostWithVote = Post & { voteType: VoteType };
 interface RecommendationRequirements {
@@ -23,7 +23,7 @@ interface RecommendationRequirements {
   dislikedTags: string[]
   likedUsers: string[]
   dislikedUsers: string[]
-  posts: DetailedPosts | undefined
+  posts: PaginatedDetailedPosts | undefined
 }
 
 export default class RecommendationEndpoint extends BaseEndpoint<type.RecommendationRequestArgs,
@@ -54,10 +54,10 @@ export default class RecommendationEndpoint extends BaseEndpoint<type.Recommenda
     this.voteModel = new VoteModelType(this.db, this.logger, this.redisClient, this.config);
   }
 
-  async globalRecommend(args: type.GlobalRecommendArgs, _auth: Auth): Promise<DetailedPosts> {
+  async globalRecommend(args: type.GlobalRecommendArgs, _auth: Auth): Promise<PaginatedDetailedPosts> {
     args = await this.validate(type.GlobalRecommendArgsSchema, args);
 
-    const posts = await this.postModel.readDetailedPosts(args.afterCursor, args.numberRecords);
+    const posts = await this.postModel.readPaginatedDetailedPosts(args.afterCursor, args.numberRecords);
 
     if (!posts) {
       throw new RequestError(ERequestError.DatabaseErrorSufficientPosts);
@@ -76,7 +76,7 @@ export default class RecommendationEndpoint extends BaseEndpoint<type.Recommenda
     return { result: hotTags };
   }
 
-  async recommend(args: type.RecommendArgs, auth: Auth): Promise<DetailedPosts> {
+  async recommend(args: type.RecommendArgs, auth: Auth): Promise<PaginatedDetailedPosts> {
     args = await this.validate(type.RecommendArgsSchema, args);
 
     const votes = await this.voteModel.readVotesOfUser(auth.user.email);
@@ -138,7 +138,7 @@ export default class RecommendationEndpoint extends BaseEndpoint<type.Recommenda
       dislikedTags: this.getPreferredTags(postsWithVoteType, VoteType.Down),
       likedUsers: this.getPreferredUsers(postsWithVoteType, VoteType.Up),
       dislikedUsers: this.getPreferredUsers(postsWithVoteType, VoteType.Down),
-      posts: await this.postModel.readDetailedPosts(args.afterCursor, args.numberRecords, email)
+      posts: await this.postModel.readPaginatedDetailedPosts(args.afterCursor, args.numberRecords, email)
     };
   }
 }

@@ -15,7 +15,6 @@ export interface Post {
   frozenAt: Date
   text: string
   repliesTo: number | null
-  parent: number | null
   tags: string
 }
 
@@ -29,7 +28,7 @@ export type DetailedPost = (
   }
 );
 
-export interface DetailedPosts {
+export interface PaginatedDetailedPosts {
   results: DetailedPost[]
   endCursor: string
 }
@@ -103,10 +102,6 @@ export default class PostModel implements ICRUDModel<
       path: module.filename
     });
 
-    //? I can't do this without raw also because Knex turns .select("tag", "COUNT(*) as postCount") into
-    //? select "tag", "COUNT(*)" as "postCount"
-    // TODO: https://knexjs.org/guide/ref.html#alias
-
     const hotTags = await this.db.raw(`
       SELECT tag, COUNT(*) as "postCount"
       FROM (
@@ -152,8 +147,6 @@ export default class PostModel implements ICRUDModel<
       context: { repliesTo }
     });
 
-    // TODO: Is it really DetailedPost??
-
     const result = await this.db<DetailedPost>("post").select(
       "post.id",
       "post.author",
@@ -172,53 +165,11 @@ export default class PostModel implements ICRUDModel<
     return result;
   }
 
-  public async findParent(identifier: number): Promise<number | undefined> {
-    this.logger.log({
-      level: "trying",
-      message: "To find the parent of the post",
-      path: module.filename,
-      context: { identifier }
-    });
-  
-    const comment = await this.read(identifier);
-    if (!comment) {
-      this.logger.log({ level: "database",  message: `${identifier} is the parent`, path: module.filename });
-      return;
-    }
-
-    let parent: number = comment.repliesTo || comment.id;
-    let commentOfParent = await this.read(parent) as Post;
-
-    while (commentOfParent) {
-      this.logger.log({ level: "database",  message: `Probably ${parent}, checking...`, path: module.filename });
-      commentOfParent = await this.read(parent) as Post;
-
-      if (commentOfParent.repliesTo === null) {
-        this.logger.log({
-          level: "database",
-          message: `Yeah, ${commentOfParent.id} is the parent`,
-          path: module.filename
-        });
-        return commentOfParent.id;
-      }
-  
-      this.logger.log({
-        level: "database",
-        message: `Nah, ${commentOfParent.id} is not a parent`,
-        path: module.filename
-      });
-      parent = commentOfParent.repliesTo;
-    }
-
-    this.logger.log({ level: "database",  message: `Done, ${parent} is the parent`, path: module.filename });
-    return parent;
-  }
-
-  public async readDetailedPosts(
+  public async readPaginatedDetailedPosts(
     afterCursor: string,
     numberRecords: number,
     email?: string
-  ): Promise<DetailedPosts | undefined> {
+  ): Promise<PaginatedDetailedPosts | undefined> {
     this.logger.log({
       level: "trying",
       message: "To read posts with more detailed info",
@@ -249,6 +200,7 @@ export default class PostModel implements ICRUDModel<
     }
     const endCursor = getCursor(results[results.length - 1]);
 
+    // TODO: Looks too complicated
     const votes = (await this.db.transaction(async trx => {
       return Promise.all(results.map(result => 
         trx<Vote>("vote").select().where("vote.postId", result.id)
@@ -330,7 +282,7 @@ export default class PostModel implements ICRUDModel<
     query: string,
     afterCursor?: string,
     numberRecords?: number
-  ): Promise<DetailedPosts> {
+  ): Promise<PaginatedDetailedPosts> {
     this.logger.log({
       level: "trying",
       message: "To search posts",
@@ -368,10 +320,10 @@ export default class PostModel implements ICRUDModel<
     email: string,
     afterCursor?: string,
     numberRecords?: number
-  ): Promise<DetailedPosts> {
+  ): Promise<PaginatedDetailedPosts> {
     this.logger.log({
       level: "trying",
-      message: `To get posts made by ${email}`,
+      message: `To get posts written by ${email}`,
       path: module.filename,
       context: { email, afterCursor, numberRecords }
     });

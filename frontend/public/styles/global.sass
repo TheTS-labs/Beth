@@ -1,0 +1,16 @@
+@use "base" as *
+
+body, html 
+  color: text-color()
+  background-color: background-color()
+  display: flex
+  flex-direction: column
+  margin: 0
+  font-family: 'Roboto', sans-serif
+
+body
+  -ms-overflow-style: none
+  scrollbar-width: none
+
+body::-webkit-scrollbar
+  display: none

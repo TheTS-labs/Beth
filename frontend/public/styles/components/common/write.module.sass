@@ -1,0 +1,30 @@
+@use "../../base" as *
+  
+.form
+  margin-top: 20px
+  display: flex
+  gap: 5px
+
+  textarea
+    box-sizing: border-box
+    width: 100%
+
+    color: text-color()
+    background-color: background-color()
+    border: solid 2px primary-color()
+    resize: vertical
+    font-weight: 700
+
+  input[type="submit"]
+    background-color: rgb(0, 0, 0, 0)
+    border: solid 2px primary-color()
+    color: text-color()
+    font-weight: bold#45111100
+    cursor: pointer
+    transition: all 150ms
+    font-size: 1rem
+    font-weight: 700
+
+    &:hover
+      background-color: primary-color()
+      color: #000000

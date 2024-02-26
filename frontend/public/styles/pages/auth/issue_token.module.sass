@@ -1,0 +1,141 @@
+@use "../../base" as *
+
+.text
+  font-style: italic
+  margin-bottom: -1px
+
+.text_container
+  position: absolute
+  top: 50%
+  left: 50%
+  transform: translate(-50%, -50%)
+
+  display: flex
+  flex-direction: column
+  align-items: center
+
+.container
+  display: flex
+  flex-direction: row
+  align-items: flex-end
+  gap: 20px
+
+.permission_checkbox 
+  display: flex
+  gap: 8px
+  align-items: center
+
+.token
+  max-width: 1000px
+  overflow-wrap: break-word
+  font-family: monospace
+
+.form_wrap
+  display: flex
+  flex-direction: column
+  align-items: center
+
+  form
+    display: flex
+    flex-direction: column
+    align-items: center
+    margin: 10px
+    gap: 10px
+
+    .scope
+      display: grid
+      grid-template-columns: 1fr 1fr 1fr
+      gap: 20px
+
+    .loader_wrapper
+      grid-column: 2
+    
+    .error
+      grid-column: 2
+
+    input
+      color: text-color()
+      background-color: background-color()
+      border: solid 2px primary-color()
+  
+      width: 250px
+      height: 30px
+      padding: 0
+  
+      box-sizing: border-box
+      text-align: center
+      font-weight: bold
+      font-size: 1rem
+      
+      &[type="submit"]
+        color: #000000
+        background-color: primary-color()
+        border: none
+        transition: background-color 100ms ease
+        grid-column: 2
+
+      &[type="checkbox"]
+        margin-bottom: 0
+        width: 20px
+        height: 20px
+
+      &[type="submit"]:hover
+        background-color: primary-color(0.8)
+        cursor: pointer
+
+      &::placeholder
+        text-align: left
+        padding: 5px
+      
+      &:focus
+        outline: none
+        border-width: 4px
+
+.placeholder
+  visibility: hidden
+
+.logout
+  color: #000000
+  background-color: primary-color()
+  border: none
+
+  width: 250px
+  height: 30px
+  margin-bottom: 20px
+  padding: 0
+
+  box-sizing: border-box
+  text-align: center
+  font-weight: bold
+  font-size: 1rem
+
+  transition: background-color 100ms easy
+
+  &:hover
+    background-color: primary-color(0.8)
+    cursor: pointer
+  
+  &:disabled
+    background-color: primary-color(0.5)
+
+    &:hover
+      cursor: default
+
+.froze_account
+  margin-left: auto
+  margin-right: 30px
+
+  button
+    width: 150px
+    height: 35px
+
+    background-color: rgb(0, 0, 0, 0)
+    border: solid 2px primary-color()
+    color: text-color()
+    font-weight: bold
+    cursor: pointer
+    transition: all 150ms
+
+    &:hover
+      background-color: primary-color()
+      color: #000000

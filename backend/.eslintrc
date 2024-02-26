@@ -1,0 +1,4 @@
+{
+  "extends": "../.eslintrc",
+  "ignorePatterns": ["common/types/base_endpoint.d.ts", "common/types/crud_model.d.ts", "jest.config.ts"]
+}

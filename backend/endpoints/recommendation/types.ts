@@ -18,16 +18,16 @@ export type GetHotTagsArgs = {};
 export const GetHotTagsArgsSchema = Joi.object({});
 // <<< Get Hot Tags <<<
 
-// >>> Get Posts >>>
-export interface GetPostsArgs {
+// >>> Global Recommend >>>
+export interface GlobalRecommendArgs {
   afterCursor: string
   numberRecords: number
 }
 
-export const GetPostsArgsSchema = Joi.object({
+export const GlobalRecommendArgsSchema = Joi.object({
   afterCursor: Joi.string().default(""),
   numberRecords: Joi.number().positive().default(10),
 });
-// <<< Get Posts <<<
+// <<< Global Recommend <<<
 
-export type RecommendationRequestArgs = RecommendArgs | GetHotTagsArgs;
+export type RecommendationRequestArgs = RecommendArgs | GlobalRecommendArgs;

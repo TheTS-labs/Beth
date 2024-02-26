@@ -12,7 +12,7 @@ export default class CachingVoteModel extends VoteModel {
 
     const vote = await this.db<Vote>("vote").insert(args, "*");
 
-    await this.redisClient.set(`vote:${vote[0].postId}:${vote[0].userEmail}`, JSON.stringify(vote[0]), {
+    await this.redisClient.set(`vote:${vote[0].id}`, JSON.stringify(vote[0]), {
       EX: this.config.get("VOTE_EX").required().asIntPositive(),
       NX: true
     });

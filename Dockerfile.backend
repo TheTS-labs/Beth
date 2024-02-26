@@ -1,0 +1,9 @@
+# syntax = edrevo/dockerfile-plus
+
+FROM node:20.5.1-slim
+
+INCLUDE+ Dockerfile
+
+CMD yarn backend:start
+
+EXPOSE ${APP_PORT}

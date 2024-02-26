@@ -1,9 +1,17 @@
-{
-  "parser": "@typescript-eslint/parser",
-  "plugins": ["@typescript-eslint", "simple-import-sort"],
-  "extends": ["@wemake-services/typescript/strict"],
-  "parserOptions": { "project": ["./backend/tsconfig.json", "./frontend/tsconfig.json"] },
-  "rules": {
+module.exports = {
+  parser: "@typescript-eslint/parser",
+  plugins: ["@typescript-eslint", "simple-import-sort"],
+  extends: ["@wemake-services/typescript/strict"],
+  ignorePatterns: [".eslintrc.js"],
+  parserOptions: {
+    tsconfigRootDir: __dirname,
+    project: [
+      "./backend/tsconfig.json",
+      "./frontend/tsconfig.json",
+      "./tsconfig.json"
+    ]
+  },
+  rules: {
     "@typescript-eslint/semi": [2, "always"],
     "quotes": [2, "double", { "avoidEscape": true }],
     "simple-import-sort/imports": "warn",

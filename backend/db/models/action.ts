@@ -83,16 +83,11 @@ export default class ActionModel implements ICRUDModel<Omit<Action, "id" | "crea
     value: string,
     currentPage: number,
     perPage: number
-  ): Promise<
-    IWithPagination<
-      Action,
-      {
-        perPage: number
-        currentPage: number
-        isLengthAware: true
-      }
-    >
-  > {
+  ): Promise<IWithPagination<Action, {
+    perPage: number
+    currentPage: number
+    isLengthAware: true
+  }>> {
     this.logger.log({
       level: "trying",
       message: "To preform a simple action(s) search",
@@ -111,14 +106,11 @@ export default class ActionModel implements ICRUDModel<Omit<Action, "id" | "crea
   }
 
   public async chainWhereSearch(chain: ChainWhereSearchArgs["chain"], currentPage: number, perPage: number): Promise<
-    IWithPagination<
-      Action,
-      {
-        perPage: number
-        currentPage: number
-        isLengthAware: true
-      }
-    >
+    IWithPagination<Action, {
+      perPage: number
+      currentPage: number
+      isLengthAware: true
+    }>
   > {
     this.logger.log({
       level: "trying",

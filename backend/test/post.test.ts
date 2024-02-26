@@ -2,13 +2,12 @@ import request from "supertest";
 
 import App from "../app";
 import { disableAuthFor, endpoints } from "../common/endpoints";
+import { DBBool } from "../common/types";
 import { Permissions,PermissionStatus } from "../db/models/permission";
-import { Post } from "../db/models/post";
+import { DetailedPost, Post } from "../db/models/post";
 import userData, { credentials } from "./data/user_data";
 import auth from "./helpers/auth";
 
-process.env.REDIS_REQUIRED = "false";
-process.env.LOG_LEVEL = process.env.TEST_LOG_LEVEL;
 const server = new App(endpoints, disableAuthFor);
 const req = request(server.app);
 
@@ -68,7 +67,6 @@ describe("POST /post/create", () => {
     expect(post).not.toBeUndefined();
     expect(post?.text).toBe("Example");
     expect(post?.repliesTo).toBe(replyTo);
-    expect(post?.parent).toBe(replyTo);
   });
 
   it("should create reply to reply", async () => {
@@ -86,7 +84,6 @@ describe("POST /post/create", () => {
       text: "Example 2",
       author: userData.email,
       repliesTo: parent,
-      parent
     }, "id"))[0].id;
     // Preparing
 
@@ -103,7 +100,6 @@ describe("POST /post/create", () => {
     expect(post).not.toBeUndefined();
     expect(post?.text).toBe("Example");
     expect(post?.repliesTo).toBe(replyTo);
-    expect(post?.parent).toBe(parent);
   });
 });
 
@@ -126,8 +122,22 @@ describe("POST /post/view", () => {
     expect(res.body.errorMessage).toBeUndefined();
     expect(res.statusCode).toBe(200);
 
-    const post = await server.db<Post>("post").where({ id }).first();
-    expect(JSON.stringify(res.body)).toBe(JSON.stringify(post));
+    const post = await server.db<Post>("post").where({ id }).select(
+      "id",
+      "author",
+      "text",
+      "repliesTo",
+      "tags",
+    ).first();
+    // /post/view returns DetailedPost so we need to add the missing properties
+    expect(res.body).toEqual({
+      ...post,
+      displayName: "Beth",
+      score: 0,
+      userVote: null,
+      username: "beth",
+      verified: false as unknown as DBBool
+    } as DetailedPost);
   });
 
   it("should return empty object", async () => {
@@ -156,7 +166,7 @@ describe("POST /post/view", () => {
     const id = (await server.db<Post>("post").insert({
       text: "Example",
       author: userData.email,
-      frozenAt: new Date(Date.now())
+      softDeletedAt: new Date(Date.now())
     }, "id"))[0].id;
     // Preparing
 
@@ -285,7 +295,7 @@ describe("POST /post/delete", () => {
     expect(res.body.success).toBeTruthy();
 
     const post = await server.db<Post>("post").where({ id }).first();
-    expect(post?.frozenAt).not.toBeUndefined();
+    expect(post?.softDeletedAt).not.toBeUndefined();
   });
 
   it("should throw DatabaseError: Post doesn't exist", async () => {
@@ -356,7 +366,7 @@ describe("POST /post/delete", () => {
     expect(res.body.success).toBeTruthy();
 
     const post = await server.db<Post>("post").where({ id }).first();
-    expect(post?.frozenAt).not.toBeUndefined();
+    expect(post?.softDeletedAt).not.toBeUndefined();
   });
 });
 
@@ -472,9 +482,9 @@ describe("POST /post/viewReplies", () => {
       text: "Example",
       author: userData.email
     }, "id"))[0].id;
-    await server.db<Post>("post").insert({ text: "Example 1", author: userData.email, repliesTo: parent, parent });
-    await server.db<Post>("post").insert({ text: "Example 2", author: userData.email, repliesTo: parent, parent });
-    await server.db<Post>("post").insert({ text: "Example 3", author: userData.email, repliesTo: parent, parent });
+    await server.db<Post>("post").insert({ text: "Example 1", author: userData.email, repliesTo: parent });
+    await server.db<Post>("post").insert({ text: "Example 2", author: userData.email, repliesTo: parent });
+    await server.db<Post>("post").insert({ text: "Example 3", author: userData.email, repliesTo: parent });
     // Preparing
 
     const res = await req.post("/post/viewReplies")
@@ -659,7 +669,7 @@ describe("POST /post/getUserPosts", () => {
     // Preparing
 
     const res = await req.post("/post/getUserPosts")
-                         .send({ username: userData.username });
+                         .send({ email: userData.email });
 
     expect(res.body.errorMessage).toBeUndefined();
     expect(res.statusCode).toBe(200);
@@ -668,7 +678,7 @@ describe("POST /post/getUserPosts", () => {
 
   it("should throw DatabaseError", async () => {
     const res = await req.post("/post/getUserPosts")
-                         .send({ username: "notFound" });
+                         .send({ email: "notFound@email.com" });
 
     expect(res.body.errorType).toBe("DatabaseError");
     expect(res.body.errorMessage).not.toBeUndefined();

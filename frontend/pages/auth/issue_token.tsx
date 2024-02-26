@@ -4,7 +4,7 @@ import Link from "next/link";
 import React, { FormEvent, useEffect, useState } from "react";
 
 import axiosConfig from "../../axios.config";
-import Errors, { errorsAtom } from "../../components/common/errors";
+import { errorsAtom } from "../../components/common/errors";
 import Header from "../../components/common/header";
 import Loader from "../../components/common/loader";
 import useAuthToken from "../../lib/hooks/use_auth_token";
@@ -145,7 +145,5 @@ export default function IssueToken(): React.JSX.Element {
         </div>
       </div>
     </div>
-
-    <Errors />
   </>;
 }

@@ -5,6 +5,7 @@ import express, { Express, Response } from "express";
 import asyncHandler from "express-async-handler";
 import { IncomingMessage, Server, ServerResponse } from "http";
 import knex, { Knex } from "knex";
+import { attachPaginate } from "knex-paginate";
 import asyncMiddleware from "middleware-async";
 import { RedisClientType } from "redis";
 import winston from "winston";
@@ -22,7 +23,8 @@ import PermissionMiddleware from "./middlewares/permission_middleware";
 import Redis from "./redis";
 import ScheduledTasks from "./scheduledJobs/scheduled_tasks";
 
-dotenv.config({ path: "../.backend.env" });
+dotenv.config({ path: "../env/.backend.env" });
+attachPaginate();
 
 export interface Domains {
   [key: string]: typeof IBaseEndpoint
@@ -38,7 +40,7 @@ export default class App {
   app: Express = express();
   db: Knex;
   redisClient: RedisClientType;
-  domains: DomainInstances = {};
+  domainInstances: DomainInstances = {};
   logger: winston.Logger;
   config: ENV;
   scheduledTasks: ScheduledTasks;
@@ -100,7 +102,7 @@ export default class App {
       path: module.filename
     });
     Object.keys(domains).map((domainName: string) => {
-      this.domains[domainName] = new domains[domainName](
+      this.domainInstances[domainName] = new domains[domainName](
         this.db,
         this.redisClient,
         this.logger,
@@ -122,8 +124,23 @@ export default class App {
       path: module.filename
     });
 
-    Object.keys(this.domains).map((domainName: string) => {
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    this.app.all("/ping", (req, res) => {
+      this.logger.log({
+        level: "request",
+        message: "Ping",
+        path: module.filename 
+      });
+
+      res.sendStatus(200);
+
+      this.logger.log({
+        level: "response",
+        message: "Pong",
+        path: module.filename
+      });
+    });
+
+    Object.keys(this.domainInstances).map((domainName: string) => {
       //@ts-ignore
       this.app.post(`${domainName}/:endPoint`, asyncHandler(async (req: JWTRequest, res: Response) => {
         this.logger.log({
@@ -133,7 +150,7 @@ export default class App {
           path: module.filename 
         });
 
-        const response = await this.domains[domainName].callEndpoint(req.params.endPoint, req.body, req.auth);
+        const response = await this.domainInstances[domainName].callEndpoint(req.params.endPoint, req.body, req.auth);
 
         this.logger.log({
           level: "response",

@@ -3,15 +3,22 @@
     "camelcase",
     "Checkmark",
     "creds",
+    "DISPLAYNAME",
+    "Doesnt",
+    "DONT",
     "downvotes",
     "Hasnt",
     "ICRUD",
     "knexfile",
     "middlewares",
+    "PGADMIN",
     "tanstack",
+    "testingonly",
+    "testingtag",
     "unnest",
     "Unvote",
-    "upvotes"
+    "upvotes",
+    "weakpassword"
   ],
   "jest.rootPath": "./backend",
   "search.exclude": {

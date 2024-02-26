@@ -1,0 +1,20 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+set -o allexport
+source env/.backend.env
+source env/.frontend.env
+set +o allexport
+
+echo "ESLint (1/4)"
+yarn root:lint --max-warnings=0
+
+echo "Cypress (2/4)"
+yarn frontend:build
+LOG_LEVEL=$TEST_LOG_LEVEL yarn frontend:test:full
+
+echo "Cypress: check-coverage (3/4)"
+yarn workspace frontend nyc check-coverage
+
+echo "Jest (4/4)"
+yarn backend:test

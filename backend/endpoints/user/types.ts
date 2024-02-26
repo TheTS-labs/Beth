@@ -116,7 +116,7 @@ export const IssueTokenArgsSchema = Joi.object({
   ).required(),
   expiresIn: Joi.alternatives().try(Joi.number(), Joi.string()).default(2592000), // 30 days
   scope: Joi.array().items(Joi.string()),
-  shorthand: Joi.string().valid("login")
+  shorthand: Joi.string().valid("login", "all")
 }).xor("scope", "shorthand");
 // <<< Issue Token <<<
 

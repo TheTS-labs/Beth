@@ -1,12 +1,10 @@
-import axios from "axios";
-import { useSetAtom } from "jotai";
 import Link from "next/link";
-import React, { FormEvent } from "react";
+import React, { FormEvent, useEffect, useRef } from "react";
 
-import axiosConfig from "../../axios.config";
-import Errors, { errorsAtom } from "../../components/common/errors";
+import { errorsAtom } from "../../components/common/errors";
 import Header from "../../components/common/header";
 import useAuthToken from "../../lib/hooks/use_auth_token";
+import useRequest from "../../lib/hooks/use_request";
 import styles from "../../public/styles/pages/auth/common.module.sass";
 import headerStyles from "../../public/styles/pages/auth/header.module.sass";
 
@@ -26,37 +24,29 @@ interface Event extends FormEvent<HTMLFormElement> {
 }
 
 export default function LogIn(): React.JSX.Element {
-  const setErrors = useSetAtom(errorsAtom);
   const authToken = useAuthToken();
+  const { request, result } = useRequest<{ token: string }>({ url: "user/issueToken", data: {}, errorsAtom });
+  const submitRef = useRef<HTMLInputElement | null>(null);
+
+  useEffect(() => {
+    if (!result?.token || !submitRef.current) {
+      return;
+    }
+
+    authToken.update(result.token);
+    submitRef.current.value = "done, redirecting...";
+    window.location.replace("/");
+  }, [result?.token]);
 
   const onsubmit = async (e: Event): Promise<void> => {
     e.preventDefault();
     e.target.submit.value = "working, just wait...";
 
-    const body = new URLSearchParams({
+    request({
       email: e.target.email.value,
       password: e.target.password.value,
       shorthand: "login"
     });
-
-    const response = await axios.request({...axiosConfig, ...{ url: "user/issueToken", data: body }})
-                                .catch(e => {
-      setErrors(prevErrors => [...prevErrors, String(e)]);
-    });
-
-    if (!response) {
-      return;
-    }
-
-    if ("errorType" in response.data && "errorMessage" in response.data) {
-      setErrors(prevErrors => [...prevErrors, response.data.errorMessage]);
-      return;
-    }
-
-    authToken.update(response.data.token);
-
-    e.target.submit.value = "done, redirecting...";
-    window.location.replace("/");
   };
 
   return <>
@@ -110,10 +100,8 @@ export default function LogIn(): React.JSX.Element {
         />
         <br />
 
-        <input type="submit" id="submit" value="Looks good" />
+        <input type="submit" id="submit" value="Looks good" ref={submitRef} />
       </form>
     </div>
-
-    <Errors />
   </>;
 }

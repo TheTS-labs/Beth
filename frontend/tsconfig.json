@@ -19,7 +19,8 @@
     "next-env.d.ts",
     "**/*.ts",
     "**/*.tsx",
-    "../backend/**/*"
+    "../backend/**/*",
+    "start_server.js"
   ],
   "exclude": [
     "node_modules"

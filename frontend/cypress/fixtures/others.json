@@ -1,0 +1,9 @@
+{
+  "updateData": {
+    "fieldsToFillOneByOne": [
+      [":nth-child(1) > form > #username", "USERNAME"],
+      [":nth-child(1) > form > #displayName", "DISPLAYNAME"],
+      [":nth-child(1) > form > #password", "Pa$$w0rD!!"]
+    ]
+  }
+}

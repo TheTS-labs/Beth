@@ -27,8 +27,6 @@ function Posts(): React.JSX.Element {
     //? I used `any` instead of `DBBool` just because I can't import it
     //? But, interestingly enough, I can import and use types as long as
     //? they don't go into the JS code, which means they can be used in type definitions.
-    //? I guess the reason is that the file is located where WebPack doesn't build it
-    // TODO: Resolve it
     // Module parse failed: Unexpected token (6:7)
     // You may need an appropriate loader to handle this file type,
     // currently no loaders are configured to process this file.
@@ -43,7 +41,7 @@ function Posts(): React.JSX.Element {
     userVote: faker.datatype.boolean(),
     author: faker.internet.userName(),
     createdAt: new Date(),
-    frozenAt: null,
+    softDeletedAt: null,
     repliesTo: null,
     parent: null,
     tags: "",
@@ -122,7 +120,6 @@ function Posts(): React.JSX.Element {
     { token && <Write placeholder="Your definitely important opinion..." /> }
     {...postElements}
 
-    {/* // TODO: Add retry */}
     { !error && <div className={styles.loader} ref={observerTarget}><Loader /></div> }
   </div>;
 }

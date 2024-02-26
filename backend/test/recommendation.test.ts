@@ -10,8 +10,6 @@ import { seed as seedPosts } from "../db/seeds/02_post";
 import userData, { credentials } from "./data/user_data";
 import auth from "./helpers/auth";
 
-process.env.REDIS_REQUIRED = "false";
-process.env.LOG_LEVEL = process.env.TEST_LOG_LEVEL;
 const server = new App(endpoints, disableAuthFor);
 const req = request(server.app);
 

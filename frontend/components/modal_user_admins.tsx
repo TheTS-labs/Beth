@@ -7,8 +7,6 @@ import useRequest from "../lib/hooks/use_request";
 import styles from "../public/styles/components/actions.module.sass";
 import { errorsAtom } from "./common/errors";
 
-// TODO: Refactor
-
 export default function ModalUserAdmins(): React.JSX.Element {
   const authToken = useAuthToken();
   const modalUser = useAtomValue(modalUserAtom);
@@ -17,7 +15,7 @@ export default function ModalUserAdmins(): React.JSX.Element {
   const userVerify = useRequest({ url: "user/verify", data: { email: modalUser }, errorsAtom });
   const userFroze = useRequest({ url: "user/froze", data: { email: modalUser }, errorsAtom });
   const userEditTags = useRequest({ url: "user/editTags", data: { email: modalUser }, errorsAtom });
-  const userGrantPermission = useRequest({ url: "permission/grant", data: { grantTo: modalUser }, errorsAtom });
+  const userGrandPermission = useRequest({ url: "permission/grand", data: { grandTo: modalUser }, errorsAtom });
   const userRescindPermission = useRequest({ url: "permission/rescind", data: { rescindFrom: modalUser }, errorsAtom });
 
   useEffect(() => {
@@ -37,13 +35,13 @@ export default function ModalUserAdmins(): React.JSX.Element {
   };
 
   const grandPermission = (): void => {
-    const permission = prompt("Type permission name you want to grant \n\nExample: UserView");
+    const permission = prompt("Type permission name you want to grand \n\nExample: UserView");
 
     if (permission === null) {
       return;
     }
 
-    userGrantPermission.request({ grantPermission: permission });
+    userGrandPermission.request({ grandPermission: permission });
   };
 
   const rescindPermission = (): void => {

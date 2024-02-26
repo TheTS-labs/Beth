@@ -4,28 +4,26 @@ import winston from "winston";
 
 import { ENV } from "../../app";
 import BaseEndpoint from "../../common/base_endpoint_class";
-import RequestError from "../../common/request_error";
+import RequestError, { ERequestError } from "../../common/request_error";
 import { Auth, UserScore } from "../../common/types";
 import CachingPostModel from "../../db/models/caching/caching_post";
 import CachingUserModel from "../../db/models/caching/caching_user";
 import CachingVoteModel from "../../db/models/caching/caching_vote";
 import PermissionModel from "../../db/models/permission";
-import PostModel, { DetailedPosts, Post } from "../../db/models/post";
+import PostModel, { PaginatedDetailedPosts, Post } from "../../db/models/post";
 import UserModel from "../../db/models/user";
 import VoteModel, { VoteType } from "../../db/models/vote";
 import * as type from "./types";
 
-type CallEndpointReturnType = { results: PostWithRate[] } |
-                              { result: { tag: string, postCount: string }[] } |
-                              DetailedPosts;
+type CallEndpointReturnType = { result: { tag: string, postCount: string }[] } | PaginatedDetailedPosts | never;
+
 type PostWithVote = Post & { voteType: VoteType };
-type PostWithRate = Post & { rate: number };
 interface RecommendationRequirements {
   likedTags: string[]
   dislikedTags: string[]
   likedUsers: string[]
   dislikedUsers: string[]
-  posts: DetailedPosts | undefined
+  posts: PaginatedDetailedPosts | undefined
 }
 
 export default class RecommendationEndpoint extends BaseEndpoint<type.RecommendationRequestArgs,
@@ -56,22 +54,16 @@ export default class RecommendationEndpoint extends BaseEndpoint<type.Recommenda
     this.voteModel = new VoteModelType(this.db, this.logger, this.redisClient, this.config);
   }
 
-  async globalRecommend(args: type.GetPostsArgs, _auth: Auth): Promise<DetailedPosts> {
-    args = await this.validate(type.GetPostsArgsSchema, args);
+  async globalRecommend(args: type.GlobalRecommendArgs, _auth: Auth): Promise<PaginatedDetailedPosts> {
+    args = await this.validate(type.GlobalRecommendArgsSchema, args);
 
-    const posts = await this.postModel.readDetailedPosts(args.afterCursor, args.numberRecords);
+    const posts = await this.postModel.readPaginatedDetailedPosts(args.afterCursor, args.numberRecords);
 
     if (!posts) {
-      throw new RequestError("DatabaseError", [""], 5);
+      throw new RequestError(ERequestError.DatabaseErrorSufficientPosts);
     }
 
     posts.results.sort((a, b) => b.score - a.score);
-
-    // posts.results.sort((a, b) => {
-    //   const millisecondsFromCreationA = Date.now() - a.createdAt.getTime(),
-    //         millisecondsFromCreationB = Date.now() - b.createdAt.getTime();
-    //   return millisecondsFromCreationB/b.score - millisecondsFromCreationA/a.score;
-    // });
 
     return posts;
   }
@@ -84,7 +76,7 @@ export default class RecommendationEndpoint extends BaseEndpoint<type.Recommenda
     return { result: hotTags };
   }
 
-  async recommend(args: type.RecommendArgs, auth: Auth): Promise<CallEndpointReturnType> {
+  async recommend(args: type.RecommendArgs, auth: Auth): Promise<PaginatedDetailedPosts> {
     args = await this.validate(type.RecommendArgsSchema, args);
 
     const votes = await this.voteModel.readVotesOfUser(auth.user.email);
@@ -102,7 +94,7 @@ export default class RecommendationEndpoint extends BaseEndpoint<type.Recommenda
     const requirements = await this.getRecommendationRequirements(args, postsWithVoteType, auth.user.email);
 
     if (!requirements.posts) {
-      throw new RequestError("DatabaseError", [""], 5);
+      throw new RequestError(ERequestError.DatabaseErrorSufficientPosts);
     }
 
     const recommendations = requirements.posts.results.map(recommendPost => {
@@ -146,7 +138,7 @@ export default class RecommendationEndpoint extends BaseEndpoint<type.Recommenda
       dislikedTags: this.getPreferredTags(postsWithVoteType, VoteType.Down),
       likedUsers: this.getPreferredUsers(postsWithVoteType, VoteType.Up),
       dislikedUsers: this.getPreferredUsers(postsWithVoteType, VoteType.Down),
-      posts: await this.postModel.readDetailedPosts(args.afterCursor, args.numberRecords, email)
+      posts: await this.postModel.readPaginatedDetailedPosts(args.afterCursor, args.numberRecords, email)
     };
   }
 }

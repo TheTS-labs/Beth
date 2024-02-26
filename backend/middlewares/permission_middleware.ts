@@ -4,7 +4,7 @@ import { RedisClientType } from "redis";
 import winston from "winston";
 
 import { ENV } from "../app";
-import RequestError from "../common/request_error";
+import RequestError, { ERequestError } from "../common/request_error";
 import { JWTRequest } from "../common/types";
 
 type MiddlewareFunction = (
@@ -49,7 +49,7 @@ export default class PermissionMiddleware {
       });
   
       if (!req.auth?.token?.scope.includes(requiredScope)) {
-        throw new RequestError("PermissionDenied", [requiredScope]);
+        throw new RequestError(ERequestError.PermissionDenied, [requiredScope]);
       }
   
       next();

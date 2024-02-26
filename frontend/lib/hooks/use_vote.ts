@@ -13,6 +13,15 @@ export default function useVote(postId: number): { callback: (event: MouseEvent<
   const [ voteType, setVoteType ] = useState<string | null>(null);
 
   useEffect(() => {
+    // For some reason the invalid_token error is triggered twice if I combine these two if`s
+    //? The invalid_token error will occur if the user doesn't have a token or it's invalid
+    // TODO: investigate
+    if (vote.error || voteCount.error) {
+      return;
+    }
+
+    //? Do nothing if neither voteCount nor vote has a result
+    //? Fire voteCount, if only the vote has a result, for the user's interaction with the voting to take effect
     if (!voteCount.result || !vote.result) {
       if (!voteCount.result && vote.result) {
         voteCount.request();
@@ -20,6 +29,7 @@ export default function useVote(postId: number): { callback: (event: MouseEvent<
       return;
     }
 
+    //? This may look wrong, but for the code, these elements with the same id are actually the same thing
     const scores = document.querySelectorAll<HTMLElement>(`#post_${postId}_score`);
     const voteColor = parseInt(voteType || "0") ? "green" : "red";
 

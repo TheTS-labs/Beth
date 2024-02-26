@@ -9,8 +9,6 @@ import { User } from "../db/models/user";
 import userData, { credentials } from "./data/user_data";
 import auth from "./helpers/auth";
 
-process.env.REDIS_REQUIRED = "false";
-process.env.LOG_LEVEL = process.env.TEST_LOG_LEVEL;
 const server = new App(endpoints, disableAuthFor);
 const req = request(server.app);
 
@@ -387,7 +385,7 @@ describe("POST /user/issueToken", () => {
                           });
 
     expect(res.body.errorMessage).not.toBeUndefined();
-    expect(res.statusCode).toBe(403);
+    expect(res.statusCode).toBe(400);
   });
 
   it("should throw DatabaseError: Permissions doesn't exist", async () => {

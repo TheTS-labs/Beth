@@ -56,11 +56,13 @@ typings/
 
 # dotenv environment variables file
 .backend.env
+.frontend.env
+.db.env
 
 # next.js build output
 .next
 
 dist
 *.sqlite3
-docker-compose.yml
 .yarn
+frontend/cypress/screenshots

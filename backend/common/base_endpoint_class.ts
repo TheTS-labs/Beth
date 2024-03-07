@@ -1,3 +1,4 @@
+import { Request } from "express";
 import Joi from "joi";
 import { Knex } from "knex";
 import { RedisClientType } from "redis";
@@ -6,7 +7,7 @@ import winston from "winston";
 import { ENV } from "../app";
 import ActionModel from "../db/models/action";
 import RequestError, { ERequestError } from "./request_error";
-import { EndpointThisType, JWTRequest } from "./types";
+import { EndpointThisType } from "./types";
 import IBaseEndpoint from "./types/base_endpoint";
 
 export default class BaseEndpoint<RequestArgsType extends object,
@@ -26,7 +27,7 @@ export default class BaseEndpoint<RequestArgsType extends object,
 
   async callEndpoint(
     this: EndpointThisType<this, RequestArgsType, Promise<CallEndpointReturnType>>,
-    name: string, args: RequestArgsType, auth: JWTRequest["auth"]
+    name: string, args: RequestArgsType, auth: Request["auth"]
   ): Promise<CallEndpointReturnType> {
     const endpointIncludes = this.allowNames.includes(name);
     if (!endpointIncludes) {

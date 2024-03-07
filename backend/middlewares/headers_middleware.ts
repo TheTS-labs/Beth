@@ -1,12 +1,11 @@
-import { NextFunction, Response } from "express";
+import { NextFunction, Request, Response } from "express";
 import { Knex } from "knex";
 import { RedisClientType } from "redis";
 import winston from "winston";
 
 import { ENV } from "../app";
-import { JWTRequest } from "../common/types";
 
-type MiddlewareFunction = (req: JWTRequest, res: Response, next: NextFunction) => Promise<void>;
+type MiddlewareFunction = (req: Request, res: Response, next: NextFunction) => Promise<void>;
 
 export default class HeadersMiddleware {
   constructor(
@@ -17,7 +16,7 @@ export default class HeadersMiddleware {
   ) { }
 
   public middleware(): MiddlewareFunction {
-    return async (_req: JWTRequest, res: Response, next: NextFunction): Promise<void> => {
+    return async (_req: Request, res: Response, next: NextFunction): Promise<void> => {
       res.setHeader(
         "Access-Control-Allow-Origin",
         this.config.get("ACCESS_CONTROL_ALLOW_ORIGIN_HEADER").required().asString()

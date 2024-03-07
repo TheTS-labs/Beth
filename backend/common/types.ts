@@ -11,7 +11,7 @@ export type RequestErrorObject = {
 };
 
 export type EndpointThisType<CType, AType, RType> = CType & {
-  [name: string]: (args: AType, auth: JWTRequest["auth"]) => RType
+  [name: string]: (args: AType, auth: Request["auth"]) => RType
 };
 
 export enum DBBool {
@@ -27,11 +27,7 @@ export enum UserScore {
 
 export interface Auth {
   tokenId: number
-  scope: string[]
+  scope: string
   user: User
   token: Token
-}
-
-export interface JWTRequest extends Request {
-  auth: Auth | undefined
 }

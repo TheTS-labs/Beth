@@ -1,16 +1,15 @@
-import { NextFunction, Response } from "express";
+import { NextFunction, Request,Response } from "express";
 import { Knex } from "knex";
 import { RedisClientType } from "redis";
 import winston from "winston";
 
 import { ENV } from "../app";
 import RequestError, { ERequestError } from "../common/request_error";
-import { JWTRequest } from "../common/types";
 import CachingUserModel from "../db/models/caching/caching_user";
 import TokenModel from "../db/models/token";
 import UserModel from "../db/models/user";
 
-type MiddlewareFunction = (req: JWTRequest, res: Response, next: NextFunction) => Promise<void>;
+type MiddlewareFunction = (req: Request, res: Response, next: NextFunction) => Promise<void>;
 
 export default class IdentityMiddleware {
   userModel: UserModel | CachingUserModel;
@@ -28,7 +27,7 @@ export default class IdentityMiddleware {
   }
 
   public middleware(): MiddlewareFunction {
-    return async (req: JWTRequest, _res: Response, next: NextFunction): Promise<void> => {
+    return async (req: Request, _res: Response, next: NextFunction): Promise<void> => {
       if (req.auth === undefined) {
         this.logger.log({
           level: "middleware",
@@ -62,11 +61,12 @@ export default class IdentityMiddleware {
         throw new RequestError(ERequestError.DatabaseErrorDoesntExist, ["User"]);
       }
 
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      //@ts-ignore
+
       req.auth = {
         token,
-        user
+        user,
+        tokenId: token.id,
+        scope: token.scope
       };
 
       this.logger.log({

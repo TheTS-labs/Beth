@@ -1,14 +1,13 @@
-import { NextFunction, Response } from "express";
+import { NextFunction, Request, Response } from "express";
 import { Knex } from "knex";
 import { RedisClientType } from "redis";
 import winston from "winston";
 
 import { ENV } from "../app";
 import RequestError, { ERequestError } from "../common/request_error";
-import { JWTRequest } from "../common/types";
 
 type MiddlewareFunction = (
-  req: JWTRequest,
+  req: Request,
   res: Response,
   next: NextFunction
 ) => Promise<void>;
@@ -23,7 +22,7 @@ export default class PermissionMiddleware {
 
   public middleware(): MiddlewareFunction {
     return async (
-      req: JWTRequest,
+      req: Request,
       res: Response,
       next: NextFunction
     ): Promise<void> => {
@@ -48,7 +47,7 @@ export default class PermissionMiddleware {
         path: module.filename
       });
   
-      if (!req.auth?.token?.scope.includes(requiredScope)) {
+      if (!req.auth?.scope.includes(requiredScope)) {
         throw new RequestError(ERequestError.PermissionDenied, [requiredScope]);
       }
   

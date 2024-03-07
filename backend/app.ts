@@ -1,7 +1,6 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment */
 import dotenv from "dotenv";
 import { ExtenderTypeOptional, from, IEnv, IOptionalVariable } from "env-var";
-import express, { Express, Response } from "express";
+import express, { Express, Request, Response } from "express";
 import asyncHandler from "express-async-handler";
 import { IncomingMessage, Server, ServerResponse } from "http";
 import knex, { Knex } from "knex";
@@ -10,7 +9,6 @@ import asyncMiddleware from "middleware-async";
 import { RedisClientType } from "redis";
 import winston from "winston";
 
-import { JWTRequest } from "./common/types";
 import IBaseEndpoint from "./common/types/base_endpoint";
 import knexfile from "./knexfile";
 import Logger from "./logger";
@@ -84,14 +82,10 @@ export default class App {
     });
     this.app.use(express.json());
     this.app.use(express.urlencoded({ extended: true }));
-    //@ts-ignore
     this.app.use(asyncMiddleware(this.headersMiddleware.middleware()));
     this.app.use(this.JWTMiddleware.middleware(disableAuthFor));
-    //@ts-ignore
     this.app.use(asyncMiddleware(this.identityMiddleware.middleware()));
-    //@ts-ignore
     this.app.use(asyncMiddleware(this.permissionMiddleware.middleware()));
-    //@ts-ignore
     this.app.use(asyncMiddleware(this.frozenMiddleware.middleware()));
   }
 
@@ -141,8 +135,7 @@ export default class App {
     });
 
     Object.keys(this.domainInstances).map((domainName: string) => {
-      //@ts-ignore
-      this.app.post(`${domainName}/:endPoint`, asyncHandler(async (req: JWTRequest, res: Response) => {
+      this.app.post(`${domainName}/:endPoint`, asyncHandler(async (req: Request, res: Response) => {
         this.logger.log({
           level: "request",
           message: `To ${domainName}/${req.params.endPoint}`,

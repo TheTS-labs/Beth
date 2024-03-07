@@ -1,13 +1,12 @@
-import { NextFunction, Response } from "express";
+import { NextFunction, Request,Response } from "express";
 import { Knex } from "knex";
 import { RedisClientType } from "redis";
 import winston from "winston";
 
 import { ENV } from "../app";
 import RequestError, { ERequestError } from "../common/request_error";
-import { JWTRequest } from "../common/types";
 
-type MiddlewareFunction = (req: JWTRequest, res: Response, next: NextFunction) => Promise<void>;
+type MiddlewareFunction = (req: Request, res: Response, next: NextFunction) => Promise<void>;
 
 export default class FrozenMiddleware {
   constructor(
@@ -18,7 +17,7 @@ export default class FrozenMiddleware {
   ) { }
 
   public middleware(): MiddlewareFunction {
-    return async (req: JWTRequest, res: Response, next: NextFunction): Promise<void> => {
+    return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
       if (!req.auth) {
         this.logger.log({
           level: "middleware",

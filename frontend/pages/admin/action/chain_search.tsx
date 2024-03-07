@@ -96,9 +96,10 @@ export default function ChainSearch(): React.JSX.Element {
 
   const onChange = (key: keyof Where, index: number) => {
     return (e: React.ChangeEvent<HTMLSelectElement | HTMLInputElement>) => setChains(prev => {
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      //@ts-ignore
-      prev[index][key] = e.target.value;
+      prev[index] = {
+        ...prev[index],
+        [key]: e.target.value
+      };
 
       return prev;
     });

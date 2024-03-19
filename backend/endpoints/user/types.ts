@@ -4,6 +4,8 @@ import scopes from "../../common/scopes";
 import { DBBool } from "../../common/types";
 import { Permissions } from "../../db/models/permission";
 
+export const PASSWORD_REGEX = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$/mi;
+
 // >>> Create >>>
 export interface CreateArgs {
   username: string
@@ -17,9 +19,7 @@ export const CreateArgsSchema = Joi.object({
   username: Joi.string().required(),
   displayName: Joi.string().required(),
   email: Joi.string().email().required(),
-  password: Joi.string().regex(
-    /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$/mi
-  ).required(),
+  password: Joi.string().regex(PASSWORD_REGEX).required(),
   repeatPassword: Joi.ref("password"),
 }).with("password", "repeatPassword");
 // <<< Create <<<
@@ -45,13 +45,9 @@ export interface EditArgs {
 }
 
 export const EditArgsSchema = Joi.object({
-  password: Joi.string().regex(
-    /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$/mi
-  ).required(),
+  password: Joi.string().regex(PASSWORD_REGEX).required(),
   edit: Joi.object({
-    password: Joi.string().regex(
-      /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$/mi
-    ).default(() => undefined),
+    password: Joi.string().regex(PASSWORD_REGEX).default(() => undefined),
     username: Joi.string().default(() => undefined),
     displayName: Joi.string().default(() => undefined)
   })
@@ -111,9 +107,7 @@ export type IssueTokenArgs = {
 
 export const IssueTokenArgsSchema = Joi.object({
   email: Joi.string().email().required(),
-  password: Joi.string().regex(
-    /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$/mi
-  ).required(),
+  password: Joi.string().regex(PASSWORD_REGEX).required(),
   expiresIn: Joi.alternatives().try(Joi.number(), Joi.string()).default(2592000), // 30 days
   scope: Joi.array().items(Joi.string()),
   shorthand: Joi.string().valid("login", "all")

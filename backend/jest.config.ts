@@ -45,6 +45,7 @@ export default merge.recursive(TSPreset, {
     "!common/types/**/*",
     "!db/migrations/**/*",
     "!db/seeds/**/*",
+    "!endpoints/dev/**/*",
     env.get("REDIS_REQUIRED").required().asBool() ? "db/models/caching/**/*" : "!db/models/caching/**/*"
   ],
 

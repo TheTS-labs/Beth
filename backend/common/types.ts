@@ -1,5 +1,3 @@
-import { Request } from "express";
-
 import { Token } from "../db/models/token";
 import { User } from "../db/models/user";
 
@@ -11,7 +9,7 @@ export type RequestErrorObject = {
 };
 
 export type EndpointThisType<CType, AType, RType> = CType & {
-  [name: string]: (args: AType, auth: Request["auth"]) => RType
+  [name: string]: (args: AType, auth: Auth) => RType
 };
 
 export enum DBBool {
